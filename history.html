@@ -711,11 +711,12 @@
         ).length;
       } else {
         // 登録単位：出席登録があるものをカウント
-        // attendance_status が「出席」または「参加」の場合
-        attendCount = events.filter(item =>
-          item.attendance_status === '出席' ||
-          item.attendance_status === '参加'
-        ).length;
+        // attendance_status が「出席」「参加」の場合、またはBタイプ（欠席以外）
+        attendCount = events.filter(item => {
+          if (!item.attendance_status) return false; // 未登録は除外
+          if (item.attendance_status === '欠席') return false; // 欠席は除外
+          return true; // 出席、参加、その他のBタイプステータスはすべてカウント
+        }).length;
       }
 
       const rate = totalEvents > 0 ? Math.round((attendCount / totalEvents) * 100) : 0;
@@ -775,15 +776,20 @@
       let statusHTML = '';
       let statusClass = 'pending';
 
-      if (item.attendance_status === '出席') {
+      if (!item.attendance_status) {
+        // statusがない場合のみ未登録
+        statusHTML = '未登録';
+        statusClass = 'pending';
+      } else if (item.attendance_status === '出席') {
         statusHTML = '✓ 出席';
         statusClass = 'attend';
       } else if (item.attendance_status === '欠席') {
         statusHTML = '✗ 欠席';
         statusClass = 'absent';
       } else {
-        statusHTML = '未登録';
-        statusClass = 'pending';
+        // Bタイプのイベント（カスタムステータス）
+        statusHTML = item.attendance_status;
+        statusClass = 'attend'; // Bタイプは欠席以外は出席扱い
       }
 
       // 実出席ステータス（チェックイン）
