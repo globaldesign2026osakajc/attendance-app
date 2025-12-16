@@ -256,6 +256,24 @@ function addEvent(token, dataStr) {
     data.participation_options = JSON.stringify(data.participation_options);
   }
 
+  // tagsをJSON文字列に変換
+  if (data.tags) {
+    if (typeof data.tags === 'object') {
+      data.tags = JSON.stringify(data.tags);
+    } else if (typeof data.tags === 'string') {
+      // 既に文字列の場合はそのまま（カンマ区切りまたはJSON文字列）
+      // 念のため配列に変換してからJSON化
+      try {
+        const tagsArray = JSON.parse(data.tags);
+        data.tags = JSON.stringify(tagsArray);
+      } catch (e) {
+        // JSON配列でない場合はカンマ区切りとして配列に変換
+        const tagsArray = data.tags.split(',').map(t => t.trim()).filter(t => t);
+        data.tags = JSON.stringify(tagsArray);
+      }
+    }
+  }
+
   const newEvent = {
     event_id: eventId,
     title: data.title,
@@ -338,6 +356,24 @@ function updateEvent(token, dataStr) {
   // participation_optionsをJSON文字列に変換
   if (data.participation_options && typeof data.participation_options === 'object') {
     data.participation_options = JSON.stringify(data.participation_options);
+  }
+
+  // tagsをJSON文字列に変換
+  if (data.tags) {
+    if (typeof data.tags === 'object') {
+      data.tags = JSON.stringify(data.tags);
+    } else if (typeof data.tags === 'string') {
+      // 既に文字列の場合はそのまま（カンマ区切りまたはJSON文字列）
+      // 念のため配列に変換してからJSON化
+      try {
+        const tagsArray = JSON.parse(data.tags);
+        data.tags = JSON.stringify(tagsArray);
+      } catch (e) {
+        // JSON配列でない場合はカンマ区切りとして配列に変換
+        const tagsArray = data.tags.split(',').map(t => t.trim()).filter(t => t);
+        data.tags = JSON.stringify(tagsArray);
+      }
+    }
   }
 
   updateRow('events', event.rowIndex, data);
