@@ -551,8 +551,10 @@
           if (allHistory.length > 0) {
             console.log('履歴データサンプル:', allHistory[0]);
             console.log('tags形式:', typeof allHistory[0].tags, allHistory[0].tags);
+            console.log('event_tags形式:', typeof allHistory[0].event_tags, allHistory[0].event_tags);
             console.log('checked_in:', allHistory[0].checked_in);
             console.log('checkin_time:', allHistory[0].checkin_time);
+            console.log('全フィールド:', Object.keys(allHistory[0]));
           }
 
           applyFilters();
@@ -727,11 +729,12 @@
         <table class="history-table">
           <thead>
             <tr>
-              <th>イベント</th>
+              <th>開催日</th>
+              <th>イベント名</th>
               <th>出欠</th>
+              <th>実出席</th>
               <th>登録料</th>
               <th>支払</th>
-              <th>登録日時</th>
             </tr>
           </thead>
           <tbody>
@@ -745,7 +748,6 @@
     function createHistoryRow(item) {
       const eventDate = Utils.formatDateSlash(item.event_date);
       const dayOfWeek = Utils.getDayOfWeek(item.event_date);
-      const registeredAt = item.registered_at ? Utils.formatDateTime(item.registered_at) : '-';
 
       // 出欠ステータス
       let statusHTML = '';
@@ -760,6 +762,18 @@
       } else {
         statusHTML = '未登録';
         statusClass = 'pending';
+      }
+
+      // 実出席ステータス（チェックイン）
+      let checkinHTML = '';
+      let checkinClass = 'pending';
+
+      if (item.checked_in === true || item.checked_in === 1 || (item.checkin_time && item.checkin_time !== null)) {
+        checkinHTML = '✓ 出席';
+        checkinClass = 'attend';
+      } else {
+        checkinHTML = '－';
+        checkinClass = 'absent';
       }
 
       // 登録料
@@ -786,18 +800,20 @@
 
       return `
         <tr onclick="location.href='event-detail.html?id=${item.event_id}'">
-          <td data-label="イベント">
+          <td data-label="開催日">${eventDate}（${dayOfWeek}）</td>
+          <td data-label="イベント名">
             <div class="history-event-name">${Utils.escapeHtml(item.event_name)}</div>
-            <div class="history-event-date">${eventDate}（${dayOfWeek}）</div>
           </td>
           <td data-label="出欠">
             <span class="history-status ${statusClass}">${statusHTML}</span>
+          </td>
+          <td data-label="実出席">
+            <span class="history-status ${checkinClass}">${checkinHTML}</span>
           </td>
           <td data-label="登録料">${fee}</td>
           <td data-label="支払">
             <span class="payment-status ${paymentClass}">${paymentHTML}</span>
           </td>
-          <td data-label="登録日時">${registeredAt}</td>
         </tr>
       `;
     }
