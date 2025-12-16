@@ -516,27 +516,28 @@
         </div>
       </div>
 
-      <!-- 緊急登録が必要なイベント -->
-      <section id="urgentSection" class="section hidden">
+      <!-- 参加予定イベント -->
+      <section id="registeredSection" class="section">
         <div class="section-header">
-          <h3 class="section-title">🚨 緊急登録が必要なイベント</h3>
-        </div>
-        <div id="urgentEvents"></div>
-      </section>
-
-      <!-- 出欠登録が未完了のイベント -->
-      <section id="pendingSection" class="section hidden">
-        <div class="section-header">
-          <h3 class="section-title">⚠️ 出欠登録が未完了</h3>
+          <h3 class="section-title">✅ 参加予定イベントリスト</h3>
           <a href="events.html" class="view-all-link">すべて見る →</a>
         </div>
-        <div id="pendingEvents"></div>
+        <div id="registeredEvents"></div>
+      </section>
+
+      <!-- 締切直前イベント -->
+      <section id="deadlineSoonSection" class="section">
+        <div class="section-header">
+          <h3 class="section-title">⚠️ 締切直前イベントリスト（締切1週間前）</h3>
+          <a href="events.html" class="view-all-link">すべて見る →</a>
+        </div>
+        <div id="deadlineSoonEvents"></div>
       </section>
 
       <!-- 今後のイベント -->
       <section id="upcomingSection" class="section">
         <div class="section-header">
-          <h3 class="section-title">📅 今後のイベント</h3>
+          <h3 class="section-title">📅 今後のイベントリスト（今後2ヶ月）</h3>
           <a href="events.html" class="view-all-link">すべて見る →</a>
         </div>
         <div id="upcomingEvents"></div>

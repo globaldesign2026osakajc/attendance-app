@@ -546,6 +546,15 @@
           // GAS側は `attendances` を返すためそれを優先して扱う。
           // 互換性のため `history` / `data` もフォールバックで受け取る。
           allHistory = result.attendances || result.history || result.data || [];
+
+          // デバッグ用：取得したデータの最初の1件を確認
+          if (allHistory.length > 0) {
+            console.log('履歴データサンプル:', allHistory[0]);
+            console.log('tags形式:', typeof allHistory[0].tags, allHistory[0].tags);
+            console.log('checked_in:', allHistory[0].checked_in);
+            console.log('checkin_time:', allHistory[0].checkin_time);
+          }
+
           applyFilters();
           updateStats();
         } else {
@@ -622,6 +631,23 @@
       displayHistory();
     }
 
+    // タグを配列に変換するヘルパー関数
+    function normalizeTags(tags) {
+      if (!tags) return [];
+      if (Array.isArray(tags)) return tags;
+      if (typeof tags === 'string') {
+        // カンマ区切りまたは単一の文字列として扱う
+        return tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      }
+      return [];
+    }
+
+    // タグをチェックするヘルパー関数
+    function hasTag(item, tagName) {
+      const tags = normalizeTags(item.tags || item.event_tags);
+      return tags.some(tag => tag.includes(tagName));
+    }
+
     // 統計更新
     function updateStats() {
       // 過去のイベントのみ集計
@@ -629,14 +655,10 @@
       const pastEvents = allHistory.filter(item => new Date(item.event_date) < now);
 
       // タグ別にイベントを分類
-      const committeeEvents = pastEvents.filter(item =>
-        item.tags && item.tags.includes('委員会')
-      );
-      const monthlyEvents = pastEvents.filter(item =>
-        item.tags && item.tags.includes('月例会')
-      );
+      const committeeEvents = pastEvents.filter(item => hasTag(item, '委員会'));
+      const monthlyEvents = pastEvents.filter(item => hasTag(item, '月例会'));
       const otherEvents = pastEvents.filter(item =>
-        !item.tags || (!item.tags.includes('委員会') && !item.tags.includes('月例会'))
+        !hasTag(item, '委員会') && !hasTag(item, '月例会')
       );
 
       // 登録単位の統計
@@ -657,10 +679,19 @@
 
       if (useCheckin) {
         // 実出席：チェックイン済みのみカウント
-        attendCount = events.filter(item => item.checked_in).length;
+        // checked_in フラグまたは checkin_time の有無で判定
+        attendCount = events.filter(item =>
+          item.checked_in === true ||
+          item.checked_in === 1 ||
+          (item.checkin_time && item.checkin_time !== null)
+        ).length;
       } else {
         // 登録単位：出席登録があるものをカウント
-        attendCount = events.filter(item => item.attendance_status === '出席').length;
+        // attendance_status が「出席」または「参加」の場合
+        attendCount = events.filter(item =>
+          item.attendance_status === '出席' ||
+          item.attendance_status === '参加'
+        ).length;
       }
 
       const rate = totalEvents > 0 ? Math.round((attendCount / totalEvents) * 100) : 0;

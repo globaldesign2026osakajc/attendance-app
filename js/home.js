@@ -1,8 +1,9 @@
 // ホームページ
 class HomePage {
   constructor() {
-    this.pendingEvents = [];
-    this.upcomingEvents = [];
+    this.registeredEvents = [];  // 参加予定イベント
+    this.deadlineSoonEvents = []; // 締切直前イベント
+    this.upcomingEvents = [];     // 今後のイベント
     this.stats = null;
   }
 
@@ -52,26 +53,33 @@ class HomePage {
 
       if (result.success) {
         const now = new Date();
-        const oneMonthLater = new Date(now);
-        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
         const twoMonthsLater = new Date(now);
         twoMonthsLater.setMonth(twoMonthsLater.getMonth() + 2);
+        const oneWeekLater = new Date(now);
+        oneWeekLater.setDate(oneWeekLater.getDate() + 7);
 
         const futureEvents = (result.events || [])
           .filter(event => new Date(event.date) >= now)
           .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // 未登録のイベント（締切日あり、1カ月以内、未登録のみ、締切日が近い順）
-        this.pendingEvents = futureEvents
+        // 参加予定イベント（出席登録済み、今後2ヶ月以内）
+        this.registeredEvents = futureEvents
+          .filter(event => {
+            if (!event.my_attendance_status) return false; // 未登録は除外
+            if (event.my_attendance_status === '欠席') return false; // 欠席は除外
+            const eventDate = new Date(event.date);
+            return eventDate <= twoMonthsLater;
+          });
+
+        // 締切直前イベント（締切1週間前、未登録のみ）
+        this.deadlineSoonEvents = futureEvents
           .filter(event => {
             if (event.my_attendance_status) return false; // 既に登録済みは除外
             if (!event.attendance_deadline) return false; // 締切日なしは除外
 
             const deadline = new Date(event.attendance_deadline);
             if (deadline < now) return false; // 締切過ぎは除外
-
-            const eventDate = new Date(event.date);
-            if (eventDate > oneMonthLater) return false; // イベント日が1カ月より先は除外
+            if (deadline > oneWeekLater) return false; // 締切が1週間より先は除外
 
             return true;
           })
@@ -82,18 +90,20 @@ class HomePage {
             return deadlineA - deadlineB;
           });
 
-        // 今後のイベント（直近2カ月以内、全て表示）
+        // 今後のイベント（今後2ヶ月以内、全て表示）
         this.upcomingEvents = futureEvents.filter(event => {
           const eventDate = new Date(event.date);
           return eventDate <= twoMonthsLater;
         });
       } else {
-        this.pendingEvents = [];
+        this.registeredEvents = [];
+        this.deadlineSoonEvents = [];
         this.upcomingEvents = [];
       }
     } catch (error) {
       console.error('イベントの読み込みエラー:', error);
-      this.pendingEvents = [];
+      this.registeredEvents = [];
+      this.deadlineSoonEvents = [];
       this.upcomingEvents = [];
     }
   }
@@ -118,9 +128,15 @@ class HomePage {
 
   render() {
     try {
-      this.renderPendingEvents();
+      this.renderRegisteredEvents();
     } catch (error) {
-      console.error('未登録イベントの表示エラー:', error);
+      console.error('参加予定イベントの表示エラー:', error);
+    }
+
+    try {
+      this.renderDeadlineSoonEvents();
+    } catch (error) {
+      console.error('締切直前イベントの表示エラー:', error);
     }
 
     try {
@@ -142,18 +158,29 @@ class HomePage {
     }
   }
 
-  renderPendingEvents() {
-    const section = document.getElementById('pendingSection');
-    const container = document.getElementById('pendingEvents');
-    if (!container || !section) return;
+  renderRegisteredEvents() {
+    const container = document.getElementById('registeredEvents');
+    if (!container) return;
 
-    if (!this.pendingEvents || this.pendingEvents.length === 0) {
-      section.classList.add('hidden');
+    if (this.registeredEvents.length === 0) {
+      container.innerHTML = '<p class="no-data">参加予定のイベントはありません</p>';
       return;
     }
 
-    section.classList.remove('hidden');
-    const html = this.pendingEvents.map(event => this.renderEventCard(event)).join('');
+    const html = this.registeredEvents.map(event => this.renderEventCard(event)).join('');
+    container.innerHTML = html;
+  }
+
+  renderDeadlineSoonEvents() {
+    const container = document.getElementById('deadlineSoonEvents');
+    if (!container) return;
+
+    if (this.deadlineSoonEvents.length === 0) {
+      container.innerHTML = '<p class="no-data">締切直前のイベントはありません</p>';
+      return;
+    }
+
+    const html = this.deadlineSoonEvents.map(event => this.renderEventCard(event)).join('');
     container.innerHTML = html;
   }
 
@@ -254,6 +281,12 @@ class HomePage {
       attendanceDeadlineText = `${month}/${day}`;
     }
 
+    // 至急登録バッジ
+    let urgentBadge = '';
+    if (event.urgent === true || event.urgent === 1) {
+      urgentBadge = '<span class="badge badge-danger" style="margin-left: 0.5rem;">☆至急登録</span>';
+    }
+
     return `
       <div class="event-card-compact" onclick="window.location.href='event-detail.html?id=${event.event_id}'">
         <div class="event-date-badge month-${eventMonth}">
@@ -264,7 +297,7 @@ class HomePage {
 
         <div class="event-content">
           <div class="event-header">
-            <h4 class="event-name">${escapeHtml(event.title)}</h4>
+            <h4 class="event-name">${escapeHtml(event.title)}${urgentBadge}</h4>
             ${deadlineWarning}
           </div>
 
