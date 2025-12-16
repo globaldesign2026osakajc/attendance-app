@@ -97,6 +97,14 @@ const API = {
   },
 
   /**
+   * 自分の出欠履歴を取得
+   */
+  async getAttendanceHistory() {
+    // GAS側は getMyAttendance を提供しているためそれを呼び出す
+    return await this.call('getMyAttendance');
+  },
+
+  /**
    * ローディング表示
    */
   showLoading() {

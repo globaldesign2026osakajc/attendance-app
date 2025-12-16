@@ -539,9 +539,7 @@
       Utils.showLoading();
 
       try {
-        const result = await API.call('getAttendanceHistory', {
-          member_id: userInfo.memberId
-        });
+        const result = await API.getAttendanceHistory();
 
         if (result.success) {
           allHistory = result.history || [];
