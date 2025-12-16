@@ -663,26 +663,37 @@
 
     // 統計更新
     function updateStats() {
-      // 過去のイベントのみ集計
       const now = new Date();
+
+      // 登録単位: 全イベント（過去+未来）を集計
+      const allEvents = allHistory;
+
+      // 実出席: 過去のイベントのみ集計
       const pastEvents = allHistory.filter(item => new Date(item.event_date) < now);
 
-      // タグ別にイベントを分類
-      const committeeEvents = pastEvents.filter(item => hasTag(item, '委員会'));
-      const monthlyEvents = pastEvents.filter(item => hasTag(item, '月例会'));
-      const otherEvents = pastEvents.filter(item =>
+      // タグ別にイベントを分類（登録単位用: 全イベント）
+      const committeeEventsAll = allEvents.filter(item => hasTag(item, '委員会'));
+      const monthlyEventsAll = allEvents.filter(item => hasTag(item, '月例会'));
+      const otherEventsAll = allEvents.filter(item =>
         !hasTag(item, '委員会') && !hasTag(item, '月例会')
       );
 
-      // 登録単位の統計
-      updateCategoryStats('reg', 'Committee', committeeEvents, false);
-      updateCategoryStats('reg', 'Monthly', monthlyEvents, false);
-      updateCategoryStats('reg', 'Other', otherEvents, false);
+      // タグ別にイベントを分類（実出席用: 過去のみ）
+      const committeeEventsPast = pastEvents.filter(item => hasTag(item, '委員会'));
+      const monthlyEventsPast = pastEvents.filter(item => hasTag(item, '月例会'));
+      const otherEventsPast = pastEvents.filter(item =>
+        !hasTag(item, '委員会') && !hasTag(item, '月例会')
+      );
 
-      // 実出席の統計（チェックイン済み）
-      updateCategoryStats('actual', 'Committee', committeeEvents, true);
-      updateCategoryStats('actual', 'Monthly', monthlyEvents, true);
-      updateCategoryStats('actual', 'Other', otherEvents, true);
+      // 登録単位の統計（全イベント）
+      updateCategoryStats('reg', 'Committee', committeeEventsAll, false);
+      updateCategoryStats('reg', 'Monthly', monthlyEventsAll, false);
+      updateCategoryStats('reg', 'Other', otherEventsAll, false);
+
+      // 実出席の統計（過去のイベントのみ）
+      updateCategoryStats('actual', 'Committee', committeeEventsPast, true);
+      updateCategoryStats('actual', 'Monthly', monthlyEventsPast, true);
+      updateCategoryStats('actual', 'Other', otherEventsPast, true);
     }
 
     // カテゴリー別統計更新
