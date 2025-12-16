@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>イベント登録・編集 - 管理者画面</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    .form-section {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-section-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 1.5rem 0;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-actions-sticky {
+      position: sticky;
+      bottom: 0;
+      background-color: white;
+      padding: 1.5rem 2rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+
+    /* カスタムオプションのスタイル */
+    .custom-option-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+    }
+
+    .custom-option-item input[type="text"] {
+      flex: 2;
+      padding: 8px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .custom-option-item input[type="number"] {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .remove-option-btn {
+      padding: 6px 16px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+
+    .remove-option-btn:hover {
+      background: #c82333;
+    }
+
+    .btn-secondary {
+      padding: 10px 20px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- 管理者レイアウト -->
+  <div class="admin-layout">
+    <!-- サイドバー -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-header">
+        <h1 class="admin-sidebar-title">管理者画面</h1>
+        <p class="admin-sidebar-subtitle">出欠管理システム</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <a href="dashboard.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📊</span>
+          <span class="admin-sidebar-text">ダッシュボード</span>
+        </a>
+        <a href="events.html" class="admin-sidebar-item active">
+          <span class="admin-sidebar-icon">📅</span>
+          <span class="admin-sidebar-text">イベント管理</span>
+        </a>
+        <a href="members.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">👥</span>
+          <span class="admin-sidebar-text">メンバー管理</span>
+        </a>
+        <a href="analytics.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📈</span>
+          <span class="admin-sidebar-text">出席率分析</span>
+        </a>
+        <a href="payments.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">💰</span>
+          <span class="admin-sidebar-text">支払い管理</span>
+        </a>
+        <a href="checkin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📱</span>
+          <span class="admin-sidebar-text">QRチェックイン</span>
+        </a>
+        <a href="receipts-admin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🧾</span>
+          <span class="admin-sidebar-text">領収書管理</span>
+        </a>
+
+        <div class="admin-sidebar-divider"></div>
+
+        <a href="../home.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🏠</span>
+          <span class="admin-sidebar-text">ユーザー画面へ</span>
+        </a>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button id="logoutBtn" class="btn btn-outline btn-block" style="color: white; border-color: rgba(255,255,255,0.3);">
+          ログアウト
+        </button>
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="admin-main">
+      <!-- トップバー -->
+      <div class="admin-topbar">
+        <button class="admin-mobile-toggle" id="mobileToggle">
+          ☰
+        </button>
+        <h2 class="admin-topbar-title" id="pageTitle">イベント登録</h2>
+        <div class="admin-topbar-actions">
+          <div class="admin-user-info">
+            <span class="admin-user-icon">👤</span>
+            <div class="admin-user-details">
+              <span class="admin-user-name" id="userName">管理者</span>
+              <span class="admin-user-role">管理者</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- コンテンツ -->
+      <div class="admin-content">
+        <form id="eventForm">
+          <!-- 基本情報 -->
+          <div class="form-section">
+            <h3 class="form-section-title">基本情報</h3>
+
+            <div class="form-group">
+              <label for="eventName" class="form-label required">イベント名</label>
+              <input
+                type="text"
+                id="eventName"
+                class="form-input"
+                required
+                placeholder="例：12月度委員会"
+              >
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="eventDate" class="form-label required">開催日</label>
+                <input
+                  type="date"
+                  id="eventDate"
+                  class="form-input"
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="startTime" class="form-label">開始時間</label>
+                <input
+                  type="time"
+                  id="startTime"
+                  class="form-input"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="endTime" class="form-label">終了時間</label>
+                <input
+                  type="time"
+                  id="endTime"
+                  class="form-input"
+                >
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="location" class="form-label">開催場所</label>
+                <input
+                  type="text"
+                  id="location"
+                  class="form-input"
+                  placeholder="例：東京国際フォーラム"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="mapUrl" class="form-label">MAP URL</label>
+                <input
+                  type="url"
+                  id="mapUrl"
+                  class="form-input"
+                  placeholder="https://maps.google.com/..."
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="host" class="form-label">主催</label>
+              <input
+                type="text"
+                id="host"
+                class="form-input"
+                placeholder="例：グローバルデザイン推進委員会"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="description" class="form-label">説明文</label>
+              <textarea
+                id="description"
+                class="form-input"
+                rows="4"
+                placeholder="イベントの詳細説明を入力してください..."
+              ></textarea>
+            </div>
+
+            <div class="form-check">
+              <input
+                type="checkbox"
+                id="urgentFlag"
+                class="form-check-input"
+              >
+              <label for="urgentFlag" class="form-check-label">
+                至急登録（緊急フラグ）
+              </label>
+            </div>
+          </div>
+
+          <!-- 出欠・締切設定 -->
+          <div class="form-section">
+            <h3 class="form-section-title">出欠・締切設定</h3>
+
+            <!-- 出欠タイプ選択 -->
+            <div class="form-group" style="margin-bottom: 2rem;">
+              <label class="form-label">出欠タイプ</label>
+              <div class="radio-group" style="display: flex; gap: 2rem; margin-top: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="radio" name="attendance_type" value="A" checked>
+                  <span>タイプA (シンプルな出欠)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="radio" name="attendance_type" value="B">
+                  <span>タイプB (カスタムオプション)</span>
+                </label>
+              </div>
+              <p style="font-size: 0.875rem; color: #6c757d; margin-top: 0.5rem;">
+                タイプA: 参加/不参加/未定のシンプルな選択<br>
+                タイプB: 任意の選択肢と金額を設定可能(例: 15日参加宿泊なし 5,000円)
+              </p>
+            </div>
+
+            <!-- タイプBのカスタムオプション設定 -->
+            <div id="customOptionsContainer" style="display: none; margin-bottom: 2rem;">
+              <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">参加オプション設定</h4>
+              <div id="optionsList"></div>
+              <button type="button" id="addOptionBtn" class="btn-secondary" style="margin-top: 1rem;">
+                ＋ オプションを追加
+              </button>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="deadline" class="form-label">出欠締切日</label>
+                <input
+                  type="date"
+                  id="deadline"
+                  class="form-input"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="registrationDeadline" class="form-label">登録期限</label>
+                <input
+                  type="date"
+                  id="registrationDeadline"
+                  class="form-input"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="cancellationFeeDate" class="form-label">キャンセル料発生日</label>
+                <input
+                  type="date"
+                  id="cancellationFeeDate"
+                  class="form-input"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- 参加費・支払い -->
+          <div class="form-section">
+            <h3 class="form-section-title">参加費・支払い</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="participationFee" class="form-label">参加費（円）</label>
+                <input
+                  type="number"
+                  id="participationFee"
+                  class="form-input"
+                  min="0"
+                  placeholder="0"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="paymentMethods" class="form-label">支払い方法</label>
+                <select id="paymentMethods" class="form-input" multiple size="3">
+                  <option value="現地払い">現地払い</option>
+                  <option value="銀行振込">銀行振込</option>
+                </select>
+                <small style="color: var(--text-secondary); font-size: 0.75rem;">
+                  Ctrl/Cmdを押しながら複数選択可能
+                </small>
+              </div>
+            </div>
+
+            <div class="form-check">
+              <input
+                type="checkbox"
+                id="receiptEnabled"
+                class="form-check-input"
+              >
+              <label for="receiptEnabled" class="form-check-label">
+                領収書発行を有効にする
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label for="receiptNoteDefault" class="form-label">領収書 但し書き（デフォルト）</label>
+              <input
+                type="text"
+                id="receiptNoteDefault"
+                class="form-input"
+                placeholder="例：会費として、研修費として（空欄の場合：イベント名 参加費として）"
+              >
+              <small style="color: var(--text-secondary); font-size: 0.75rem;">
+                メンバーが領収書発行時に変更可能
+              </small>
+            </div>
+          </div>
+
+          <!-- その他設定 -->
+          <div class="form-section">
+            <h3 class="form-section-title">その他設定</h3>
+
+            <div class="form-group">
+              <label for="dressCode" class="form-label">服装規定</label>
+              <select id="dressCode" class="form-input">
+                <option value="">指定なし</option>
+                <option value="スーツ">スーツ</option>
+                <option value="ビジネスカジュアル">ビジネスカジュアル</option>
+                <option value="カジュアル">カジュアル</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="tags" class="form-label">タグ</label>
+              <input
+                type="text"
+                id="tags"
+                class="form-input"
+                placeholder="カンマ区切りで入力（例：委員会,月例会,総会）"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="notes" class="form-label">備考</label>
+              <textarea
+                id="notes"
+                class="form-input"
+                rows="3"
+                placeholder="管理者用のメモや備考..."
+              ></textarea>
+            </div>
+
+            <div class="form-check">
+              <input
+                type="checkbox"
+                id="calendarSync"
+                class="form-check-input"
+              >
+              <label for="calendarSync" class="form-check-label">
+                Googleカレンダーに連携
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input
+                type="checkbox"
+                id="qrEnabled"
+                class="form-check-input"
+                checked
+              >
+              <label for="qrEnabled" class="form-check-label">
+                QRコードチェックインを有効にする
+              </label>
+            </div>
+          </div>
+
+          <!-- メンバーへの表示項目 -->
+          <div class="form-section">
+            <h3 class="form-section-title">メンバーへの表示項目</h3>
+            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
+              チェックを入れた項目のみメンバーに表示されます
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+              <div class="form-check">
+                <input type="checkbox" id="display_date" class="form-check-input" checked>
+                <label for="display_date" class="form-check-label">開催日</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_time" class="form-check-input" checked>
+                <label for="display_time" class="form-check-label">開催時間</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_location" class="form-check-input" checked>
+                <label for="display_location" class="form-check-label">開催場所</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_map_url" class="form-check-input">
+                <label for="display_map_url" class="form-check-label">MAP URL</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_host" class="form-check-input" checked>
+                <label for="display_host" class="form-check-label">主催</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_description" class="form-check-input" checked>
+                <label for="display_description" class="form-check-label">説明文</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_fee_amount" class="form-check-input" checked>
+                <label for="display_fee_amount" class="form-check-label">参加費</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_payment_methods" class="form-check-input">
+                <label for="display_payment_methods" class="form-check-label">支払い方法</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_dress_code" class="form-check-input" checked>
+                <label for="display_dress_code" class="form-check-label">服装規定</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="display_notes" class="form-check-input">
+                <label for="display_notes" class="form-check-label">備考</label>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- 固定フッター -->
+      <div class="form-actions-sticky">
+        <button type="button" class="btn btn-outline btn-lg" onclick="history.back()">
+          キャンセル
+        </button>
+        <button type="submit" form="eventForm" class="btn btn-primary btn-lg" id="submitBtn">
+          保存
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScriptファイル -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+
+  <script>
+    let eventId = null;
+    let isEditMode = false;
+    const userInfo = Auth.getUserInfo();
+    let customOptions = [];
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 管理者権限チェック
+      Auth.requireAdmin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // マスタデータ読み込み
+      await loadMasterData();
+
+      // URLパラメータから編集モード判定
+      eventId = Utils.getUrlParam('id');
+      isEditMode = !!eventId;
+
+      if (isEditMode) {
+        document.getElementById('pageTitle').textContent = 'イベント編集';
+        document.getElementById('submitBtn').textContent = '更新';
+        await loadEventData();
+      }
+
+      // イベントリスナー設定
+      setupEventListeners();
+    });
+
+    // マスタデータ読み込み
+    async function loadMasterData() {
+      try {
+        const result = await API.call('getMasters');
+
+        if (result.success) {
+          const masters = result.masters || {};
+
+          // 支払い方法
+          const paymentMethodsSelect = document.getElementById('paymentMethods');
+          paymentMethodsSelect.innerHTML = '';
+          (masters.payment_methods || []).forEach(method => {
+            const option = document.createElement('option');
+            option.value = method;
+            option.textContent = method;
+            paymentMethodsSelect.appendChild(option);
+          });
+
+          // 服装規定
+          const dressCodeSelect = document.getElementById('dressCode');
+          dressCodeSelect.innerHTML = '<option value="">指定なし</option>';
+          (masters.dress_codes || []).forEach(code => {
+            const option = document.createElement('option');
+            option.value = code;
+            option.textContent = code;
+            dressCodeSelect.appendChild(option);
+          });
+
+          // 主催（委員会）
+          const hostInput = document.getElementById('host');
+          if (masters.committees && masters.committees.length > 0) {
+            // テキスト入力からセレクトボックスに変更
+            const hostSelect = document.createElement('select');
+            hostSelect.id = 'host';
+            hostSelect.className = 'form-input';
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '選択してください';
+            hostSelect.appendChild(defaultOption);
+
+            masters.committees.forEach(committee => {
+              const option = document.createElement('option');
+              option.value = committee;
+              option.textContent = committee;
+              hostSelect.appendChild(option);
+            });
+
+            hostInput.parentNode.replaceChild(hostSelect, hostInput);
+          }
+
+          // タグ（マルチセレクト）
+          const tagsInput = document.getElementById('tags');
+          if (masters.tags && masters.tags.length > 0) {
+            // テキスト入力からマルチセレクトに変更
+            const tagsSelect = document.createElement('select');
+            tagsSelect.id = 'tags';
+            tagsSelect.className = 'form-input';
+            tagsSelect.multiple = true;
+            tagsSelect.size = 3;
+
+            masters.tags.forEach(tag => {
+              const option = document.createElement('option');
+              option.value = tag;
+              option.textContent = tag;
+              tagsSelect.appendChild(option);
+            });
+
+            const small = document.createElement('small');
+            small.style.color = 'var(--text-secondary)';
+            small.style.fontSize = '0.75rem';
+            small.textContent = 'Ctrl/Cmdを押しながら複数選択可能';
+
+            tagsInput.parentNode.replaceChild(tagsSelect, tagsInput);
+            tagsSelect.parentNode.appendChild(small);
+          }
+        }
+      } catch (error) {
+        console.error('Load master data error:', error);
+      }
+    }
+
+    // イベントデータ読み込み
+    async function loadEventData() {
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getEventDetail', {
+          event_id: eventId
+        });
+
+        if (result.success && result.event) {
+          fillFormData(result.event);
+        } else {
+          throw new Error(result.message || 'イベント情報の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load event error:', error);
+        Utils.showError('イベント情報の取得に失敗しました');
+        setTimeout(() => {
+          history.back();
+        }, 2000);
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // フォームデータ入力
+    function fillFormData(event) {
+      document.getElementById('eventName').value = event.title || '';
+      document.getElementById('eventDate').value = event.date || '';
+      document.getElementById('startTime').value = event.start_time || '';
+      document.getElementById('endTime').value = event.end_time || '';
+      document.getElementById('location').value = event.location || '';
+      document.getElementById('mapUrl').value = event.map_url || '';
+      document.getElementById('description').value = event.description || '';
+      document.getElementById('urgentFlag').checked = event.urgent || false;
+      document.getElementById('deadline').value = event.attendance_deadline || '';
+      document.getElementById('registrationDeadline').value = event.registration_deadline || '';
+      document.getElementById('cancellationFeeDate').value = event.cancellation_fee_date || '';
+      document.getElementById('participationFee').value = event.fee_amount || 0;
+      document.getElementById('receiptEnabled').checked = event.receipt_enabled || false;
+      document.getElementById('receiptNoteDefault').value = event.receipt_note_default || '';
+      document.getElementById('dressCode').value = event.dress_code || '';
+      document.getElementById('notes').value = event.notes || '';
+
+      // タグの設定（マルチセレクトまたはテキスト）
+      const tagsElement = document.getElementById('tags');
+      if (tagsElement.tagName === 'SELECT') {
+        // マルチセレクトの場合
+        if (event.tags) {
+          const tags = event.tags.split(',').map(t => t.trim());
+          Array.from(tagsElement.options).forEach(option => {
+            option.selected = tags.includes(option.value);
+          });
+        }
+      } else {
+        // テキストインプットの場合
+        tagsElement.value = event.tags || '';
+      }
+
+      // ホストの設定（セレクトまたはテキスト）
+      const hostElement = document.getElementById('host');
+      if (hostElement.tagName === 'SELECT') {
+        hostElement.value = event.host || '';
+      } else {
+        hostElement.value = event.host || '';
+      }
+
+      // 支払い方法（複数選択）
+      if (event.payment_methods) {
+        const methods = event.payment_methods.split(',').map(m => m.trim());
+        const select = document.getElementById('paymentMethods');
+        Array.from(select.options).forEach(option => {
+          option.selected = methods.includes(option.value);
+        });
+      }
+
+      document.getElementById('calendarSync').checked = event.calendar_sync || false;
+      document.getElementById('qrEnabled').checked = event.qr_enabled !== false;
+
+      // 出欠タイプとカスタムオプション
+      const attendanceType = event.attendance_type || 'A';
+      document.querySelector(`input[name="attendance_type"][value="${attendanceType}"]`).checked = true;
+
+      if (attendanceType === 'B' && event.participation_options) {
+        customOptions = typeof event.participation_options === 'string'
+          ? JSON.parse(event.participation_options)
+          : event.participation_options;
+        document.getElementById('customOptionsContainer').style.display = 'block';
+        renderCustomOptions();
+      }
+
+      // 表示項目
+      const displayFields = event.display_fields || {};
+      Object.keys(displayFields).forEach(key => {
+        const checkbox = document.getElementById(`display_${key}`);
+        if (checkbox) {
+          checkbox.checked = displayFields[key];
+        }
+      });
+    }
+
+    // カスタムオプション表示
+    function renderCustomOptions() {
+      const container = document.getElementById('optionsList');
+      container.innerHTML = customOptions.map((option, index) => `
+        <div class="custom-option-item">
+          <input type="text" placeholder="選択肢名（例：宿泊あり）" value="${option.label || ''}" onchange="updateOption(${index}, 'label', this.value)">
+          <input type="number" placeholder="金額" value="${option.amount || 0}" min="0" onchange="updateOption(${index}, 'amount', parseInt(this.value) || 0)">
+          <button type="button" class="remove-option-btn" onclick="removeOption(${index})">削除</button>
+        </div>
+      `).join('');
+    }
+
+    // オプション更新
+    function updateOption(index, field, value) {
+      if (customOptions[index]) {
+        customOptions[index][field] = value;
+      }
+    }
+
+    // オプション追加
+    function addCustomOption() {
+      customOptions.push({ label: '', amount: 0 });
+      renderCustomOptions();
+    }
+
+    // オプション削除
+    function removeOption(index) {
+      customOptions.splice(index, 1);
+      renderCustomOptions();
+    }
+
+    // グローバルスコープに追加
+    window.updateOption = updateOption;
+    window.addCustomOption = addCustomOption;
+    window.removeOption = removeOption;
+
+    // フォーム送信
+    async function handleSubmit(e) {
+      e.preventDefault();
+
+      // フォームデータ収集
+      // 出欠タイプ
+      const attendanceType = document.querySelector('input[name="attendance_type"]:checked').value;
+
+      const formData = {
+        title: document.getElementById('eventName').value.trim(),
+        date: document.getElementById('eventDate').value,
+        start_time: document.getElementById('startTime').value,
+        end_time: document.getElementById('endTime').value,
+        location: document.getElementById('location').value.trim(),
+        map_url: document.getElementById('mapUrl').value.trim(),
+        host: document.getElementById('host').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        attendance_type: attendanceType,
+        urgent: document.getElementById('urgentFlag').checked,
+        attendance_deadline: document.getElementById('deadline').value,
+        registration_deadline: document.getElementById('registrationDeadline').value,
+        cancellation_fee_date: document.getElementById('cancellationFeeDate').value,
+        fee_amount: parseInt(document.getElementById('participationFee').value) || 0,
+        receipt_enabled: document.getElementById('receiptEnabled').checked,
+        receipt_note_default: document.getElementById('receiptNoteDefault').value.trim(),
+        dress_code: document.getElementById('dressCode').value,
+        notes: document.getElementById('notes').value.trim(),
+        calendar_sync: document.getElementById('calendarSync').checked,
+        qr_enabled: document.getElementById('qrEnabled').checked
+      };
+
+      // タグの取得（マルチセレクトまたはテキスト）
+      const tagsElement = document.getElementById('tags');
+      if (tagsElement.tagName === 'SELECT') {
+        const selectedTags = Array.from(tagsElement.selectedOptions).map(opt => opt.value);
+        formData.tags = selectedTags.join(',');
+      } else {
+        formData.tags = tagsElement.value.trim();
+      }
+
+      // タイプBの場合、参加オプションを追加
+      if (attendanceType === 'B') {
+        formData.participation_options = customOptions;
+      }
+
+      // 支払い方法
+      const paymentMethodsSelect = document.getElementById('paymentMethods');
+      const selectedMethods = Array.from(paymentMethodsSelect.selectedOptions).map(opt => opt.value);
+      formData.payment_methods = selectedMethods.join(',');
+
+      // 表示項目
+      const displayFields = {};
+      ['date', 'time', 'location', 'map_url', 'host', 'description', 'fee_amount', 'payment_methods', 'dress_code', 'notes'].forEach(key => {
+        const checkbox = document.getElementById(`display_${key}`);
+        if (checkbox) {
+          displayFields[key] = checkbox.checked;
+        }
+      });
+      formData.display_fields = displayFields;
+
+      // バリデーション
+      if (!formData.title) {
+        Utils.showError('イベント名を入力してください');
+        return;
+      }
+
+      if (!formData.date) {
+        Utils.showError('開催日を入力してください');
+        return;
+      }
+
+      // 確認
+      const confirmMessage = isEditMode ? 'イベント情報を更新しますか？' : 'イベントを登録しますか？';
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        let result;
+        if (isEditMode) {
+          formData.event_id = eventId;
+          result = await API.call('updateEvent', { data: JSON.stringify(formData) });
+        } else {
+          result = await API.call('addEvent', { data: JSON.stringify(formData) });
+        }
+
+        if (result.success) {
+          Utils.showSuccess(isEditMode ? 'イベントを更新しました' : 'イベントを登録しました');
+          setTimeout(() => {
+            location.href = 'events.html';
+          }, 1000);
+        } else {
+          throw new Error(result.message || '保存に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Save event error:', error);
+        Utils.showError(error.message || '保存に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // モバイルメニュートグル
+      document.getElementById('mobileToggle').addEventListener('click', () => {
+        document.getElementById('adminSidebar').classList.toggle('mobile-open');
+      });
+
+      // 出欠タイプ切り替え
+      document.querySelectorAll('input[name="attendance_type"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          const customContainer = document.getElementById('customOptionsContainer');
+          const participationFeeContainer = document.getElementById('participationFee').closest('.form-group');
+
+          if (e.target.value === 'B') {
+            customContainer.style.display = 'block';
+            participationFeeContainer.style.display = 'none';
+            if (customOptions.length === 0) {
+              customOptions.push({ label: '', amount: 0 });
+              renderCustomOptions();
+            }
+          } else {
+            customContainer.style.display = 'none';
+            participationFeeContainer.style.display = 'block';
+          }
+        });
+      });
+
+      // オプション追加ボタン
+      document.getElementById('addOptionBtn').addEventListener('click', addCustomOption);
+
+      // フォーム送信
+      document.getElementById('eventForm').addEventListener('submit', handleSubmit);
+    }
+  </script>
+</body>
+</html>

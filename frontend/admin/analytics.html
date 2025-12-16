@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>出席率分析 - 管理者画面</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .analytics-filters {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .stat-card.success {
+      border-left-color: #28a745;
+    }
+
+    .stat-card.warning {
+      border-left-color: #ffc107;
+    }
+
+    .stat-card.danger {
+      border-left-color: #dc3545;
+    }
+
+    .stat-card.info {
+      border-left-color: #17a2b8;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-color);
+      line-height: 1;
+    }
+
+    .stat-unit {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-left: 0.25rem;
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 1.5rem 0;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+    }
+
+    .chart-wrapper.pie {
+      height: 300px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      overflow-x: auto;
+    }
+
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .analytics-table th {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-color);
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .analytics-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .analytics-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .percentage-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .percentage-bar-bg {
+      flex: 1;
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .percentage-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #28a745, #20c997);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .percentage-text {
+      font-weight: 600;
+      color: var(--text-color);
+      min-width: 50px;
+      text-align: right;
+    }
+
+    .export-actions {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .no-data-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- 管理者レイアウト -->
+  <div class="admin-layout">
+    <!-- サイドバー -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-header">
+        <h1 class="admin-sidebar-title">管理者画面</h1>
+        <p class="admin-sidebar-subtitle">出欠管理システム</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <a href="dashboard.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📊</span>
+          <span class="admin-sidebar-text">ダッシュボード</span>
+        </a>
+        <a href="events.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📅</span>
+          <span class="admin-sidebar-text">イベント管理</span>
+        </a>
+        <a href="members.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">👥</span>
+          <span class="admin-sidebar-text">メンバー管理</span>
+        </a>
+        <a href="analytics.html" class="admin-sidebar-item active">
+          <span class="admin-sidebar-icon">📈</span>
+          <span class="admin-sidebar-text">出席率分析</span>
+        </a>
+        <a href="payments.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">💰</span>
+          <span class="admin-sidebar-text">支払い管理</span>
+        </a>
+        <a href="checkin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📱</span>
+          <span class="admin-sidebar-text">QRチェックイン</span>
+        </a>
+        <a href="receipts-admin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🧾</span>
+          <span class="admin-sidebar-text">領収書管理</span>
+        </a>
+
+        <div class="admin-sidebar-divider"></div>
+
+        <a href="../home.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🏠</span>
+          <span class="admin-sidebar-text">ユーザー画面へ</span>
+        </a>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button id="logoutBtn" class="btn btn-outline btn-block" style="color: white; border-color: rgba(255,255,255,0.3);">
+          ログアウト
+        </button>
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="admin-main">
+      <!-- トップバー -->
+      <div class="admin-topbar">
+        <button class="admin-mobile-toggle" id="mobileToggle">
+          ☰
+        </button>
+        <h2 class="admin-topbar-title">出席率分析</h2>
+        <div class="admin-topbar-actions">
+          <div class="admin-user-info">
+            <span class="admin-user-icon">👤</span>
+            <div class="admin-user-details">
+              <span class="admin-user-name" id="userName">管理者</span>
+              <span class="admin-user-role">管理者</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- コンテンツ -->
+      <div class="admin-content">
+        <!-- フィルター -->
+        <div class="analytics-filters">
+          <div class="filter-row">
+            <div class="form-group">
+              <label for="filterStartDate" class="form-label">期間（開始）</label>
+              <input type="date" id="filterStartDate" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label for="filterEndDate" class="form-label">期間（終了）</label>
+              <input type="date" id="filterEndDate" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label for="filterPosition" class="form-label">役職</label>
+              <select id="filterPosition" class="form-input">
+                <option value="">全て</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filterAffiliation" class="form-label">所属</label>
+              <select id="filterAffiliation" class="form-input">
+                <option value="">全て</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="filter-row">
+            <div class="form-group">
+              <label for="filterCommittee" class="form-label">委員会</label>
+              <select id="filterCommittee" class="form-input">
+                <option value="">全て</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filterTag" class="form-label">タグ</label>
+              <select id="filterTag" class="form-input">
+                <option value="">全て</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button id="applyFilterBtn" class="btn btn-primary btn-block">
+                フィルター適用
+              </button>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button id="resetFilterBtn" class="btn btn-outline btn-block">
+                リセット
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 統計カード -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">全体出席率</div>
+            <div class="stat-value">
+              <span id="overallRate">0</span><span class="stat-unit">%</span>
+            </div>
+          </div>
+
+          <div class="stat-card success">
+            <div class="stat-label">総イベント数</div>
+            <div class="stat-value">
+              <span id="totalEvents">0</span><span class="stat-unit">件</span>
+            </div>
+          </div>
+
+          <div class="stat-card info">
+            <div class="stat-label">平均参加者数</div>
+            <div class="stat-value">
+              <span id="avgAttendees">0</span><span class="stat-unit">人</span>
+            </div>
+          </div>
+
+          <div class="stat-card warning">
+            <div class="stat-label">対象メンバー数</div>
+            <div class="stat-value">
+              <span id="totalMembers">0</span><span class="stat-unit">人</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- エクスポートボタン -->
+        <div class="export-actions">
+          <button id="exportCsvBtn" class="btn btn-success">
+            CSV出力
+          </button>
+        </div>
+
+        <!-- グラフエリア -->
+        <div class="chart-container">
+          <h3 class="chart-title">役職別出席率</h3>
+          <div class="chart-wrapper">
+            <canvas id="positionChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <h3 class="chart-title">所属別出席率</h3>
+          <div class="chart-wrapper">
+            <canvas id="affiliationChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <h3 class="chart-title">委員会別出席率</h3>
+          <div class="chart-wrapper">
+            <canvas id="committeeChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <h3 class="chart-title">出席状況の割合</h3>
+          <div class="chart-wrapper pie">
+            <canvas id="attendanceStatusChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 詳細テーブル -->
+        <div class="table-container">
+          <h3 class="chart-title">メンバー別出席率</h3>
+          <table class="analytics-table" id="memberTable">
+            <thead>
+              <tr>
+                <th>メンバー名</th>
+                <th>役職</th>
+                <th>所属</th>
+                <th>委員会</th>
+                <th>出席回数</th>
+                <th>対象イベント数</th>
+                <th>出席率</th>
+              </tr>
+            </thead>
+            <tbody id="memberTableBody">
+              <tr>
+                <td colspan="7" class="no-data">
+                  <div class="no-data-icon">📊</div>
+                  <div>データを読み込んでいます...</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScriptファイル -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+
+  <script>
+    let analyticsData = null;
+    let positionChart = null;
+    let affiliationChart = null;
+    let committeeChart = null;
+    let statusChart = null;
+
+    const userInfo = Auth.getUserInfo();
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 管理者権限チェック
+      Auth.requireAdmin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // イベントリスナー設定
+      setupEventListeners();
+
+      // マスタデータ読み込み
+      await loadMasters();
+
+      // デフォルトのフィルター設定（過去3ヶ月）
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 3);
+
+      document.getElementById('filterEndDate').value = endDate.toISOString().split('T')[0];
+      document.getElementById('filterStartDate').value = startDate.toISOString().split('T')[0];
+
+      // データ読み込み
+      await loadAnalyticsData();
+    });
+
+    // マスタデータ読み込み
+    async function loadMasters() {
+      try {
+        const result = await API.call('getMasters');
+
+        if (result.success) {
+          // 役職
+          const positionSelect = document.getElementById('filterPosition');
+          if (result.positions) {
+            result.positions.forEach(position => {
+              const option = document.createElement('option');
+              option.value = position;
+              option.textContent = position;
+              positionSelect.appendChild(option);
+            });
+          }
+
+          // 所属
+          const affiliationSelect = document.getElementById('filterAffiliation');
+          if (result.affiliations) {
+            result.affiliations.forEach(affiliation => {
+              const option = document.createElement('option');
+              option.value = affiliation;
+              option.textContent = affiliation;
+              affiliationSelect.appendChild(option);
+            });
+          }
+
+          // 委員会
+          const committeeSelect = document.getElementById('filterCommittee');
+          if (result.committees) {
+            result.committees.forEach(committee => {
+              const option = document.createElement('option');
+              option.value = committee;
+              option.textContent = committee;
+              committeeSelect.appendChild(option);
+            });
+          }
+
+          // タグ
+          const tagSelect = document.getElementById('filterTag');
+          if (result.tags) {
+            result.tags.forEach(tag => {
+              const option = document.createElement('option');
+              option.value = tag;
+              option.textContent = tag;
+              tagSelect.appendChild(option);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Load masters error:', error);
+      }
+    }
+
+    // 分析データ読み込み
+    async function loadAnalyticsData() {
+      Utils.showLoading();
+
+      try {
+        const filters = {
+          start_date: document.getElementById('filterStartDate').value,
+          end_date: document.getElementById('filterEndDate').value,
+          position: document.getElementById('filterPosition').value,
+          affiliation: document.getElementById('filterAffiliation').value,
+          committee: document.getElementById('filterCommittee').value,
+          tag: document.getElementById('filterTag').value
+        };
+
+        const result = await API.call('getAnalytics', filters);
+
+        if (result.success) {
+          analyticsData = result.data;
+          renderAnalytics();
+        } else {
+          throw new Error(result.message || '分析データの取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load analytics error:', error);
+        Utils.showError('分析データの取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 分析データ描画
+    function renderAnalytics() {
+      if (!analyticsData) return;
+
+      // 統計カード
+      document.getElementById('overallRate').textContent = analyticsData.overall_rate || 0;
+      document.getElementById('totalEvents').textContent = analyticsData.total_events || 0;
+      document.getElementById('avgAttendees').textContent = analyticsData.avg_attendees || 0;
+      document.getElementById('totalMembers').textContent = analyticsData.total_members || 0;
+
+      // グラフ描画
+      renderPositionChart();
+      renderAffiliationChart();
+      renderCommitteeChart();
+      renderStatusChart();
+
+      // テーブル描画
+      renderMemberTable();
+    }
+
+    // 役職別出席率グラフ
+    function renderPositionChart() {
+      const ctx = document.getElementById('positionChart');
+
+      if (positionChart) {
+        positionChart.destroy();
+      }
+
+      const data = analyticsData.by_position || [];
+
+      positionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(item => item.position || '未設定'),
+          datasets: [{
+            label: '出席率 (%)',
+            data: data.map(item => item.rate),
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `出席率: ${context.parsed.y}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 所属別出席率グラフ
+    function renderAffiliationChart() {
+      const ctx = document.getElementById('affiliationChart');
+
+      if (affiliationChart) {
+        affiliationChart.destroy();
+      }
+
+      const data = analyticsData.by_affiliation || [];
+
+      affiliationChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(item => item.affiliation || '未設定'),
+          datasets: [{
+            label: '出席率 (%)',
+            data: data.map(item => item.rate),
+            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `出席率: ${context.parsed.y}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 委員会別出席率グラフ
+    function renderCommitteeChart() {
+      const ctx = document.getElementById('committeeChart');
+
+      if (committeeChart) {
+        committeeChart.destroy();
+      }
+
+      const data = analyticsData.by_committee || [];
+
+      committeeChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(item => item.committee || '未設定'),
+          datasets: [{
+            label: '出席率 (%)',
+            data: data.map(item => item.rate),
+            backgroundColor: 'rgba(153, 102, 255, 0.7)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `出席率: ${context.parsed.y}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 出席状況円グラフ
+    function renderStatusChart() {
+      const ctx = document.getElementById('attendanceStatusChart');
+
+      if (statusChart) {
+        statusChart.destroy();
+      }
+
+      const statusData = analyticsData.by_status || { attended: 0, absent: 0, undecided: 0 };
+
+      statusChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['出席', '欠席', '未定'],
+          datasets: [{
+            data: [statusData.attended, statusData.absent, statusData.undecided],
+            backgroundColor: [
+              'rgba(40, 167, 69, 0.7)',
+              'rgba(220, 53, 69, 0.7)',
+              'rgba(255, 193, 7, 0.7)'
+            ],
+            borderColor: [
+              'rgba(40, 167, 69, 1)',
+              'rgba(220, 53, 69, 1)',
+              'rgba(255, 193, 7, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                  return `${label}: ${value}件 (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // メンバー別テーブル
+    function renderMemberTable() {
+      const tbody = document.getElementById('memberTableBody');
+      const members = analyticsData.by_member || [];
+
+      if (members.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="no-data">
+              <div class="no-data-icon">📊</div>
+              <div>データがありません</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = members.map(member => `
+        <tr>
+          <td>${Utils.escapeHtml(member.name)}</td>
+          <td>${Utils.escapeHtml(member.position || '-')}</td>
+          <td>${Utils.escapeHtml(member.affiliation || '-')}</td>
+          <td>${Utils.escapeHtml(member.committee || '-')}</td>
+          <td>${member.attended_count}</td>
+          <td>${member.total_events}</td>
+          <td>
+            <div class="percentage-bar">
+              <div class="percentage-bar-bg">
+                <div class="percentage-bar-fill" style="width: ${member.rate}%"></div>
+              </div>
+              <span class="percentage-text">${member.rate}%</span>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // CSV出力
+    function exportToCsv() {
+      if (!analyticsData) {
+        Utils.showError('データがありません');
+        return;
+      }
+
+      const members = analyticsData.by_member || [];
+
+      if (members.length === 0) {
+        Utils.showError('エクスポートするデータがありません');
+        return;
+      }
+
+      // CSVヘッダー
+      let csv = 'メンバー名,役職,所属,委員会,出席回数,対象イベント数,出席率(%)\n';
+
+      // データ行
+      members.forEach(member => {
+        csv += `"${member.name}","${member.position || ''}","${member.affiliation || ''}","${member.committee || ''}",${member.attended_count},${member.total_events},${member.rate}\n`;
+      });
+
+      // ダウンロード
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+
+      const now = new Date();
+      const filename = `出席率分析_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.csv`;
+
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Utils.showSuccess('CSVファイルをダウンロードしました');
+    }
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // モバイルメニュートグル
+      document.getElementById('mobileToggle').addEventListener('click', () => {
+        document.getElementById('adminSidebar').classList.toggle('mobile-open');
+      });
+
+      // フィルター適用
+      document.getElementById('applyFilterBtn').addEventListener('click', () => {
+        loadAnalyticsData();
+      });
+
+      // フィルターリセット
+      document.getElementById('resetFilterBtn').addEventListener('click', () => {
+        document.getElementById('filterStartDate').value = '';
+        document.getElementById('filterEndDate').value = '';
+        document.getElementById('filterPosition').value = '';
+        document.getElementById('filterAffiliation').value = '';
+        document.getElementById('filterCommittee').value = '';
+        document.getElementById('filterTag').value = '';
+        loadAnalyticsData();
+      });
+
+      // CSV出力
+      document.getElementById('exportCsvBtn').addEventListener('click', exportToCsv);
+    }
+  </script>
+</body>
+</html>

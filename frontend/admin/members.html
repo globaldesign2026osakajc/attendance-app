@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>メンバー管理 - 管理者画面</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    /* 検索・フィルターバー */
+    .search-filter-bar {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-filter-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    /* メンバーテーブル */
+    .member-photo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: var(--bg-gray);
+    }
+
+    .member-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .member-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .member-kana {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* モーダル */
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    .modal-grid-full {
+      grid-column: 1 / -1;
+    }
+
+    .photo-upload-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .photo-upload-area:hover {
+      border-color: var(--primary-color);
+      background-color: var(--bg-secondary);
+    }
+
+    .photo-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: var(--bg-gray);
+      border: 3px solid var(--border-color);
+    }
+
+    .photo-upload-text {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    #photoFileInput {
+      display: none;
+    }
+
+    @media (max-width: 1200px) {
+      .search-filter-row {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .search-filter-row {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .data-table {
+        min-width: 800px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- 管理者レイアウト -->
+  <div class="admin-layout">
+    <!-- サイドバー -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-header">
+        <h1 class="admin-sidebar-title">管理者画面</h1>
+        <p class="admin-sidebar-subtitle">出欠管理システム</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <a href="dashboard.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📊</span>
+          <span class="admin-sidebar-text">ダッシュボード</span>
+        </a>
+        <a href="events.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📅</span>
+          <span class="admin-sidebar-text">イベント管理</span>
+        </a>
+        <a href="members.html" class="admin-sidebar-item active">
+          <span class="admin-sidebar-icon">👥</span>
+          <span class="admin-sidebar-text">メンバー管理</span>
+        </a>
+        <a href="analytics.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📈</span>
+          <span class="admin-sidebar-text">出席率分析</span>
+        </a>
+        <a href="payments.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">💰</span>
+          <span class="admin-sidebar-text">支払い管理</span>
+        </a>
+        <a href="checkin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📱</span>
+          <span class="admin-sidebar-text">QRチェックイン</span>
+        </a>
+        <a href="receipts-admin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🧾</span>
+          <span class="admin-sidebar-text">領収書管理</span>
+        </a>
+
+        <div class="admin-sidebar-divider"></div>
+
+        <a href="../home.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🏠</span>
+          <span class="admin-sidebar-text">ユーザー画面へ</span>
+        </a>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button id="logoutBtn" class="btn btn-outline btn-block" style="color: white; border-color: rgba(255,255,255,0.3);">
+          ログアウト
+        </button>
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="admin-main">
+      <!-- トップバー -->
+      <div class="admin-topbar">
+        <button class="admin-mobile-toggle" id="mobileToggle">
+          ☰
+        </button>
+        <h2 class="admin-topbar-title">メンバー管理</h2>
+        <div class="admin-topbar-actions">
+          <div class="admin-user-info">
+            <span class="admin-user-icon">👤</span>
+            <div class="admin-user-details">
+              <span class="admin-user-name" id="userName">管理者</span>
+              <span class="admin-user-role">管理者</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- コンテンツ -->
+      <div class="admin-content">
+        <!-- 検索・フィルター -->
+        <div class="search-filter-bar">
+          <div class="search-filter-row">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="searchInput" class="form-label">検索</label>
+              <input
+                type="text"
+                id="searchInput"
+                class="form-input"
+                placeholder="名前、ふりがな、ログインIDで検索..."
+              >
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="filterAffiliation" class="form-label">所属</label>
+              <select id="filterAffiliation" class="form-input">
+                <option value="">すべて</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="filterPosition" class="form-label">役職</label>
+              <select id="filterPosition" class="form-input">
+                <option value="">すべて</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="filterBirthMonth" class="form-label">誕生月</label>
+              <select id="filterBirthMonth" class="form-input">
+                <option value="">すべて</option>
+                <option value="1">1月</option>
+                <option value="2">2月</option>
+                <option value="3">3月</option>
+                <option value="4">4月</option>
+                <option value="5">5月</option>
+                <option value="6">6月</option>
+                <option value="7">7月</option>
+                <option value="8">8月</option>
+                <option value="9">9月</option>
+                <option value="10">10月</option>
+                <option value="11">11月</option>
+                <option value="12">12月</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="filterRole" class="form-label">権限</label>
+              <select id="filterRole" class="form-input">
+                <option value="">すべて</option>
+                <option value="staff">スタッフ</option>
+                <option value="member">メンバー</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- メンバー一覧テーブル -->
+        <div class="data-table-container">
+          <div class="data-table-header">
+            <h3 class="data-table-title">メンバー一覧</h3>
+            <div class="data-table-actions">
+              <button class="btn btn-primary" id="addMemberBtn">
+                + 新規メンバー登録
+              </button>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="data-table" id="membersTable">
+              <thead>
+                <tr>
+                  <th>写真</th>
+                  <th>氏名</th>
+                  <th>ログインID</th>
+                  <th>所属</th>
+                  <th>役職</th>
+                  <th>誕生日</th>
+                  <th>権限</th>
+                  <th>登録日</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="membersTableBody">
+                <tr>
+                  <td colspan="9" class="data-table-empty">
+                    <div class="data-table-empty-icon">👥</div>
+                    <div class="data-table-empty-text">メンバーを読み込んでいます...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- メンバー登録・編集モーダル -->
+  <div class="admin-modal" id="memberModal">
+    <div class="admin-modal-content">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="modalTitle">新規メンバー登録</h3>
+        <button class="admin-modal-close" id="closeModalBtn">×</button>
+      </div>
+
+      <div class="admin-modal-body">
+        <form id="memberForm">
+          <input type="hidden" id="memberId">
+
+          <!-- プロフィール写真 -->
+          <div class="form-group">
+            <label class="form-label">プロフィール写真</label>
+            <div class="photo-upload-area" id="photoUploadArea">
+              <img
+                id="photoPreview"
+                class="photo-preview"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f1f5f9' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='40'%3E👤%3C/text%3E%3C/svg%3E"
+                alt="プロフィール写真"
+              >
+              <div class="photo-upload-text">
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">写真をアップロード</div>
+                <div style="font-size: 0.75rem;">クリックして画像を選択（JPG, PNG, 最大5MB）</div>
+              </div>
+              <input type="file" id="photoFileInput" accept="image/jpeg,image/png">
+            </div>
+          </div>
+
+          <div class="modal-grid">
+            <!-- 基本情報 -->
+            <div class="form-group">
+              <label for="memberName" class="form-label required">氏名</label>
+              <input
+                type="text"
+                id="memberName"
+                class="form-input"
+                required
+                placeholder="例：山田太郎"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberKana" class="form-label">ふりがな</label>
+              <input
+                type="text"
+                id="memberKana"
+                class="form-input"
+                placeholder="例：やまだたろう"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberNickname" class="form-label">あだ名</label>
+              <input
+                type="text"
+                id="memberNickname"
+                class="form-input"
+                placeholder="例：たろちゃん"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberLoginId" class="form-label required">ログインID</label>
+              <input
+                type="text"
+                id="memberLoginId"
+                class="form-input"
+                required
+                placeholder="例：M001"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberPassword" class="form-label" id="passwordLabel">パスワード</label>
+              <input
+                type="password"
+                id="memberPassword"
+                class="form-input"
+                placeholder="8文字以上"
+              >
+              <small class="form-help">編集時は変更する場合のみ入力してください</small>
+            </div>
+
+            <!-- 組織情報 -->
+            <div class="form-group">
+              <label for="memberPosition" class="form-label">役職</label>
+              <select id="memberPosition" class="form-input">
+                <option value="">未設定</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="memberAffiliation" class="form-label">所属</label>
+              <select id="memberAffiliation" class="form-input">
+                <option value="">未設定</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="memberBirthday" class="form-label">誕生日</label>
+              <input
+                type="date"
+                id="memberBirthday"
+                class="form-input"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberCommittee" class="form-label">委員会</label>
+              <select id="memberCommittee" class="form-input">
+                <option value="">未設定</option>
+              </select>
+            </div>
+
+            <div class="modal-grid-full">
+              <div class="form-group">
+                <label for="memberComment" class="form-label">一言</label>
+                <textarea
+                  id="memberComment"
+                  class="form-input"
+                  rows="2"
+                  placeholder="例：よろしくお願いします"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="memberLineName" class="form-label">LINE名</label>
+              <input
+                type="text"
+                id="memberLineName"
+                class="form-input"
+                placeholder="例：たろう"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberJoinYear" class="form-label">入会年度</label>
+              <select id="memberJoinYear" class="form-input">
+                <option value="">未設定</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="memberSecondment" class="form-label">出向先</label>
+              <input
+                type="text"
+                id="memberSecondment"
+                class="form-input"
+                placeholder="例：○○部"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberPhone" class="form-label">電話番号</label>
+              <input
+                type="tel"
+                id="memberPhone"
+                class="form-input"
+                placeholder="例：090-1234-5678"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberCompanyName" class="form-label">会社名</label>
+              <input
+                type="text"
+                id="memberCompanyName"
+                class="form-input"
+                placeholder="例：株式会社サンプル"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberIndustry" class="form-label">業種</label>
+              <input
+                type="text"
+                id="memberIndustry"
+                class="form-input"
+                placeholder="例：IT"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberAllergy" class="form-label">アレルギー</label>
+              <input
+                type="text"
+                id="memberAllergy"
+                class="form-input"
+                placeholder="例：卵、そば"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberFavorite" class="form-label">好きなもの</label>
+              <input
+                type="text"
+                id="memberFavorite"
+                class="form-input"
+                placeholder="例：旅行、読書"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberDislike" class="form-label">嫌いなもの</label>
+              <input
+                type="text"
+                id="memberDislike"
+                class="form-input"
+                placeholder="例：虫"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="memberFavoriteCountry" class="form-label">好きな国</label>
+              <input
+                type="text"
+                id="memberFavoriteCountry"
+                class="form-input"
+                placeholder="例：日本、イタリア"
+              >
+            </div>
+
+            <div class="modal-grid-full">
+              <div class="form-group">
+                <label for="memberFavoriteWord" class="form-label">好きな言葉</label>
+                <input
+                  type="text"
+                  id="memberFavoriteWord"
+                  class="form-input"
+                  placeholder="例：一期一会"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="memberRole" class="form-label required">権限</label>
+              <select id="memberRole" class="form-input" required>
+                <option value="member">メンバー</option>
+                <option value="staff">スタッフ</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button type="button" class="btn btn-outline" id="cancelModalBtn">
+          キャンセル
+        </button>
+        <button type="submit" form="memberForm" class="btn btn-primary" id="saveMemberBtn">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScriptファイル -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+
+  <script>
+    let members = [];
+    let filteredMembers = [];
+    let currentEditingMemberId = null;
+    let selectedPhotoFile = null;
+    const userInfo = Auth.getUserInfo();
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 管理者権限チェック
+      Auth.requireAdmin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // イベントリスナー設定
+      setupEventListeners();
+
+      // マスタデータとメンバー一覧を読み込み
+      await loadMasterData();
+      await loadMembers();
+    });
+
+    // マスタデータ読み込み
+    async function loadMasterData() {
+      try {
+        const result = await API.call('getMasters');
+
+        if (result.success && result.masters) {
+          const masters = result.masters;
+
+          // 所属プルダウン
+          populateSelect('filterAffiliation', masters.affiliations);
+          populateSelect('memberAffiliation', masters.affiliations);
+
+          // 役職プルダウン
+          populateSelect('filterPosition', masters.positions);
+          populateSelect('memberPosition', masters.positions);
+
+          // 委員会プルダウン
+          populateSelect('filterCommittee', masters.committees);
+          populateSelect('memberCommittee', masters.committees);
+
+          // 入会年度プルダウン
+          const currentYear = new Date().getFullYear();
+          const yearSelect = document.getElementById('memberJoinYear');
+          for (let year = currentYear; year >= 2010; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year + '年';
+            yearSelect.appendChild(option);
+          }
+        }
+      } catch (error) {
+        console.error('Load master data error:', error);
+      }
+    }
+
+    // プルダウン設定
+    function populateSelect(selectId, options) {
+      const select = document.getElementById(selectId);
+      const isFilter = selectId.startsWith('filter');
+
+      if (Array.isArray(options)) {
+        options.forEach(option => {
+          const opt = document.createElement('option');
+          opt.value = option;
+          opt.textContent = option;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    // SELECT要素に値を設定（選択肢にない場合は追加）
+    function setSelectValue(selectElement, value) {
+      if (!value) {
+        selectElement.value = '';
+        return;
+      }
+
+      // 選択肢に値が存在するか確認
+      let optionExists = false;
+      for (let i = 0; i < selectElement.options.length; i++) {
+        if (selectElement.options[i].value === value) {
+          optionExists = true;
+          break;
+        }
+      }
+
+      // 選択肢にない場合は追加
+      if (!optionExists) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        selectElement.appendChild(option);
+      }
+
+      selectElement.value = value;
+    }
+
+    // メンバー一覧読み込み
+    async function loadMembers() {
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getMembers');
+
+        if (result.success && result.members) {
+          members = result.members;
+          filteredMembers = [...members];
+          renderMembers();
+        } else {
+          throw new Error(result.message || 'メンバー情報の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load members error:', error);
+        Utils.showError('メンバー情報の取得に失敗しました');
+        document.getElementById('membersTableBody').innerHTML = `
+          <tr>
+            <td colspan="9" class="data-table-empty">
+              <div class="data-table-empty-icon">⚠️</div>
+              <div class="data-table-empty-text">メンバー情報の取得に失敗しました</div>
+            </td>
+          </tr>
+        `;
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // メンバー一覧表示
+    function renderMembers() {
+      const tbody = document.getElementById('membersTableBody');
+
+      if (filteredMembers.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="data-table-empty">
+              <div class="data-table-empty-icon">👥</div>
+              <div class="data-table-empty-text">メンバーが見つかりませんでした</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filteredMembers.map(member => {
+        const photoUrl = member.PhotoURL ||
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f1f5f9' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='40'%3E👤%3C/text%3E%3C/svg%3E";
+
+        const registeredDate = member.registered_at ?
+          new Date(member.registered_at).toLocaleDateString('ja-JP') : '-';
+
+        const birthday = member.birthday ?
+          new Date(member.birthday).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : '-';
+
+        return `
+          <tr>
+            <td>
+              <img src="${photoUrl}" alt="${member.name}" class="member-photo">
+            </td>
+            <td>
+              <div class="member-info">
+                <div>
+                  <div class="member-name">${member.name}</div>
+                  ${member.kana ? `<div class="member-kana">${member.kana}</div>` : ''}
+                </div>
+              </div>
+            </td>
+            <td>${member.login_id}</td>
+            <td>${member.affiliation || '-'}</td>
+            <td>${member.position || '-'}</td>
+            <td>${birthday}</td>
+            <td>
+              <span class="badge ${member.role === 'staff' ? 'badge-warning' : 'badge-secondary'}">
+                ${member.role === 'staff' ? 'スタッフ' : 'メンバー'}
+              </span>
+            </td>
+            <td>${registeredDate}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="table-action-btn" onclick="editMember('${member.member_id}')">
+                  編集
+                </button>
+                <button class="table-action-btn danger" onclick="deleteMember('${member.member_id}', '${member.name}')">
+                  削除
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // フィルター適用
+    function applyFilters() {
+      const searchText = document.getElementById('searchInput').value.toLowerCase();
+      const filterAffiliation = document.getElementById('filterAffiliation').value;
+      const filterPosition = document.getElementById('filterPosition').value;
+      const filterBirthMonth = document.getElementById('filterBirthMonth').value;
+      const filterRole = document.getElementById('filterRole').value;
+
+      filteredMembers = members.filter(member => {
+        // 検索条件
+        const matchSearch = !searchText ||
+          member.name.toLowerCase().includes(searchText) ||
+          (member.kana && member.kana.toLowerCase().includes(searchText)) ||
+          member.login_id.toLowerCase().includes(searchText);
+
+        // 所属フィルター
+        const matchAffiliation = !filterAffiliation || member.affiliation === filterAffiliation;
+
+        // 役職フィルター
+        const matchPosition = !filterPosition || member.position === filterPosition;
+
+        // 誕生月フィルター
+        let matchBirthMonth = true;
+        if (filterBirthMonth && member.birthday) {
+          const birthDate = new Date(member.birthday);
+          matchBirthMonth = (birthDate.getMonth() + 1) === parseInt(filterBirthMonth);
+        } else if (filterBirthMonth) {
+          matchBirthMonth = false;
+        }
+
+        // 権限フィルター
+        const matchRole = !filterRole || member.role === filterRole;
+
+        return matchSearch && matchAffiliation && matchPosition && matchBirthMonth && matchRole;
+      });
+
+      renderMembers();
+    }
+
+    // モーダルを開く（新規登録）
+    function openAddModal() {
+      currentEditingMemberId = null;
+      selectedPhotoFile = null;
+
+      document.getElementById('modalTitle').textContent = '新規メンバー登録';
+      document.getElementById('memberForm').reset();
+      document.getElementById('memberId').value = '';
+      document.getElementById('passwordLabel').textContent = 'パスワード';
+      document.getElementById('memberPassword').required = true;
+
+      // 写真プレビューをリセット
+      document.getElementById('photoPreview').src =
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f1f5f9' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='40'%3E👤%3C/text%3E%3C/svg%3E";
+
+      document.getElementById('memberModal').classList.add('active');
+    }
+
+    // モーダルを開く（編集）
+    function editMember(memberId) {
+      const member = members.find(m => m.member_id === memberId);
+      if (!member) return;
+
+      currentEditingMemberId = memberId;
+      selectedPhotoFile = null;
+
+      document.getElementById('modalTitle').textContent = 'メンバー編集';
+      document.getElementById('memberId').value = memberId;
+      document.getElementById('memberName').value = member.name || '';
+      document.getElementById('memberKana').value = member.kana || '';
+      document.getElementById('memberLoginId').value = member.login_id || '';
+      document.getElementById('memberPassword').value = '';
+      document.getElementById('passwordLabel').textContent = 'パスワード（変更する場合のみ）';
+      document.getElementById('memberPassword').required = false;
+
+      // SELECT要素の値を設定（マスターデータ読み込み後に実行されるため、選択肢は存在する）
+      const affiliationSelect = document.getElementById('memberAffiliation');
+      const positionSelect = document.getElementById('memberPosition');
+      const committeeSelect = document.getElementById('memberCommittee');
+
+      // 既存の値を設定、選択肢にない場合は追加
+      setSelectValue(affiliationSelect, member.affiliation || '');
+      setSelectValue(positionSelect, member.position || '');
+      setSelectValue(committeeSelect, member.committee || '');
+
+      // 新しいフィールドの値を設定
+      document.getElementById('memberNickname').value = member['あだ名'] || '';
+      document.getElementById('memberBirthday').value = member.birthday || '';
+      document.getElementById('memberComment').value = member['一言'] || '';
+      document.getElementById('memberLineName').value = member['LINE名'] || '';
+      document.getElementById('memberJoinYear').value = member['入会年度'] || '';
+      document.getElementById('memberSecondment').value = member['出向先'] || '';
+      document.getElementById('memberPhone').value = member['電話番号'] || '';
+      document.getElementById('memberCompanyName').value = member.company_name || '';
+      document.getElementById('memberIndustry').value = member['業種'] || '';
+      document.getElementById('memberAllergy').value = member['アレルギー'] || '';
+      document.getElementById('memberFavorite').value = member['好きなもの'] || '';
+      document.getElementById('memberDislike').value = member['嫌いなもの'] || '';
+      document.getElementById('memberFavoriteCountry').value = member['好きな国'] || '';
+      document.getElementById('memberFavoriteWord').value = member['好きな言葉'] || '';
+      document.getElementById('memberRole').value = member.role || 'member';
+
+      // 写真プレビュー
+      if (member.PhotoURL) {
+        document.getElementById('photoPreview').src = member.PhotoURL;
+      } else {
+        document.getElementById('photoPreview').src =
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f1f5f9' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='40'%3E👤%3C/text%3E%3C/svg%3E";
+      }
+
+      document.getElementById('memberModal').classList.add('active');
+    }
+
+    // モーダルを閉じる
+    function closeModal() {
+      document.getElementById('memberModal').classList.remove('active');
+      currentEditingMemberId = null;
+      selectedPhotoFile = null;
+    }
+
+    // 写真選択
+    function handlePhotoSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // ファイルサイズチェック（5MB）
+      if (file.size > 5 * 1024 * 1024) {
+        Utils.showError('ファイルサイズは5MB以下にしてください');
+        return;
+      }
+
+      // ファイル形式チェック
+      if (!file.type.match(/^image\/(jpeg|png)$/)) {
+        Utils.showError('JPEGまたはPNG形式の画像を選択してください');
+        return;
+      }
+
+      selectedPhotoFile = file;
+
+      // プレビュー表示
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('photoPreview').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // メンバー保存
+    async function saveMember(e) {
+      e.preventDefault();
+
+      const formData = {
+        name: document.getElementById('memberName').value.trim(),
+        login_id: document.getElementById('memberLoginId').value.trim(),
+        kana: document.getElementById('memberKana').value.trim(),
+        'あだ名': document.getElementById('memberNickname').value.trim(),
+        position: document.getElementById('memberPosition').value,
+        affiliation: document.getElementById('memberAffiliation').value,
+        birthday: document.getElementById('memberBirthday').value,
+        committee: document.getElementById('memberCommittee').value,
+        '一言': document.getElementById('memberComment').value.trim(),
+        'LINE名': document.getElementById('memberLineName').value.trim(),
+        '入会年度': document.getElementById('memberJoinYear').value,
+        '出向先': document.getElementById('memberSecondment').value.trim(),
+        '電話番号': document.getElementById('memberPhone').value.trim(),
+        company_name: document.getElementById('memberCompanyName').value.trim(),
+        '業種': document.getElementById('memberIndustry').value.trim(),
+        'アレルギー': document.getElementById('memberAllergy').value.trim(),
+        '好きなもの': document.getElementById('memberFavorite').value.trim(),
+        '嫌いなもの': document.getElementById('memberDislike').value.trim(),
+        '好きな国': document.getElementById('memberFavoriteCountry').value.trim(),
+        '好きな言葉': document.getElementById('memberFavoriteWord').value.trim(),
+        role: document.getElementById('memberRole').value
+      };
+
+      // パスワード（新規登録時は必須、編集時は変更する場合のみ）
+      const password = document.getElementById('memberPassword').value;
+      if (currentEditingMemberId) {
+        if (password) {
+          formData.password = password;
+        }
+        formData.member_id = currentEditingMemberId;
+      } else {
+        if (!password || password.length < 8) {
+          Utils.showError('パスワードは8文字以上で入力してください');
+          return;
+        }
+        formData.password = password;
+      }
+
+      // バリデーション
+      if (!formData.name) {
+        Utils.showError('氏名を入力してください');
+        return;
+      }
+
+      if (!formData.login_id) {
+        Utils.showError('ログインIDを入力してください');
+        return;
+      }
+
+      // 確認
+      const confirmMessage = currentEditingMemberId ?
+        'メンバー情報を更新しますか？' : '新規メンバーを登録しますか？';
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        // 写真アップロード
+        if (selectedPhotoFile) {
+          const photoResult = await uploadPhoto(selectedPhotoFile);
+          if (photoResult.success) {
+            formData.PhotoURL = photoResult.photo_url;
+          }
+        }
+
+        // メンバー保存
+        const action = currentEditingMemberId ? 'updateMember' : 'addMember';
+        const result = await API.call(action, { data: JSON.stringify(formData) });
+
+        if (result.success) {
+          Utils.showSuccess(currentEditingMemberId ?
+            'メンバー情報を更新しました' : '新規メンバーを登録しました');
+          closeModal();
+          await loadMembers();
+        } else {
+          throw new Error(result.message || '保存に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Save member error:', error);
+        Utils.showError(error.message || '保存に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 写真アップロード
+    async function uploadPhoto(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const base64Data = e.target.result.split(',')[1];
+            const uploadParams = {
+              file_data: base64Data,
+              file_name: file.name,
+              mime_type: file.type
+            };
+
+            // 編集中のメンバーIDを追加（管理者が他のメンバーの写真をアップする場合）
+            if (currentEditingMemberId) {
+              uploadParams.member_id = currentEditingMemberId;
+            }
+
+            const result = await API.call('uploadProfilePhoto', uploadParams);
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // メンバー削除
+    async function deleteMember(memberId, memberName) {
+      if (!confirm(`${memberName}さんを削除してもよろしいですか？\nこの操作は取り消せません。`)) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('deleteMember', { member_id: memberId });
+
+        if (result.success) {
+          Utils.showSuccess('メンバーを削除しました');
+          await loadMembers();
+        } else {
+          throw new Error(result.message || '削除に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Delete member error:', error);
+        Utils.showError(error.message || '削除に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // モバイルメニュートグル
+      document.getElementById('mobileToggle').addEventListener('click', () => {
+        document.getElementById('adminSidebar').classList.toggle('mobile-open');
+      });
+
+      // 検索・フィルター
+      document.getElementById('searchInput').addEventListener('input', applyFilters);
+      document.getElementById('filterAffiliation').addEventListener('change', applyFilters);
+      document.getElementById('filterPosition').addEventListener('change', applyFilters);
+      document.getElementById('filterBirthMonth').addEventListener('change', applyFilters);
+      document.getElementById('filterRole').addEventListener('change', applyFilters);
+
+      // モーダル
+      document.getElementById('addMemberBtn').addEventListener('click', openAddModal);
+      document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+      document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+      document.getElementById('memberForm').addEventListener('submit', saveMember);
+
+      // 写真アップロード
+      document.getElementById('photoUploadArea').addEventListener('click', () => {
+        document.getElementById('photoFileInput').click();
+      });
+      document.getElementById('photoFileInput').addEventListener('change', handlePhotoSelect);
+
+      // モーダル外クリックで閉じる
+      document.getElementById('memberModal').addEventListener('click', (e) => {
+        if (e.target.id === 'memberModal') {
+          closeModal();
+        }
+      });
+    }
+
+    // グローバル関数として公開
+    window.editMember = editMember;
+    window.deleteMember = deleteMember;
+  </script>
+</body>
+</html>

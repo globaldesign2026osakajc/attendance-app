@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(for file in history.html event-detail.html profile.html receipts.html qr.html)",
+      "Bash(do cp \"$file\" \"$file.bak\")",
+      "Bash(done)",
+      "Bash(for file in \"G:\\出欠アプリ\\frontend\\history.html\" \"G:\\出欠アプリ\\frontend\\event-detail.html\" \"G:\\出欠アプリ\\frontend\\profile.html\" \"G:\\出欠アプリ\\frontend\\receipts.html\" \"G:\\出欠アプリ\\frontend\\qr.html\")",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

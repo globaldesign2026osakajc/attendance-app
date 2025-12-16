@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>出欠履歴 - グローバルデザイン推進委員会 出欠管理</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .stats-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+
+    .stat-card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-card-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .stat-card-detail {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      margin-top: 0.5rem;
+    }
+
+    .filter-section {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .filter-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .history-list {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .history-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .history-count {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .history-table thead {
+      background-color: var(--gray-light);
+    }
+
+    .history-table th {
+      padding: 1rem;
+      text-align: left;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-color);
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .history-table td {
+      padding: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .history-table tbody tr {
+      transition: background-color 0.3s ease;
+      cursor: pointer;
+    }
+
+    .history-table tbody tr:hover {
+      background-color: var(--gray-light);
+    }
+
+    .history-event-name {
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 0.25rem;
+    }
+
+    .history-event-date {
+      font-size: 0.75rem;
+      color: var(--text-light);
+    }
+
+    .history-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.813rem;
+    }
+
+    .history-status.attend {
+      background-color: var(--success-bg);
+      color: var(--success-color);
+    }
+
+    .history-status.absent {
+      background-color: var(--gray-light);
+      color: var(--text-secondary);
+    }
+
+    .history-status.pending {
+      background-color: var(--warning-bg);
+      color: var(--warning-color);
+    }
+
+    .payment-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.813rem;
+    }
+
+    .payment-status.paid {
+      background-color: var(--success-bg);
+      color: var(--success-color);
+    }
+
+    .payment-status.unpaid {
+      background-color: var(--warning-bg);
+      color: var(--warning-color);
+    }
+
+    .payment-status.free {
+      background-color: var(--gray-light);
+      color: var(--text-secondary);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+      .history-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      .history-table thead {
+        display: none;
+      }
+
+      .history-table tbody {
+        display: block;
+      }
+
+      .history-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+      }
+
+      .history-table td {
+        display: block;
+        text-align: left;
+        padding: 0.5rem 0;
+        border: none;
+      }
+
+      .history-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-color);
+        display: inline-block;
+        width: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-container">
+      <!-- トップバー -->
+      <div class="header-top">
+        <h1 class="header-title">出欠管理システム</h1>
+        <div class="header-user">
+          <span id="userName" class="header-user-name"></span>
+          <button id="mobileNavToggle" class="mobile-nav-toggle">☰</button>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">ログアウト</button>
+        </div>
+      </div>
+
+      <!-- ナビゲーション -->
+      <nav class="nav">
+        <div class="nav-container">
+          <a href="home.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">HOME</span>
+          </a>
+          <a href="events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">イベント</span>
+          </a>
+          <a href="members.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">メンバー</span>
+          </a>
+          <a href="history.html" class="nav-item active">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">履歴</span>
+          </a>
+          <a href="receipts.html" class="nav-item">
+            <span class="nav-icon">🧾</span>
+            <span class="nav-text">領収書</span>
+          </a>
+          <a href="profile.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">プロフィール</span>
+          </a>
+          <!-- 管理者用リンク -->
+          <a href="admin/dashboard.html" id="adminLink" class="nav-item" style="display: none;">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">管理画面</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container">
+      <h2 class="page-title">出欠履歴</h2>
+
+      <!-- 統計概要 -->
+      <div class="stats-overview">
+        <div class="stat-card">
+          <div class="stat-card-icon">📅</div>
+          <div class="stat-card-value" id="totalEvents">0</div>
+          <div class="stat-card-label">総イベント数</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon">✓</div>
+          <div class="stat-card-value" id="attendCount">0</div>
+          <div class="stat-card-label">出席回数</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon">📈</div>
+          <div class="stat-card-value" id="attendanceRate">0%</div>
+          <div class="stat-card-label">出席率</div>
+          <div class="stat-card-detail" id="attendanceDetail"></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon">💰</div>
+          <div class="stat-card-value" id="totalPayment">¥0</div>
+          <div class="stat-card-label">総支払額</div>
+        </div>
+      </div>
+
+      <!-- フィルター -->
+      <div class="filter-section">
+        <div class="filter-row">
+          <!-- 期間選択 -->
+          <div class="filter-group">
+            <label class="filter-label">期間</label>
+            <select id="periodSelect" class="form-input">
+              <option value="all">すべて</option>
+              <option value="this-year">今年</option>
+              <option value="last-year">昨年</option>
+              <option value="this-month">今月</option>
+              <option value="last-3-months">過去3ヶ月</option>
+              <option value="last-6-months">過去6ヶ月</option>
+            </select>
+          </div>
+
+          <!-- 出欠状況選択 -->
+          <div class="filter-group">
+            <label class="filter-label">出欠状況</label>
+            <select id="statusSelect" class="form-input">
+              <option value="all">すべて</option>
+              <option value="attend">出席のみ</option>
+              <option value="absent">欠席のみ</option>
+              <option value="pending">未登録のみ</option>
+            </select>
+          </div>
+
+          <!-- 支払状況選択 -->
+          <div class="filter-group">
+            <label class="filter-label">支払状況</label>
+            <select id="paymentSelect" class="form-input">
+              <option value="all">すべて</option>
+              <option value="paid">支払済み</option>
+              <option value="unpaid">未払い</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 履歴リスト -->
+      <div class="history-list">
+        <div class="history-header">
+          <h3 class="history-title">出欠記録</h3>
+          <span class="history-count" id="historyCount">0件</span>
+        </div>
+
+        <div id="historyTable"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- JavaScriptファイル -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/nav.js"></script>
+
+  <script>
+    let allHistory = [];
+    let filteredHistory = [];
+    const userInfo = Auth.getUserInfo();
+
+    // フィルター状態
+    let filters = {
+      period: 'all',
+      status: 'all',
+      payment: 'all'
+    };
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // ログインチェック
+      Auth.requireLogin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // 履歴取得
+      await loadHistory();
+
+      // イベントリスナー設定
+      setupEventListeners();
+    });
+
+    // 履歴取得
+    async function loadHistory() {
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getAttendanceHistory', {
+          member_id: userInfo.memberId
+        });
+
+        if (result.success) {
+          allHistory = result.history || [];
+          applyFilters();
+          updateStats();
+        } else {
+          throw new Error(result.message || '履歴の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load history error:', error);
+        Utils.showError('履歴の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // フィルター適用
+    function applyFilters() {
+      const now = new Date();
+
+      filteredHistory = allHistory.filter(item => {
+        // 期間フィルター
+        const eventDate = new Date(item.event_date);
+        if (filters.period !== 'all') {
+          if (filters.period === 'this-year' && eventDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+          if (filters.period === 'last-year' && eventDate.getFullYear() !== now.getFullYear() - 1) {
+            return false;
+          }
+          if (filters.period === 'this-month') {
+            if (eventDate.getFullYear() !== now.getFullYear() || eventDate.getMonth() !== now.getMonth()) {
+              return false;
+            }
+          }
+          if (filters.period === 'last-3-months') {
+            const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+            if (eventDate < threeMonthsAgo) {
+              return false;
+            }
+          }
+          if (filters.period === 'last-6-months') {
+            const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+            if (eventDate < sixMonthsAgo) {
+              return false;
+            }
+          }
+        }
+
+        // 出欠状況フィルター
+        if (filters.status !== 'all') {
+          if (filters.status === 'attend' && item.attendance_status !== '出席') {
+            return false;
+          }
+          if (filters.status === 'absent' && item.attendance_status !== '欠席') {
+            return false;
+          }
+          if (filters.status === 'pending' && item.attendance_status) {
+            return false;
+          }
+        }
+
+        // 支払状況フィルター
+        if (filters.payment !== 'all') {
+          if (filters.payment === 'paid' && !item.payment_confirmed) {
+            return false;
+          }
+          if (filters.payment === 'unpaid' && (item.payment_confirmed || item.participation_fee === 0)) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      displayHistory();
+    }
+
+    // 統計更新
+    function updateStats() {
+      // 過去のイベントのみ集計
+      const now = new Date();
+      const pastEvents = allHistory.filter(item => new Date(item.event_date) < now);
+
+      // 総イベント数
+      document.getElementById('totalEvents').textContent = pastEvents.length;
+
+      // 出席回数
+      const attendCount = pastEvents.filter(item => item.attendance_status === '出席').length;
+      document.getElementById('attendCount').textContent = attendCount;
+
+      // 出席率
+      let attendanceRate = 0;
+      if (pastEvents.length > 0) {
+        attendanceRate = Math.round((attendCount / pastEvents.length) * 100);
+      }
+      document.getElementById('attendanceRate').textContent = attendanceRate + '%';
+      document.getElementById('attendanceDetail').textContent =
+        `${attendCount} / ${pastEvents.length} イベント`;
+
+      // 総支払額
+      const totalPayment = pastEvents
+        .filter(item => item.payment_confirmed)
+        .reduce((sum, item) => sum + (item.participation_fee || 0), 0);
+      document.getElementById('totalPayment').textContent = Utils.formatCurrency(totalPayment);
+    }
+
+    // 履歴表示
+    function displayHistory() {
+      const container = document.getElementById('historyTable');
+      const countElement = document.getElementById('historyCount');
+
+      // 件数表示
+      countElement.textContent = `${filteredHistory.length}件`;
+
+      // 空状態
+      if (filteredHistory.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <p class="empty-state-text">該当する履歴がありません</p>
+          </div>
+        `;
+        return;
+      }
+
+      // テーブル表示
+      container.innerHTML = `
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>イベント</th>
+              <th>出欠</th>
+              <th>登録料</th>
+              <th>支払</th>
+              <th>登録日時</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredHistory.map(item => createHistoryRow(item)).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // 履歴行作成
+    function createHistoryRow(item) {
+      const eventDate = Utils.formatDateSlash(item.event_date);
+      const dayOfWeek = Utils.getDayOfWeek(item.event_date);
+      const registeredAt = item.registered_at ? Utils.formatDateTime(item.registered_at) : '-';
+
+      // 出欠ステータス
+      let statusHTML = '';
+      let statusClass = 'pending';
+
+      if (item.attendance_status === '出席') {
+        statusHTML = '✓ 出席';
+        statusClass = 'attend';
+      } else if (item.attendance_status === '欠席') {
+        statusHTML = '✗ 欠席';
+        statusClass = 'absent';
+      } else {
+        statusHTML = '未登録';
+        statusClass = 'pending';
+      }
+
+      // 登録料
+      const fee = item.participation_fee > 0 ? Utils.formatCurrency(item.participation_fee) : '無料';
+
+      // 支払ステータス
+      let paymentHTML = '';
+      let paymentClass = 'free';
+
+      if (item.participation_fee > 0) {
+        if (item.payment_confirmed) {
+          paymentHTML = '✓ 支払済み';
+          paymentClass = 'paid';
+        } else if (item.attendance_status === '出席') {
+          paymentHTML = '未払い';
+          paymentClass = 'unpaid';
+        } else {
+          paymentHTML = '-';
+          paymentClass = 'free';
+        }
+      } else {
+        paymentHTML = '-';
+      }
+
+      return `
+        <tr onclick="location.href='event-detail.html?id=${item.event_id}'">
+          <td data-label="イベント">
+            <div class="history-event-name">${Utils.escapeHtml(item.event_name)}</div>
+            <div class="history-event-date">${eventDate}（${dayOfWeek}）</div>
+          </td>
+          <td data-label="出欠">
+            <span class="history-status ${statusClass}">${statusHTML}</span>
+          </td>
+          <td data-label="登録料">${fee}</td>
+          <td data-label="支払">
+            <span class="payment-status ${paymentClass}">${paymentHTML}</span>
+          </td>
+          <td data-label="登録日時">${registeredAt}</td>
+        </tr>
+      `;
+    }
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // フィルター変更
+      document.getElementById('periodSelect').addEventListener('change', (e) => {
+        filters.period = e.target.value;
+        applyFilters();
+      });
+
+      document.getElementById('statusSelect').addEventListener('change', (e) => {
+        filters.status = e.target.value;
+        applyFilters();
+      });
+
+      document.getElementById('paymentSelect').addEventListener('change', (e) => {
+        filters.payment = e.target.value;
+        applyFilters();
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>領収書管理 - 管理者画面</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .tab-button {
+      padding: 1rem 2rem;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+      position: relative;
+      bottom: -2px;
+    }
+
+    .tab-button:hover {
+      color: var(--primary-color);
+    }
+
+    .tab-button.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-section {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-section-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 1.5rem 0;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .member-selection-area {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      background-color: white;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .member-item:hover {
+      background-color: #f0f8ff;
+      border-color: var(--primary-color);
+    }
+
+    .member-item label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .member-item input[type="radio"],
+    .member-item input[type="checkbox"] {
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+    }
+
+    .member-info {
+      flex: 1;
+    }
+
+    .member-name {
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .member-affiliation {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-left: 0.5rem;
+    }
+
+    .member-amount {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 1.125rem;
+    }
+
+    .member-status {
+      font-size: 0.813rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background-color: #28a745;
+      color: white;
+      margin-left: 0.5rem;
+    }
+
+    .total-amount-display {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: #e8f5e9;
+      border-radius: 6px;
+      text-align: right;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #2e7d32;
+    }
+
+    .data-table-container {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .receipt-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .receipt-table th {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .receipt-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .receipt-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.813rem;
+      font-weight: 600;
+    }
+
+    .badge-combined {
+      background-color: #ffc107;
+      color: #000;
+    }
+
+    .filter-bar {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-bar-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .no-members {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    .no-receipts {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- 管理者レイアウト -->
+  <div class="admin-layout">
+    <!-- サイドバー -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-header">
+        <h1 class="admin-sidebar-title">管理者画面</h1>
+        <p class="admin-sidebar-subtitle">出欠管理システム</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <a href="dashboard.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📊</span>
+          <span class="admin-sidebar-text">ダッシュボード</span>
+        </a>
+        <a href="events.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📅</span>
+          <span class="admin-sidebar-text">イベント管理</span>
+        </a>
+        <a href="members.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">👥</span>
+          <span class="admin-sidebar-text">メンバー管理</span>
+        </a>
+        <a href="analytics.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📈</span>
+          <span class="admin-sidebar-text">出席率分析</span>
+        </a>
+        <a href="payments.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">💰</span>
+          <span class="admin-sidebar-text">支払い管理</span>
+        </a>
+        <a href="checkin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📱</span>
+          <span class="admin-sidebar-text">QRチェックイン</span>
+        </a>
+        <a href="receipts-admin.html" class="admin-sidebar-item active">
+          <span class="admin-sidebar-icon">🧾</span>
+          <span class="admin-sidebar-text">領収書管理</span>
+        </a>
+
+        <div class="admin-sidebar-divider"></div>
+
+        <a href="../home.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🏠</span>
+          <span class="admin-sidebar-text">ユーザー画面へ</span>
+        </a>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button id="logoutBtn" class="btn btn-outline btn-block" style="color: white; border-color: rgba(255,255,255,0.3);">
+          ログアウト
+        </button>
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="admin-main">
+      <!-- トップバー -->
+      <div class="admin-topbar">
+        <button class="admin-mobile-toggle" id="mobileToggle">
+          ☰
+        </button>
+        <h2 class="admin-topbar-title">領収書管理</h2>
+        <div class="admin-topbar-actions">
+          <div class="admin-user-info">
+            <span class="admin-user-icon">👤</span>
+            <div class="admin-user-details">
+              <span class="admin-user-name" id="userName">管理者</span>
+              <span class="admin-user-role">管理者</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- コンテンツ -->
+      <div class="admin-content">
+        <!-- タブ -->
+        <div class="tabs">
+          <button class="tab-button active" data-tab="single">通常発行</button>
+          <button class="tab-button" data-tab="combined">合算発行</button>
+          <button class="tab-button" data-tab="list">発行済み一覧</button>
+        </div>
+
+        <!-- 通常発行タブ -->
+        <div id="singleTab" class="tab-content active">
+          <div class="form-section">
+            <h3 class="form-section-title">通常領収書発行</h3>
+
+            <div class="form-group">
+              <label for="singleEventSelect" class="form-label required">イベント選択</label>
+              <select id="singleEventSelect" class="form-input" required>
+                <option value="">-- イベントを選択 --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="singleAffiliationFilter" class="form-label">所属フィルター</label>
+              <select id="singleAffiliationFilter" class="form-input">
+                <option value="">-- 全て表示 --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">メンバー選択</label>
+              <div id="singleMemberList" class="member-selection-area">
+                <p class="no-members">イベントを選択してください</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="singleCompanyName" class="form-label required">宛名</label>
+              <input
+                type="text"
+                id="singleCompanyName"
+                class="form-input"
+                placeholder="会社名または個人名"
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="singleReceiptNote" class="form-label required">但し書き</label>
+              <input
+                type="text"
+                id="singleReceiptNote"
+                class="form-input"
+                placeholder="例: 会費として"
+                required
+              >
+            </div>
+
+            <div style="text-align: right;">
+              <button id="issueSingleBtn" class="btn btn-primary btn-lg" disabled>
+                領収書を発行
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 合算発行タブ -->
+        <div id="combinedTab" class="tab-content">
+          <div class="form-section">
+            <h3 class="form-section-title">合算領収書発行（代理支払い対応）</h3>
+
+            <div class="form-group">
+              <label for="combinedEventSelect" class="form-label required">イベント選択</label>
+              <select id="combinedEventSelect" class="form-input" required>
+                <option value="">-- イベントを選択 --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="combinedAffiliationFilter" class="form-label">所属フィルター</label>
+              <select id="combinedAffiliationFilter" class="form-input">
+                <option value="">-- 全て表示 --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">メンバー複数選択</label>
+              <div id="combinedMemberList" class="member-selection-area">
+                <p class="no-members">イベントを選択してください</p>
+              </div>
+              <div id="totalAmountDisplay" class="total-amount-display" style="display: none;">
+                合計金額: <span id="totalAmount">0</span>円
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="combinedCompanyName" class="form-label required">宛名（代理支払者）</label>
+              <input
+                type="text"
+                id="combinedCompanyName"
+                class="form-input"
+                placeholder="代理支払者の会社名または個人名"
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="combinedReceiptNote" class="form-label required">但し書き</label>
+              <input
+                type="text"
+                id="combinedReceiptNote"
+                class="form-input"
+                placeholder="例: 会費として"
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="combinedDetailNote" class="form-label">内訳メモ（任意）</label>
+              <input
+                type="text"
+                id="combinedDetailNote"
+                class="form-input"
+                placeholder="例: 山田、佐藤、鈴木の3名分"
+              >
+            </div>
+
+            <div style="text-align: right;">
+              <button id="issueCombinedBtn" class="btn btn-primary btn-lg" disabled>
+                合算領収書を発行
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 発行済み一覧タブ -->
+        <div id="listTab" class="tab-content">
+          <!-- フィルター -->
+          <div class="filter-bar">
+            <div class="filter-bar-row">
+              <div class="form-group">
+                <label for="listEventFilter" class="form-label">イベント</label>
+                <select id="listEventFilter" class="form-input">
+                  <option value="">-- 全て --</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="listAffiliationFilter" class="form-label">所属</label>
+                <select id="listAffiliationFilter" class="form-input">
+                  <option value="">-- 全て --</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="listDateFilter" class="form-label">発行日</label>
+                <input type="date" id="listDateFilter" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button id="clearFilterBtn" class="btn btn-outline">
+                  フィルタークリア
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 一覧テーブル -->
+          <div class="data-table-container">
+            <h3 class="form-section-title">発行済み領収書一覧（<span id="receiptCount">0</span>件）</h3>
+            <div id="receiptsTableContainer">
+              <table class="receipt-table">
+                <thead>
+                  <tr>
+                    <th>領収書番号</th>
+                    <th>発行日</th>
+                    <th>イベント名</th>
+                    <th>宛名</th>
+                    <th>金額</th>
+                    <th>タイプ</th>
+                    <th>PDF</th>
+                  </tr>
+                </thead>
+                <tbody id="receiptsTableBody">
+                  <tr>
+                    <td colspan="7" class="no-receipts">領収書がありません</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScriptファイル -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+
+  <script>
+    const userInfo = Auth.getUserInfo();
+    let events = [];
+    let affiliations = [];
+    let selectedSingleMember = null;
+    let selectedCombinedMembers = [];
+    let singleMembers = [];
+    let combinedMembers = [];
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 管理者権限チェック
+      Auth.requireAdmin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // イベントリスナー設定
+      setupEventListeners();
+
+      // 初期データ読み込み
+      await loadEvents();
+      await loadAffiliations();
+      await loadReceipts();
+    });
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // タブ切り替え
+      document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', () => {
+          switchTab(button.dataset.tab);
+        });
+      });
+
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // モバイルメニュートグル
+      document.getElementById('mobileToggle').addEventListener('click', () => {
+        document.getElementById('adminSidebar').classList.toggle('mobile-open');
+      });
+
+      // 通常発行
+      document.getElementById('singleEventSelect').addEventListener('change', handleSingleEventChange);
+      document.getElementById('singleAffiliationFilter').addEventListener('change', filterSingleMembers);
+      document.getElementById('issueSingleBtn').addEventListener('click', issueSingleReceipt);
+
+      // 合算発行
+      document.getElementById('combinedEventSelect').addEventListener('change', handleCombinedEventChange);
+      document.getElementById('combinedAffiliationFilter').addEventListener('change', filterCombinedMembers);
+      document.getElementById('issueCombinedBtn').addEventListener('click', issueCombinedReceipt);
+
+      // 一覧フィルター
+      document.getElementById('listEventFilter').addEventListener('change', filterReceipts);
+      document.getElementById('listAffiliationFilter').addEventListener('change', filterReceipts);
+      document.getElementById('listDateFilter').addEventListener('change', filterReceipts);
+      document.getElementById('clearFilterBtn').addEventListener('click', clearFilters);
+    }
+
+    // タブ切り替え
+    function switchTab(tabName) {
+      // タブボタンのアクティブ状態を切り替え
+      document.querySelectorAll('.tab-button').forEach(button => {
+        if (button.dataset.tab === tabName) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      });
+
+      // タブコンテンツの表示切り替え
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+
+      const targetTab = tabName === 'single' ? 'singleTab' :
+                        tabName === 'combined' ? 'combinedTab' : 'listTab';
+      document.getElementById(targetTab).classList.add('active');
+    }
+
+    // イベント一覧取得
+    async function loadEvents() {
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getReceiptableEvents');
+
+        if (result.success && result.events) {
+          events = result.events;
+          populateEventSelects();
+        }
+      } catch (error) {
+        console.error('Load events error:', error);
+        Utils.showError('イベント一覧の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // イベント選択肢を生成
+    function populateEventSelects() {
+      const singleSelect = document.getElementById('singleEventSelect');
+      const combinedSelect = document.getElementById('combinedEventSelect');
+      const listFilter = document.getElementById('listEventFilter');
+
+      singleSelect.innerHTML = '<option value="">-- イベントを選択 --</option>';
+      combinedSelect.innerHTML = '<option value="">-- イベントを選択 --</option>';
+      listFilter.innerHTML = '<option value="">-- 全て --</option>';
+
+      events.forEach(event => {
+        const option1 = document.createElement('option');
+        option1.value = event.event_id;
+        option1.textContent = `${event.title} (${event.date})`;
+        singleSelect.appendChild(option1);
+
+        const option2 = document.createElement('option');
+        option2.value = event.event_id;
+        option2.textContent = `${event.title} (${event.date})`;
+        combinedSelect.appendChild(option2);
+
+        const option3 = document.createElement('option');
+        option3.value = event.event_id;
+        option3.textContent = `${event.title} (${event.date})`;
+        listFilter.appendChild(option3);
+      });
+    }
+
+    // 所属一覧取得
+    async function loadAffiliations() {
+      try {
+        const result = await API.call('getAllMembers');
+
+        if (result.success && result.members) {
+          const affiliationSet = new Set();
+          result.members.forEach(member => {
+            if (member.affiliation) {
+              affiliationSet.add(member.affiliation);
+            }
+          });
+          affiliations = Array.from(affiliationSet).sort();
+          populateAffiliationFilters();
+        }
+      } catch (error) {
+        console.error('Load affiliations error:', error);
+      }
+    }
+
+    // 所属フィルター選択肢を生成
+    function populateAffiliationFilters() {
+      const singleFilter = document.getElementById('singleAffiliationFilter');
+      const combinedFilter = document.getElementById('combinedAffiliationFilter');
+      const listFilter = document.getElementById('listAffiliationFilter');
+
+      singleFilter.innerHTML = '<option value="">-- 全て表示 --</option>';
+      combinedFilter.innerHTML = '<option value="">-- 全て表示 --</option>';
+      listFilter.innerHTML = '<option value="">-- 全て --</option>';
+
+      affiliations.forEach(affiliation => {
+        const option1 = document.createElement('option');
+        option1.value = affiliation;
+        option1.textContent = affiliation;
+        singleFilter.appendChild(option1);
+
+        const option2 = document.createElement('option');
+        option2.value = affiliation;
+        option2.textContent = affiliation;
+        combinedFilter.appendChild(option2);
+
+        const option3 = document.createElement('option');
+        option3.value = affiliation;
+        option3.textContent = affiliation;
+        listFilter.appendChild(option3);
+      });
+    }
+
+    // 通常発行: イベント選択変更
+    async function handleSingleEventChange() {
+      const eventId = document.getElementById('singleEventSelect').value;
+
+      if (!eventId) {
+        document.getElementById('singleMemberList').innerHTML = '<p class="no-members">イベントを選択してください</p>';
+        document.getElementById('issueSingleBtn').disabled = true;
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getAdminReceiptableMembers', { event_id: eventId });
+
+        if (result.success && result.members) {
+          singleMembers = result.members;
+
+          // デフォルトの但し書きを設定
+          const event = events.find(e => e.event_id === eventId);
+          if (event && event.receipt_note_default) {
+            document.getElementById('singleReceiptNote').value = event.receipt_note_default;
+          } else if (event) {
+            document.getElementById('singleReceiptNote').value = `${event.title} 参加費として`;
+          }
+
+          filterSingleMembers();
+        }
+      } catch (error) {
+        console.error('Load members error:', error);
+        Utils.showError('メンバー一覧の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 通常発行: メンバーフィルタリング
+    function filterSingleMembers() {
+      const affiliation = document.getElementById('singleAffiliationFilter').value;
+      const filteredMembers = affiliation
+        ? singleMembers.filter(m => m.affiliation === affiliation)
+        : singleMembers;
+
+      renderSingleMembers(filteredMembers);
+    }
+
+    // 通常発行: メンバー一覧表示
+    function renderSingleMembers(members) {
+      const container = document.getElementById('singleMemberList');
+
+      if (members.length === 0) {
+        container.innerHTML = '<p class="no-members">該当するメンバーがいません</p>';
+        return;
+      }
+
+      let html = '';
+      members.forEach(member => {
+        html += `
+          <div class="member-item">
+            <label>
+              <input
+                type="radio"
+                name="singleMember"
+                value="${member.member_id}"
+                data-company="${member.company_name || ''}"
+                data-amount="${member.amount}"
+                onchange="handleSingleMemberSelect(this)"
+              >
+              <div class="member-info">
+                <span class="member-name">${member.name}</span>
+                <span class="member-affiliation">${member.affiliation || ''}</span>
+                <span class="member-status">支払済</span>
+              </div>
+              <div class="member-amount">${member.amount.toLocaleString()}円</div>
+            </label>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // 通常発行: メンバー選択
+    window.handleSingleMemberSelect = function(radio) {
+      selectedSingleMember = {
+        member_id: radio.value,
+        company_name: radio.dataset.company,
+        amount: parseInt(radio.dataset.amount)
+      };
+
+      // 宛名を自動入力
+      if (selectedSingleMember.company_name) {
+        document.getElementById('singleCompanyName').value = selectedSingleMember.company_name;
+      }
+
+      // 発行ボタンを有効化
+      document.getElementById('issueSingleBtn').disabled = false;
+    };
+
+    // 合算発行: イベント選択変更
+    async function handleCombinedEventChange() {
+      const eventId = document.getElementById('combinedEventSelect').value;
+
+      if (!eventId) {
+        document.getElementById('combinedMemberList').innerHTML = '<p class="no-members">イベントを選択してください</p>';
+        document.getElementById('issueCombinedBtn').disabled = true;
+        document.getElementById('totalAmountDisplay').style.display = 'none';
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getAdminReceiptableMembers', { event_id: eventId });
+
+        if (result.success && result.members) {
+          combinedMembers = result.members;
+
+          // デフォルトの但し書きを設定
+          const event = events.find(e => e.event_id === eventId);
+          if (event && event.receipt_note_default) {
+            document.getElementById('combinedReceiptNote').value = event.receipt_note_default;
+          } else if (event) {
+            document.getElementById('combinedReceiptNote').value = `${event.title} 参加費として`;
+          }
+
+          filterCombinedMembers();
+        }
+      } catch (error) {
+        console.error('Load members error:', error);
+        Utils.showError('メンバー一覧の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 合算発行: メンバーフィルタリング
+    function filterCombinedMembers() {
+      const affiliation = document.getElementById('combinedAffiliationFilter').value;
+      const filteredMembers = affiliation
+        ? combinedMembers.filter(m => m.affiliation === affiliation)
+        : combinedMembers;
+
+      renderCombinedMembers(filteredMembers);
+    }
+
+    // 合算発行: メンバー一覧表示
+    function renderCombinedMembers(members) {
+      const container = document.getElementById('combinedMemberList');
+
+      if (members.length === 0) {
+        container.innerHTML = '<p class="no-members">該当するメンバーがいません</p>';
+        return;
+      }
+
+      let html = '';
+      members.forEach(member => {
+        html += `
+          <div class="member-item">
+            <label>
+              <input
+                type="checkbox"
+                name="combinedMembers"
+                value="${member.member_id}"
+                data-amount="${member.amount}"
+                data-name="${member.name}"
+                onchange="handleCombinedMemberSelect()"
+              >
+              <div class="member-info">
+                <span class="member-name">${member.name}</span>
+                <span class="member-affiliation">${member.affiliation || ''}</span>
+                <span class="member-status">支払済</span>
+              </div>
+              <div class="member-amount">${member.amount.toLocaleString()}円</div>
+            </label>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // 合算発行: メンバー選択変更
+    window.handleCombinedMemberSelect = function() {
+      selectedCombinedMembers = [];
+      let totalAmount = 0;
+      const memberNames = [];
+
+      document.querySelectorAll('input[name="combinedMembers"]:checked').forEach(checkbox => {
+        const amount = parseInt(checkbox.dataset.amount);
+        selectedCombinedMembers.push({
+          member_id: checkbox.value,
+          amount: amount,
+          name: checkbox.dataset.name
+        });
+        totalAmount += amount;
+        memberNames.push(checkbox.dataset.name);
+      });
+
+      // 合計金額表示
+      if (selectedCombinedMembers.length > 0) {
+        document.getElementById('totalAmount').textContent = totalAmount.toLocaleString();
+        document.getElementById('totalAmountDisplay').style.display = 'block';
+        document.getElementById('issueCombinedBtn').disabled = false;
+
+        // 内訳メモの自動生成
+        const detailNote = `${memberNames.join('、')}の${selectedCombinedMembers.length}名分`;
+        document.getElementById('combinedDetailNote').value = detailNote;
+      } else {
+        document.getElementById('totalAmountDisplay').style.display = 'none';
+        document.getElementById('issueCombinedBtn').disabled = true;
+      }
+    };
+
+    // 通常領収書発行
+    async function issueSingleReceipt() {
+      if (!selectedSingleMember) {
+        Utils.showError('メンバーを選択してください');
+        return;
+      }
+
+      const eventId = document.getElementById('singleEventSelect').value;
+      const companyName = document.getElementById('singleCompanyName').value.trim();
+      const receiptNote = document.getElementById('singleReceiptNote').value.trim();
+
+      if (!companyName || !receiptNote) {
+        Utils.showError('宛名と但し書きを入力してください');
+        return;
+      }
+
+      if (!confirm('領収書を発行しますか？')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('issueReceipt', {
+          event_id: eventId,
+          member_id: selectedSingleMember.member_id,
+          company_name: companyName,
+          amount: selectedSingleMember.amount,
+          receipt_note: receiptNote
+        });
+
+        if (result.success) {
+          Utils.showSuccess('領収書を発行しました');
+
+          // フォームをリセット
+          document.getElementById('singleEventSelect').value = '';
+          document.getElementById('singleAffiliationFilter').value = '';
+          document.getElementById('singleCompanyName').value = '';
+          document.getElementById('singleReceiptNote').value = '';
+          document.getElementById('singleMemberList').innerHTML = '<p class="no-members">イベントを選択してください</p>';
+          document.getElementById('issueSingleBtn').disabled = true;
+          selectedSingleMember = null;
+
+          // 一覧を再読み込み
+          await loadReceipts();
+        } else {
+          throw new Error(result.message || '発行に失敗しました');
+        }
+      } catch (error) {
+        console.error('Issue receipt error:', error);
+        Utils.showError(error.message || '領収書の発行に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 合算領収書発行
+    async function issueCombinedReceipt() {
+      if (selectedCombinedMembers.length === 0) {
+        Utils.showError('メンバーを選択してください');
+        return;
+      }
+
+      const eventId = document.getElementById('combinedEventSelect').value;
+      const companyName = document.getElementById('combinedCompanyName').value.trim();
+      const receiptNote = document.getElementById('combinedReceiptNote').value.trim();
+      const detailNote = document.getElementById('combinedDetailNote').value.trim();
+
+      if (!companyName || !receiptNote) {
+        Utils.showError('宛名と但し書きを入力してください');
+        return;
+      }
+
+      const totalAmount = selectedCombinedMembers.reduce((sum, m) => sum + m.amount, 0);
+      const memberIds = selectedCombinedMembers.map(m => m.member_id);
+
+      if (!confirm(`合算領収書を発行しますか？\n合計金額: ${totalAmount.toLocaleString()}円\n対象: ${selectedCombinedMembers.length}名`)) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('issueCombinedReceipt', {
+          event_id: eventId,
+          member_ids: memberIds,
+          company_name: companyName,
+          amount: totalAmount,
+          receipt_note: receiptNote,
+          detail_note: detailNote
+        });
+
+        if (result.success) {
+          Utils.showSuccess('合算領収書を発行しました');
+
+          // フォームをリセット
+          document.getElementById('combinedEventSelect').value = '';
+          document.getElementById('combinedAffiliationFilter').value = '';
+          document.getElementById('combinedCompanyName').value = '';
+          document.getElementById('combinedReceiptNote').value = '';
+          document.getElementById('combinedDetailNote').value = '';
+          document.getElementById('combinedMemberList').innerHTML = '<p class="no-members">イベントを選択してください</p>';
+          document.getElementById('totalAmountDisplay').style.display = 'none';
+          document.getElementById('issueCombinedBtn').disabled = true;
+          selectedCombinedMembers = [];
+
+          // 一覧を再読み込み
+          await loadReceipts();
+        } else {
+          throw new Error(result.message || '発行に失敗しました');
+        }
+      } catch (error) {
+        console.error('Issue combined receipt error:', error);
+        Utils.showError(error.message || '合算領収書の発行に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 領収書一覧取得
+    async function loadReceipts() {
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getIssuedReceipts');
+
+        if (result.success && result.receipts) {
+          renderReceipts(result.receipts);
+        }
+      } catch (error) {
+        console.error('Load receipts error:', error);
+        Utils.showError('領収書一覧の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 領収書一覧表示
+    function renderReceipts(receipts) {
+      const tbody = document.getElementById('receiptsTableBody');
+      document.getElementById('receiptCount').textContent = receipts.length;
+
+      if (receipts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-receipts">領収書がありません</td></tr>';
+        return;
+      }
+
+      let html = '';
+      receipts.forEach(receipt => {
+        const badgeHtml = receipt.is_combined
+          ? '<span class="badge badge-combined">合算</span>'
+          : '';
+
+        html += `
+          <tr>
+            <td>${receipt.receipt_number}</td>
+            <td>${receipt.issued_at}</td>
+            <td>${receipt.event_name}</td>
+            <td>${receipt.company_name}</td>
+            <td>${receipt.amount.toLocaleString()}円</td>
+            <td>${badgeHtml}</td>
+            <td>
+              <button class="btn btn-sm btn-primary" onclick="viewPDF('${receipt.pdf_url}')">
+                PDF表示
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    // PDF表示
+    window.viewPDF = function(pdfUrl) {
+      if (pdfUrl) {
+        window.open(pdfUrl, '_blank');
+      } else {
+        Utils.showError('PDFが見つかりません');
+      }
+    };
+
+    // フィルター適用
+    function filterReceipts() {
+      // 実装省略（サーバーサイドでフィルタリングする場合）
+      loadReceipts();
+    }
+
+    // フィルタークリア
+    function clearFilters() {
+      document.getElementById('listEventFilter').value = '';
+      document.getElementById('listAffiliationFilter').value = '';
+      document.getElementById('listDateFilter').value = '';
+      loadReceipts();
+    }
+  </script>
+</body>
+</html>

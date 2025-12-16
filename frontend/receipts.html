@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>領収書 - グローバルデザイン推進委員会 出欠管理</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .receipts-header {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .receipts-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 1rem 0;
+    }
+
+    .receipts-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .filter-section {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .receipts-list {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .receipts-count {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .receipt-card {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .receipt-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: var(--primary-color);
+    }
+
+    .receipt-card.issued {
+      background: linear-gradient(to right, var(--success-bg) 0%, white 10%);
+      border-left: 4px solid var(--success-color);
+    }
+
+    .receipt-card.pending {
+      background: linear-gradient(to right, var(--warning-bg) 0%, white 10%);
+      border-left: 4px solid var(--warning-color);
+    }
+
+    .receipt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .receipt-info {
+      flex: 1;
+    }
+
+    .receipt-event-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .receipt-event-date {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .receipt-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .receipt-status.issued {
+      background-color: var(--success-bg);
+      color: var(--success-color);
+    }
+
+    .receipt-status.pending {
+      background-color: var(--warning-bg);
+      color: var(--warning-color);
+    }
+
+    .receipt-status.unavailable {
+      background-color: var(--gray-light);
+      color: var(--text-secondary);
+    }
+
+    .receipt-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+      background-color: var(--gray-light);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .receipt-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .receipt-detail-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .receipt-detail-value {
+      font-size: 0.875rem;
+      color: var(--text-color);
+      font-weight: 600;
+    }
+
+    .receipt-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .receipt-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-color);
+      background-color: white;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .receipt-btn:hover:not(:disabled) {
+      background-color: var(--primary-bg);
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .receipt-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .receipt-btn.primary {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .receipt-btn.primary:hover:not(:disabled) {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .receipt-notice {
+      background-color: var(--info-bg);
+      color: var(--info-color);
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.813rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .receipt-notice-icon {
+      font-size: 1.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .receipts-list {
+        padding: 1.5rem;
+      }
+
+      .receipt-card {
+        padding: 1.25rem;
+      }
+
+      .receipt-header {
+        flex-direction: column;
+      }
+
+      .receipt-details {
+        grid-template-columns: 1fr;
+      }
+
+      .receipt-actions {
+        flex-direction: column;
+      }
+
+      .receipt-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-container">
+      <!-- トップバー -->
+      <div class="header-top">
+        <h1 class="header-title">出欠管理システム</h1>
+        <div class="header-user">
+          <span id="userName" class="header-user-name"></span>
+          <button id="mobileNavToggle" class="mobile-nav-toggle">☰</button>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">ログアウト</button>
+        </div>
+      </div>
+
+      <!-- ナビゲーション -->
+      <nav class="nav">
+        <div class="nav-container">
+          <a href="home.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">HOME</span>
+          </a>
+          <a href="events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">イベント</span>
+          </a>
+          <a href="members.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">メンバー</span>
+          </a>
+          <a href="history.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">履歴</span>
+          </a>
+          <a href="receipts.html" class="nav-item active">
+            <span class="nav-icon">🧾</span>
+            <span class="nav-text">領収書</span>
+          </a>
+          <a href="profile.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">プロフィール</span>
+          </a>
+          <!-- 管理者用リンク -->
+          <a href="admin/dashboard.html" id="adminLink" class="nav-item" style="display: none;">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">管理画面</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container">
+      <!-- ヘッダー -->
+      <div class="receipts-header">
+        <h2 class="receipts-title">領収書一覧</h2>
+        <p class="receipts-subtitle">
+          登録料をお支払いいただいたイベントの領収書を発行・ダウンロードできます。<br>
+          領収書は支払確認後、自動的に発行されます。
+        </p>
+      </div>
+
+      <!-- フィルター -->
+      <div class="filter-section">
+        <div class="filter-row">
+          <!-- 期間選択 -->
+          <div class="filter-group">
+            <label class="filter-label">期間</label>
+            <select id="periodSelect" class="form-input">
+              <option value="all">すべて</option>
+              <option value="this-year">今年</option>
+              <option value="last-year">昨年</option>
+              <option value="last-3-months">過去3ヶ月</option>
+              <option value="last-6-months">過去6ヶ月</option>
+            </select>
+          </div>
+
+          <!-- ステータス選択 -->
+          <div class="filter-group">
+            <label class="filter-label">ステータス</label>
+            <select id="statusSelect" class="form-input">
+              <option value="all">すべて</option>
+              <option value="issued">発行済み</option>
+              <option value="pending">発行可能</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 領収書リスト -->
+      <div class="receipts-list">
+        <div class="receipts-count" id="receiptsCount">0件の領収書</div>
+        <div id="receiptsList"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- JavaScriptファイル -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/nav.js"></script>
+
+  <script>
+    let allReceipts = [];
+    let filteredReceipts = [];
+    const userInfo = Auth.getUserInfo();
+
+    // フィルター状態
+    let filters = {
+      period: 'all',
+      status: 'all'
+    };
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // ログインチェック
+      Auth.requireLogin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // 領収書取得
+      await loadReceipts();
+
+      // イベントリスナー設定
+      setupEventListeners();
+    });
+
+    // 領収書取得
+    async function loadReceipts() {
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getReceipts', {
+          member_id: userInfo.memberId
+        });
+
+        if (result.success) {
+          allReceipts = result.receipts || [];
+          applyFilters();
+        } else {
+          throw new Error(result.message || '領収書の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load receipts error:', error);
+        Utils.showError('領収書の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // フィルター適用
+    function applyFilters() {
+      const now = new Date();
+
+      filteredReceipts = allReceipts.filter(receipt => {
+        // 期間フィルター
+        const eventDate = new Date(receipt.event_date);
+        if (filters.period !== 'all') {
+          if (filters.period === 'this-year' && eventDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+          if (filters.period === 'last-year' && eventDate.getFullYear() !== now.getFullYear() - 1) {
+            return false;
+          }
+          if (filters.period === 'last-3-months') {
+            const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+            if (eventDate < threeMonthsAgo) {
+              return false;
+            }
+          }
+          if (filters.period === 'last-6-months') {
+            const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+            if (eventDate < sixMonthsAgo) {
+              return false;
+            }
+          }
+        }
+
+        // ステータスフィルター
+        if (filters.status !== 'all') {
+          if (filters.status === 'issued' && !receipt.receipt_url) {
+            return false;
+          }
+          if (filters.status === 'pending' && receipt.receipt_url) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      displayReceipts();
+    }
+
+    // 領収書表示
+    function displayReceipts() {
+      const container = document.getElementById('receiptsList');
+      const countElement = document.getElementById('receiptsCount');
+
+      // 件数表示
+      countElement.textContent = `${filteredReceipts.length}件の領収書`;
+
+      // 空状態
+      if (filteredReceipts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🧾</div>
+            <p class="empty-state-text">該当する領収書がありません</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 領収書カード表示
+      container.innerHTML = filteredReceipts.map(receipt => createReceiptCard(receipt)).join('');
+    }
+
+    // 領収書カード作成
+    function createReceiptCard(receipt) {
+      const eventDate = Utils.formatDateSlash(receipt.event_date);
+      const dayOfWeek = Utils.getDayOfWeek(receipt.event_date);
+      const amount = Utils.formatCurrency(receipt.amount);
+      const issuedDate = receipt.issued_date ? Utils.formatDateSlash(receipt.issued_date) : '-';
+
+      // ステータス
+      let statusClass = 'unavailable';
+      let statusText = '発行不可';
+      let cardClass = '';
+
+      if (receipt.receipt_url) {
+        statusClass = 'issued';
+        statusText = '✓ 発行済み';
+        cardClass = 'issued';
+      } else if (receipt.payment_confirmed) {
+        statusClass = 'pending';
+        statusText = '発行可能';
+        cardClass = 'pending';
+      }
+
+      return `
+        <div class="receipt-card ${cardClass}">
+          <div class="receipt-header">
+            <div class="receipt-info">
+              <div class="receipt-event-name">${Utils.escapeHtml(receipt.event_name)}</div>
+              <div class="receipt-event-date">開催日：${eventDate}（${dayOfWeek}）</div>
+            </div>
+            <div class="receipt-status ${statusClass}">${statusText}</div>
+          </div>
+
+          <div class="receipt-details">
+            <div class="receipt-detail-item">
+              <div class="receipt-detail-label">金額</div>
+              <div class="receipt-detail-value">${amount}</div>
+            </div>
+            ${receipt.receipt_number ? `
+              <div class="receipt-detail-item">
+                <div class="receipt-detail-label">領収書番号</div>
+                <div class="receipt-detail-value">${receipt.receipt_number}</div>
+              </div>
+            ` : ''}
+            <div class="receipt-detail-item">
+              <div class="receipt-detail-label">発行日</div>
+              <div class="receipt-detail-value">${issuedDate}</div>
+            </div>
+          </div>
+
+          ${!receipt.payment_confirmed ? `
+            <div class="receipt-notice">
+              <span class="receipt-notice-icon">ℹ️</span>
+              <span>支払いが確認されていないため、領収書を発行できません。</span>
+            </div>
+          ` : ''}
+
+          <div class="receipt-actions">
+            ${receipt.receipt_url ? `
+              <button class="receipt-btn primary" onclick="downloadReceipt('${receipt.receipt_url}', '${receipt.receipt_number}')">
+                <span>📥</span>
+                <span>PDFをダウンロード</span>
+              </button>
+              <button class="receipt-btn" onclick="viewReceipt('${receipt.receipt_url}')">
+                <span>👁️</span>
+                <span>プレビュー</span>
+              </button>
+            ` : receipt.payment_confirmed ? `
+              <button class="receipt-btn primary" onclick="issueReceipt('${receipt.event_id}', '${receipt.payment_id}')">
+                <span>📝</span>
+                <span>領収書を発行</span>
+              </button>
+            ` : ''}
+            <button class="receipt-btn" onclick="location.href='event-detail.html?id=${receipt.event_id}'">
+              <span>📅</span>
+              <span>イベント詳細</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 領収書発行
+    async function issueReceipt(eventId, paymentId) {
+      if (!confirm('領収書を発行しますか？')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('issueReceipt', {
+          event_id: eventId,
+          payment_id: paymentId,
+          member_id: userInfo.memberId
+        });
+
+        if (result.success) {
+          Utils.showSuccess('領収書を発行しました');
+          // 領収書を再取得
+          await loadReceipts();
+        } else {
+          throw new Error(result.message || '領収書の発行に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Issue receipt error:', error);
+        Utils.showError(error.message || '領収書の発行に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.issueReceipt = issueReceipt;
+
+    // 領収書ダウンロード
+    function downloadReceipt(url, receiptNumber) {
+      try {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `領収書_${receiptNumber}.pdf`;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Download error:', error);
+        Utils.showError('ダウンロードに失敗しました');
+      }
+    }
+    window.downloadReceipt = downloadReceipt;
+
+    // 領収書プレビュー
+    function viewReceipt(url) {
+      window.open(url, '_blank');
+    }
+    window.viewReceipt = viewReceipt;
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // フィルター変更
+      document.getElementById('periodSelect').addEventListener('change', (e) => {
+        filters.period = e.target.value;
+        applyFilters();
+      });
+
+      document.getElementById('statusSelect').addEventListener('change', (e) => {
+        filters.status = e.target.value;
+        applyFilters();
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+/**
+ * Payments.gs - 支払い管理
+ *
+ * 支払い確認、未払い一覧、キャンセル料管理
+ */
+
+/**
+ * 支払い確認（管理者のみ）
+ */
+function confirmPayment(token, params) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const paymentId = params.payment_id;
+
+  if (!paymentId) {
+    return {success: false, error: '支払いIDが必要です'};
+  }
+
+  const payment = findRow('payments', 'payment_id', paymentId);
+
+  if (!payment) {
+    return {success: false, error: '支払い情報が見つかりません'};
+  }
+
+  updateRow('payments', payment.rowIndex, {
+    paid: true,
+    paid_at: new Date(),
+    paid_by_admin: true
+  });
+
+  return {
+    success: true,
+    message: '支払いを確認しました'
+  };
+}
+
+/**
+ * 未払い一覧取得（管理者のみ）
+ */
+function getUnpaidList(token) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const payments = getSheetData('payments');
+  const events = getSheetData('events');
+  const members = getSheetData('members');
+
+  // 未払いのみフィルター
+  const unpaidPayments = payments.filter(p => !p.paid);
+
+  // イベント情報とメンバー情報を結合
+  const result = unpaidPayments.map(payment => {
+    const event = events.find(e => e.event_id === payment.event_id);
+    const member = members.find(m => m.member_id === payment.member_id);
+
+    return {
+      payment_id: payment.payment_id,
+      event_id: payment.event_id,
+      event_title: event ? event.title : '',
+      event_date: event ? event.date : '',
+      member_id: payment.member_id,
+      member_name: member ? member.name : '',
+      affiliation: member ? member.affiliation : '',
+      payment_method: payment.payment_method,
+      amount: payment.amount,
+      notes: payment.notes
+    };
+  });
+
+  // イベント日付でソート（降順）
+  result.sort((a, b) => {
+    const dateA = new Date(a.event_date);
+    const dateB = new Date(b.event_date);
+    return dateB - dateA;
+  });
+
+  return {
+    success: true,
+    unpaid_payments: result
+  };
+}
+
+/**
+ * キャンセル料一覧取得（管理者のみ）
+ */
+function getCancellationFeeList(token) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const attendances = getSheetData('attendance');
+  const events = getSheetData('events');
+  const members = getSheetData('members');
+  const payments = getSheetData('payments');
+
+  const result = [];
+
+  // キャンセル料が発生する条件:
+  // 1. イベントにcancellation_fee_dateが設定されている
+  // 2. 出欠登録で「不参加」になった
+  // 3. cancellation_fee_date以降に「不参加」に変更した場合
+
+  attendances.forEach(attendance => {
+    if (attendance.status !== '不参加') {
+      return;
+    }
+
+    const event = events.find(e => e.event_id === attendance.event_id);
+
+    if (!event || !event.cancellation_fee_date) {
+      return;
+    }
+
+    const cancellationFeeDate = new Date(event.cancellation_fee_date);
+    const registeredAt = new Date(attendance.registered_at);
+
+    // キャンセル料発生日以降の不参加登録のみ
+    if (registeredAt < cancellationFeeDate) {
+      return;
+    }
+
+    const member = members.find(m => m.member_id === attendance.member_id);
+    const payment = payments.find(p => p.event_id === attendance.event_id && p.member_id === attendance.member_id);
+
+    result.push({
+      event_id: event.event_id,
+      event_title: event.title,
+      event_date: event.date,
+      member_id: attendance.member_id,
+      member_name: member ? member.name : '',
+      affiliation: member ? member.affiliation : '',
+      cancellation_fee: event.fee_amount, // キャンセル料はイベント参加費と同額
+      paid: payment ? payment.paid : false,
+      payment_id: payment ? payment.payment_id : null,
+      registered_at: attendance.registered_at
+    });
+  });
+
+  // イベント日付でソート（降順）
+  result.sort((a, b) => {
+    const dateA = new Date(a.event_date);
+    const dateB = new Date(b.event_date);
+    return dateB - dateA;
+  });
+
+  return {
+    success: true,
+    cancellation_fees: result
+  };
+}
+
+/**
+ * イベント別支払い一覧取得（管理者のみ）
+ */
+function getPaymentsByEvent(token, eventId) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  if (!eventId) {
+    return {success: false, error: 'イベントIDが必要です'};
+  }
+
+  const payments = getSheetData('payments');
+  const members = getSheetData('members');
+
+  // 指定イベントの支払いのみフィルター
+  const eventPayments = payments.filter(p => p.event_id === eventId);
+
+  // メンバー情報を結合
+  const result = eventPayments.map(payment => {
+    const member = members.find(m => m.member_id === payment.member_id);
+
+    return {
+      payment_id: payment.payment_id,
+      member_id: payment.member_id,
+      member_name: member ? member.name : '',
+      affiliation: member ? member.affiliation : '',
+      payment_method: payment.payment_method,
+      amount: payment.amount,
+      paid: payment.paid,
+      paid_at: payment.paid_at,
+      receipt_issued: payment.receipt_issued,
+      receipt_number: payment.receipt_number,
+      notes: payment.notes
+    };
+  });
+
+  // メンバー名でソート
+  result.sort((a, b) => a.member_name.localeCompare(b.member_name, 'ja'));
+
+  return {
+    success: true,
+    payments: result
+  };
+}

@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>プロフィール - グローバルデザイン推進委員会 出欠管理</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .profile-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-header-content {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .profile-photo-wrapper {
+      position: relative;
+    }
+
+    .profile-photo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      background-color: var(--gray-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+
+    .profile-photo-upload {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 36px;
+      height: 36px;
+      background-color: var(--primary-color);
+      border-radius: 50%;
+      border: 3px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+
+    .profile-photo-upload:hover {
+      background-color: var(--secondary-color);
+      transform: scale(1.1);
+    }
+
+    .profile-header-info h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .profile-header-meta {
+      font-size: 0.875rem;
+      opacity: 0.9;
+    }
+
+    .profile-section {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 1.5rem 0;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .info-item {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 1rem;
+      padding: 1rem;
+      background-color: var(--gray-light);
+      border-radius: 8px;
+    }
+
+    .info-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .info-value {
+      font-size: 0.875rem;
+      color: var(--text-color);
+      font-weight: 500;
+    }
+
+    .edit-mode .info-item {
+      background-color: white;
+      border: 1px solid var(--border-color);
+    }
+
+    .password-requirements {
+      background-color: var(--info-bg);
+      color: var(--info-color);
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.813rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .password-requirements ul {
+      margin: 0.5rem 0 0 1.5rem;
+      padding: 0;
+    }
+
+    .password-requirements li {
+      margin-bottom: 0.25rem;
+    }
+
+    .photo-upload-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .photo-upload-modal.active {
+      display: flex;
+    }
+
+    .photo-upload-content {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .photo-upload-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .photo-preview {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 1.5rem;
+      display: block;
+      border: 2px solid var(--border-color);
+    }
+
+    .photo-upload-info {
+      font-size: 0.813rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .profile-header-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .profile-section {
+        padding: 1.5rem;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .info-item {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .form-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-container">
+      <!-- トップバー -->
+      <div class="header-top">
+        <h1 class="header-title">出欠管理システム</h1>
+        <div class="header-user">
+          <span id="userName" class="header-user-name"></span>
+          <button id="mobileNavToggle" class="mobile-nav-toggle">☰</button>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">ログアウト</button>
+        </div>
+      </div>
+
+      <!-- ナビゲーション -->
+      <nav class="nav">
+        <div class="nav-container">
+          <a href="home.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">HOME</span>
+          </a>
+          <a href="events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">イベント</span>
+          </a>
+          <a href="members.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">メンバー</span>
+          </a>
+          <a href="history.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">履歴</span>
+          </a>
+          <a href="receipts.html" class="nav-item">
+            <span class="nav-icon">🧾</span>
+            <span class="nav-text">領収書</span>
+          </a>
+          <a href="profile.html" class="nav-item active">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">プロフィール</span>
+          </a>
+          <!-- 管理者用リンク -->
+          <a href="admin/dashboard.html" id="adminLink" class="nav-item" style="display: none;">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">管理画面</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container profile-container">
+      <!-- プロフィールヘッダー -->
+      <div class="profile-header">
+        <div class="profile-header-content">
+          <div class="profile-photo-wrapper">
+            <div id="profilePhoto" class="profile-photo">👤</div>
+            <button class="profile-photo-upload" onclick="openPhotoUpload()">📷</button>
+          </div>
+          <div class="profile-header-info">
+            <h2 id="profileName">-</h2>
+            <div class="profile-header-meta">
+              <div>権限: <span id="profileRole">-</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 基本情報 -->
+      <div class="profile-section">
+        <h3 class="section-title">基本情報</h3>
+        <div id="basicInfoContent"></div>
+      </div>
+
+      <!-- パスワード変更 -->
+      <div class="profile-section">
+        <h3 class="section-title">パスワード変更</h3>
+
+        <div class="password-requirements">
+          <strong>パスワード要件：</strong>
+          <ul>
+            <li>8文字以上</li>
+            <li>英数字を含むこと推奨</li>
+          </ul>
+        </div>
+
+        <form id="passwordForm">
+          <div class="form-group">
+            <label for="currentPassword" class="form-label required">現在のパスワード</label>
+            <input
+              type="password"
+              id="currentPassword"
+              class="form-input"
+              required
+              autocomplete="current-password"
+            >
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="newPassword" class="form-label required">新しいパスワード</label>
+              <input
+                type="password"
+                id="newPassword"
+                class="form-input"
+                required
+                minlength="8"
+                autocomplete="new-password"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword" class="form-label required">新しいパスワード（確認）</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                class="form-input"
+                required
+                minlength="8"
+                autocomplete="new-password"
+              >
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">パスワードを変更</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- 写真アップロードモーダル -->
+  <div id="photoUploadModal" class="photo-upload-modal">
+    <div class="photo-upload-content">
+      <h3 class="photo-upload-title">プロフィール写真を変更</h3>
+
+      <img id="photoPreview" class="photo-preview" src="" alt="Preview" style="display: none;">
+      <div id="photoPlaceholder" class="photo-preview" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; background-color: var(--gray-light);">
+        👤
+      </div>
+
+      <div class="photo-upload-info">
+        JPG、PNG形式 / 最大5MB
+      </div>
+
+      <div class="form-group">
+        <input
+          type="file"
+          id="photoInput"
+          accept="image/jpeg,image/png"
+          class="form-input"
+          onchange="previewPhoto()"
+        >
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closePhotoUpload()">キャンセル</button>
+        <button id="uploadPhotoBtn" class="btn btn-primary" onclick="uploadPhoto()">アップロード</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScriptファイル -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/nav.js"></script>
+
+  <script>
+    let memberData = null;
+    const userInfo = Auth.getUserInfo();
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // ログインチェック
+      Auth.requireLogin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // メンバー情報取得
+      await loadMemberInfo();
+
+      // イベントリスナー設定
+      setupEventListeners();
+    });
+
+    // メンバー情報取得
+    async function loadMemberInfo() {
+      showLoading();
+
+      try {
+        const result = await API.call('getMemberProfile');
+
+        if (result.success && result.profile) {
+          memberData = result.profile;
+          displayMemberInfo();
+        } else {
+          throw new Error(result.message || 'メンバー情報の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load member info error:', error);
+        showError('メンバー情報の取得に失敗しました');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // メンバー情報表示
+    function displayMemberInfo() {
+      // ヘッダー
+      document.getElementById('profileName').textContent = memberData.name;
+      document.getElementById('profileRole').textContent = getRoleText(memberData.role);
+
+      // プロフィール写真
+      const photoElement = document.getElementById('profilePhoto');
+      const photoUrl = memberData.PhotoURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f1f5f9' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='40'%3E👤%3C/text%3E%3C/svg%3E";
+      photoElement.innerHTML = `<img src="${photoUrl}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+
+      // 入会年度の選択肢を生成
+      const currentYear = new Date().getFullYear();
+      const yearOptions = [];
+      for (let year = currentYear; year >= 2010; year--) {
+        yearOptions.push(`<option value="${year}" ${memberData['入会年度'] == year ? 'selected' : ''}>${year}年</option>`);
+      }
+
+      // 基本情報（編集可能フォーム）
+      const basicInfoContent = document.getElementById('basicInfoContent');
+      basicInfoContent.innerHTML = `
+        <form id="profileForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">氏名（カナ）</label>
+              <input type="text" id="kana" class="form-input" value="${escapeHtml(memberData.kana || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">あだ名</label>
+              <input type="text" id="nickname" class="form-input" value="${escapeHtml(memberData['あだ名'] || '')}">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">役職</label>
+              <input type="text" id="position" class="form-input" value="${escapeHtml(memberData.position || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">所属</label>
+              <input type="text" id="affiliation" class="form-input" value="${escapeHtml(memberData.affiliation || '')}">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">誕生日</label>
+              <input type="date" id="birthday" class="form-input" value="${memberData.birthday || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">委員会</label>
+              <input type="text" id="committee" class="form-input" value="${escapeHtml(memberData.committee || '')}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">一言</label>
+            <textarea id="comment" class="form-input" rows="3">${escapeHtml(memberData['一言'] || '')}</textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">LINE名</label>
+              <input type="text" id="line_name" class="form-input" value="${escapeHtml(memberData['LINE名'] || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">入会年度</label>
+              <select id="join_year" class="form-input">
+                <option value="">未設定</option>
+                ${yearOptions.join('')}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">出向先</label>
+              <input type="text" id="secondment" class="form-input" value="${escapeHtml(memberData['出向先'] || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">電話番号</label>
+              <input type="tel" id="phone" class="form-input" value="${escapeHtml(memberData['電話番号'] || '')}">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">会社名</label>
+              <input type="text" id="company_name" class="form-input" value="${escapeHtml(memberData.company_name || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">業種</label>
+              <input type="text" id="industry" class="form-input" value="${escapeHtml(memberData['業種'] || '')}">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">アレルギー</label>
+              <input type="text" id="allergy" class="form-input" value="${escapeHtml(memberData['アレルギー'] || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">好きなもの</label>
+              <input type="text" id="favorite" class="form-input" value="${escapeHtml(memberData['好きなもの'] || '')}">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">嫌いなもの</label>
+              <input type="text" id="dislike" class="form-input" value="${escapeHtml(memberData['嫌いなもの'] || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">好きな国</label>
+              <input type="text" id="favorite_country" class="form-input" value="${escapeHtml(memberData['好きな国'] || '')}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">好きな言葉</label>
+            <input type="text" id="favorite_word" class="form-input" value="${escapeHtml(memberData['好きな言葉'] || '')}">
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">プロフィールを更新</button>
+          </div>
+        </form>
+      `;
+
+      // フォーム送信イベント
+      document.getElementById('profileForm').addEventListener('submit', updateProfile);
+    }
+
+    // 誕生日フォーマット
+    function formatBirthday(birthday) {
+      if (!birthday) return '-';
+      const date = new Date(birthday);
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}月${day}日`;
+    }
+
+    // 日付フォーマット
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}年${month}月${day}日`;
+    }
+
+    // 役割テキスト取得
+    function getRoleText(role) {
+      switch (role) {
+        case 'staff': return 'スタッフ';
+        case 'member': return 'メンバー';
+        default: return role;
+      }
+    }
+
+    // プロフィール更新
+    async function updateProfile(e) {
+      e.preventDefault();
+
+      if (!confirm('プロフィールを更新しますか？')) {
+        return;
+      }
+
+      showLoading();
+
+      try {
+        const profileData = {
+          kana: document.getElementById('kana').value.trim(),
+          'あだ名': document.getElementById('nickname').value.trim(),
+          position: document.getElementById('position').value.trim(),
+          affiliation: document.getElementById('affiliation').value.trim(),
+          birthday: document.getElementById('birthday').value,
+          committee: document.getElementById('committee').value.trim(),
+          '一言': document.getElementById('comment').value.trim(),
+          'LINE名': document.getElementById('line_name').value.trim(),
+          '入会年度': document.getElementById('join_year').value,
+          '出向先': document.getElementById('secondment').value.trim(),
+          '電話番号': document.getElementById('phone').value.trim(),
+          company_name: document.getElementById('company_name').value.trim(),
+          '業種': document.getElementById('industry').value.trim(),
+          'アレルギー': document.getElementById('allergy').value.trim(),
+          '好きなもの': document.getElementById('favorite').value.trim(),
+          '嫌いなもの': document.getElementById('dislike').value.trim(),
+          '好きな国': document.getElementById('favorite_country').value.trim(),
+          '好きな言葉': document.getElementById('favorite_word').value.trim()
+        };
+
+        const result = await API.call('updateMemberProfile', { data: JSON.stringify(profileData) });
+
+        if (result.success) {
+          showSuccess('プロフィールを更新しました');
+          await loadMemberInfo();
+        } else {
+          throw new Error(result.message || 'プロフィールの更新に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Update profile error:', error);
+        showError(error.message || 'プロフィールの更新に失敗しました');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // 写真アップロードモーダルを開く
+    function openPhotoUpload() {
+      document.getElementById('photoUploadModal').classList.add('active');
+      // プレビューをリセット
+      document.getElementById('photoPreview').style.display = 'none';
+      document.getElementById('photoPlaceholder').style.display = 'flex';
+      document.getElementById('photoInput').value = '';
+    }
+    window.openPhotoUpload = openPhotoUpload;
+
+    // 写真アップロードモーダルを閉じる
+    function closePhotoUpload() {
+      document.getElementById('photoUploadModal').classList.remove('active');
+    }
+    window.closePhotoUpload = closePhotoUpload;
+
+    // 写真プレビュー
+    function previewPhoto() {
+      const input = document.getElementById('photoInput');
+      const preview = document.getElementById('photoPreview');
+      const placeholder = document.getElementById('photoPlaceholder');
+
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+
+        // ファイルサイズチェック（5MB）
+        if (file.size > 5 * 1024 * 1024) {
+          Utils.showError('ファイルサイズは5MB以下にしてください');
+          input.value = '';
+          return;
+        }
+
+        // プレビュー表示
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+          placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+    window.previewPhoto = previewPhoto;
+
+    // 写真アップロード
+    async function uploadPhoto() {
+      const input = document.getElementById('photoInput');
+
+      if (!input.files || !input.files[0]) {
+        Utils.showError('写真を選択してください');
+        return;
+      }
+
+      const file = input.files[0];
+
+      Utils.showLoading();
+
+      try {
+        // Base64エンコード
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const base64Data = e.target.result.split(',')[1];
+
+          const result = await API.call('uploadProfilePhoto', {
+            file_data: base64Data,
+            file_name: file.name,
+            mime_type: file.type
+          });
+
+          if (result.success) {
+            showSuccess('プロフィール写真を更新しました');
+            closePhotoUpload();
+            // メンバー情報を再取得
+            await loadMemberInfo();
+          } else {
+            throw new Error(result.message || '写真のアップロードに失敗しました');
+          }
+        };
+
+        reader.onerror = () => {
+          throw new Error('ファイルの読み込みに失敗しました');
+        };
+
+        reader.readAsDataURL(file);
+
+      } catch (error) {
+        console.error('Upload photo error:', error);
+        Utils.showError(error.message || '写真のアップロードに失敗しました');
+        Utils.hideLoading();
+      }
+    }
+    window.uploadPhoto = uploadPhoto;
+
+    // パスワード変更
+    async function changePassword(e) {
+      e.preventDefault();
+
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // バリデーション
+      if (newPassword.length < 8) {
+        Utils.showError('新しいパスワードは8文字以上にしてください');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        Utils.showError('新しいパスワードが一致しません');
+        return;
+      }
+
+      if (currentPassword === newPassword) {
+        Utils.showError('新しいパスワードは現在のパスワードと異なるものにしてください');
+        return;
+      }
+
+      // 確認
+      if (!confirm('パスワードを変更しますか？')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('changePassword', {
+          member_id: userInfo.memberId,
+          current_password: currentPassword,
+          new_password: newPassword
+        });
+
+        if (result.success) {
+          Utils.showSuccess('パスワードを変更しました');
+          // フォームをリセット
+          document.getElementById('passwordForm').reset();
+        } else {
+          throw new Error(result.message || 'パスワードの変更に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Change password error:', error);
+        Utils.showError(error.message || 'パスワードの変更に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // パスワード変更フォーム
+      document.getElementById('passwordForm').addEventListener('submit', changePassword);
+
+      // モーダルの外側クリックで閉じる
+      document.getElementById('photoUploadModal').addEventListener('click', (e) => {
+        if (e.target.id === 'photoUploadModal') {
+          closePhotoUpload();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>イベント管理 - 管理者画面</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- 管理者レイアウト -->
+  <div class="admin-layout">
+    <!-- サイドバー -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-header">
+        <h1 class="admin-sidebar-title">管理者画面</h1>
+        <p class="admin-sidebar-subtitle">出欠管理システム</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <a href="dashboard.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📊</span>
+          <span class="admin-sidebar-text">ダッシュボード</span>
+        </a>
+        <a href="events.html" class="admin-sidebar-item active">
+          <span class="admin-sidebar-icon">📅</span>
+          <span class="admin-sidebar-text">イベント管理</span>
+        </a>
+        <a href="members.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">👥</span>
+          <span class="admin-sidebar-text">メンバー管理</span>
+        </a>
+        <a href="analytics.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📈</span>
+          <span class="admin-sidebar-text">出席率分析</span>
+        </a>
+        <a href="payments.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">💰</span>
+          <span class="admin-sidebar-text">支払い管理</span>
+        </a>
+        <a href="checkin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📱</span>
+          <span class="admin-sidebar-text">QRチェックイン</span>
+        </a>
+        <a href="receipts-admin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🧾</span>
+          <span class="admin-sidebar-text">領収書管理</span>
+        </a>
+
+        <div class="admin-sidebar-divider"></div>
+
+        <a href="../home.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🏠</span>
+          <span class="admin-sidebar-text">ユーザー画面へ</span>
+        </a>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button id="logoutBtn" class="btn btn-outline btn-block" style="color: white; border-color: rgba(255,255,255,0.3);">
+          ログアウト
+        </button>
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="admin-main">
+      <!-- トップバー -->
+      <div class="admin-topbar">
+        <button class="admin-mobile-toggle" id="mobileToggle">
+          ☰
+        </button>
+        <h2 class="admin-topbar-title">イベント管理</h2>
+        <div class="admin-topbar-actions">
+          <div class="admin-user-info">
+            <span class="admin-user-icon">👤</span>
+            <div class="admin-user-details">
+              <span class="admin-user-name" id="userName">管理者</span>
+              <span class="admin-user-role">管理者</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- コンテンツ -->
+      <div class="admin-content">
+        <!-- フィルターバー -->
+        <div class="filter-bar">
+          <h3 class="filter-bar-title">フィルター</h3>
+          <div class="filter-bar-row">
+            <div class="form-group">
+              <label class="form-label">期間</label>
+              <select id="periodFilter" class="form-input">
+                <option value="all">すべて</option>
+                <option value="upcoming">今後</option>
+                <option value="past">過去</option>
+                <option value="this-month">今月</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">検索</label>
+              <input
+                type="text"
+                id="searchInput"
+                class="form-input"
+                placeholder="イベント名で検索..."
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">並び替え</label>
+              <select id="sortSelect" class="form-input">
+                <option value="date-desc">開催日（新しい順）</option>
+                <option value="date-asc">開催日（古い順）</option>
+                <option value="name-asc">名前（昇順）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- データテーブル -->
+        <div class="data-table-container">
+          <div class="data-table-header">
+            <h3 class="data-table-title">イベント一覧（<span id="eventCount">0</span>件）</h3>
+            <div class="data-table-actions">
+              <button class="btn btn-primary" onclick="location.href='event-form.html'">
+                ＋ 新規登録
+              </button>
+            </div>
+          </div>
+
+          <div id="eventsTableContainer"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 出欠状況モーダル -->
+  <div id="attendanceModal" class="admin-modal">
+    <div class="admin-modal-content" style="max-width: 1000px;">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="modalEventName">出欠状況</h3>
+        <button class="admin-modal-close" onclick="closeAttendanceModal()">×</button>
+      </div>
+      <div class="admin-modal-body">
+        <!-- 統計 -->
+        <div class="modal-stats" style="margin-bottom: 2rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+            <div style="text-align: center; padding: 1rem; background: var(--success-bg); border-radius: 8px;">
+              <div style="font-size: 2rem; font-weight: 700; color: var(--success-color);" id="modalAttendCount">0</div>
+              <div style="font-size: 0.813rem; color: var(--success-color);">出席</div>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: #fff4e6; border-radius: 8px;">
+              <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;" id="modalOfficialAbsenceCount">0</div>
+              <div style="font-size: 0.813rem; color: #f59e0b;">公欠</div>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: var(--danger-bg); border-radius: 8px;">
+              <div style="font-size: 2rem; font-weight: 700; color: var(--danger-color);" id="modalAbsentCount">0</div>
+              <div style="font-size: 0.813rem; color: var(--danger-color);">欠席</div>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: var(--warning-bg); border-radius: 8px;">
+              <div style="font-size: 2rem; font-weight: 700; color: var(--warning-color);" id="modalPendingCount">0</div>
+              <div style="font-size: 0.813rem; color: var(--warning-color);">未登録</div>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: var(--primary-bg); border-radius: 8px;">
+              <div style="font-size: 2rem; font-weight: 700; color: var(--primary-color);" id="modalCheckinCount">0</div>
+              <div style="font-size: 0.813rem; color: var(--primary-color);">チェックイン済</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 一括設定UI -->
+        <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; border: 2px solid #e9ecef;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <label class="form-label" style="margin-bottom: 0.5rem; display: block;">一括設定</label>
+              <select id="bulkStatusSelect" class="form-input">
+                <option value="">選択してください</option>
+                <option value="出席">出席</option>
+                <option value="公欠">公欠</option>
+                <option value="欠席">欠席</option>
+              </select>
+            </div>
+            <div style="padding-top: 1.5rem;">
+              <button class="btn btn-primary" onclick="applyBulkAttendance()" style="white-space: nowrap;">
+                選択したメンバーに適用
+              </button>
+            </div>
+          </div>
+          <div style="margin-top: 0.5rem; font-size: 0.813rem; color: var(--text-secondary);">
+            <span id="selectedCount">0</span>名選択中
+          </div>
+        </div>
+
+        <!-- 出欠リスト -->
+        <div id="attendanceList"></div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn btn-outline" onclick="exportAttendanceCSV()">CSV出力</button>
+        <button class="btn btn-secondary" onclick="closeAttendanceModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 出欠編集モーダル -->
+  <div id="editAttendanceModal" class="admin-modal">
+    <div class="admin-modal-content" style="max-width: 600px;">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title">出欠編集</h3>
+        <button class="admin-modal-close" onclick="closeEditAttendanceModal()">×</button>
+      </div>
+      <div class="admin-modal-body">
+        <div style="margin-bottom: 1.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; padding: 1rem; background-color: var(--primary-bg); border-radius: 8px; margin-bottom: 1.5rem;">
+            <span style="font-size: 1.25rem;">👤</span>
+            <div>
+              <div style="font-weight: 700; color: var(--text-color);" id="editMemberName">メンバー名</div>
+              <div style="font-size: 0.813rem; color: var(--text-secondary);" id="editEventName">イベント名</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">出欠状況 <span style="color: var(--danger-color);">*</span></label>
+            <div id="editStatusContainer">
+              <!-- タイプAまたはタイプBの選択肢が動的に挿入される -->
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editMemo">メモ</label>
+            <textarea id="editMemo" class="form-input" rows="3" placeholder="メモを入力"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn btn-outline" onclick="closeEditAttendanceModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveAttendance()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScriptファイル -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+
+  <script>
+    let allEvents = [];
+    let filteredEvents = [];
+    let currentEventId = null;
+    let currentEvent = null;
+    let currentEditMemberId = null;
+    let currentAttendanceList = [];
+    const userInfo = Auth.getUserInfo();
+
+    // フィルター状態
+    let filters = {
+      period: 'all',
+      search: '',
+      sort: 'date-desc'
+    };
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 管理者権限チェック
+      Auth.requireAdmin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // イベント取得
+      await loadEvents();
+
+      // イベントリスナー設定
+      setupEventListeners();
+    });
+
+    // イベント取得
+    async function loadEvents() {
+      Utils.showLoading();
+
+      try {
+        // 統計情報を取得するため、member_idは不要だが統計は常に返される
+        const result = await API.call('getEvents', {});
+
+        if (result.success) {
+          allEvents = result.events || [];
+          applyFilters();
+        } else {
+          throw new Error(result.message || 'イベントの取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load events error:', error);
+        Utils.showError('イベントの取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // フィルター適用
+    function applyFilters() {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      filteredEvents = allEvents.filter(event => {
+        const eventDate = new Date(event.date);
+
+        // 期間フィルター
+        if (filters.period === 'upcoming' && eventDate < today) {
+          return false;
+        }
+        if (filters.period === 'past' && eventDate >= today) {
+          return false;
+        }
+        if (filters.period === 'this-month') {
+          if (eventDate.getMonth() !== now.getMonth() || eventDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        }
+
+        // 検索フィルター
+        if (filters.search && !event.title.toLowerCase().includes(filters.search.toLowerCase())) {
+          return false;
+        }
+
+        return true;
+      });
+
+      // ソート
+      filteredEvents.sort((a, b) => {
+        switch (filters.sort) {
+          case 'date-asc':
+            return new Date(a.date) - new Date(b.date);
+          case 'date-desc':
+            return new Date(b.date) - new Date(a.date);
+          case 'name-asc':
+            return a.title.localeCompare(b.title, 'ja');
+          default:
+            return 0;
+        }
+      });
+
+      displayEvents();
+    }
+
+    // イベント表示
+    function displayEvents() {
+      const container = document.getElementById('eventsTableContainer');
+      const countElement = document.getElementById('eventCount');
+
+      countElement.textContent = filteredEvents.length;
+
+      if (filteredEvents.length === 0) {
+        container.innerHTML = `
+          <div class="data-table-empty">
+            <div class="data-table-empty-icon">📅</div>
+            <div class="data-table-empty-text">該当するイベントがありません</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>イベント名</th>
+              <th>開催日</th>
+              <th>場所</th>
+              <th>出欠状況</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredEvents.map(event => createEventRow(event)).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // イベント行作成
+    function createEventRow(event) {
+      const eventDate = Utils.formatDateSlash(event.date);
+      const dayOfWeek = Utils.getDayOfWeek(event.date);
+      const attendCount = event.attend_count || 0;
+      const absentCount = event.absent_count || 0;
+      const pendingCount = event.pending_count || 0;
+      const isPast = new Date(event.date) < new Date();
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">
+              ${Utils.escapeHtml(event.title)}
+              ${event.urgent ? '<span class="badge badge-danger" style="margin-left: 0.5rem;">緊急</span>' : ''}
+              ${isPast ? '<span class="badge badge-secondary" style="margin-left: 0.5rem;">終了</span>' : ''}
+            </div>
+            ${event.attendance_deadline ? `<div style="font-size: 0.75rem; color: var(--text-light);">締切: ${Utils.formatDateSlash(event.attendance_deadline)}</div>` : ''}
+          </td>
+          <td>
+            <div>${eventDate}</div>
+            <div style="font-size: 0.75rem; color: var(--text-light);">${dayOfWeek}</div>
+          </td>
+          <td>${Utils.escapeHtml(event.location || '-')}</td>
+          <td>
+            <div style="font-size: 0.813rem;">
+              <span style="color: var(--success-color);">✓ ${attendCount}</span> /
+              <span style="color: var(--text-secondary);">✗ ${absentCount}</span> /
+              <span style="color: var(--warning-color);">? ${pendingCount}</span>
+            </div>
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button class="table-action-btn" onclick="viewAttendance('${event.event_id}')">
+                出欠確認
+              </button>
+              <button class="table-action-btn" onclick="location.href='event-form.html?id=${event.event_id}'">
+                編集
+              </button>
+              <button class="table-action-btn" onclick="deleteEvent('${event.event_id}')">
+                削除
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    // 出欠状況表示
+    async function viewAttendance(eventId) {
+      currentEventId = eventId;
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getEventAttendance', {
+          event_id: eventId
+        });
+
+        if (result.success) {
+          displayAttendanceModal(result.event, result.attendance);
+        } else {
+          throw new Error(result.message || '出欠状況の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('View attendance error:', error);
+        Utils.showError('出欠状況の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.viewAttendance = viewAttendance;
+
+    // 出欠状況モーダル表示
+    function displayAttendanceModal(event, attendanceList) {
+      // 現在のイベントと出欠リストを保存
+      currentEvent = event;
+      currentAttendanceList = attendanceList;
+
+      // イベント名
+      document.getElementById('modalEventName').textContent = event.title + ' - 出欠状況';
+
+      // 統計（タイプBでは欠席以外を出席としてカウント）
+      const isTypeB = event.attendance_type === 'B';
+      let attendCount, officialAbsenceCount, absentCount;
+      let optionBreakdown = '';
+
+      if (isTypeB) {
+        // タイプB: 欠席を欠席、それ以外（statusがあるもの）を出席としてカウント
+        absentCount = attendanceList.filter(a => a.status === '欠席').length;
+        attendCount = attendanceList.filter(a => a.status && a.status !== '欠席').length;
+        officialAbsenceCount = 0; // タイプBには公欠なし
+
+        // オプション名ごとの集計
+        const optionCounts = {};
+        attendanceList.forEach(a => {
+          if (a.status && a.selected_option) {
+            const option = a.selected_option;
+            optionCounts[option] = (optionCounts[option] || 0) + 1;
+          }
+        });
+
+        // オプション別集計を文字列で表示
+        if (Object.keys(optionCounts).length > 0) {
+          optionBreakdown = '<div style="margin-top: 1rem; padding: 1rem; background-color: var(--primary-bg); border-radius: 8px;">' +
+            '<h4 style="font-size: 0.875rem; font-weight: 700; margin: 0 0 0.75rem 0; color: var(--text-color);">📊 オプション別集計</h4>' +
+            '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem;">';
+
+          for (const [option, count] of Object.entries(optionCounts)) {
+            const isAbsent = option === '欠席';
+            const badgeClass = isAbsent ? 'badge-danger' : 'badge-success';
+            optionBreakdown += `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background-color: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <span style="font-size: 0.813rem; font-weight: 600; color: var(--text-color);">${Utils.escapeHtml(option)}</span>
+                <span class="badge ${badgeClass}" style="font-size: 0.875rem; font-weight: 700;">${count}名</span>
+              </div>
+            `;
+          }
+
+          optionBreakdown += '</div></div>';
+        }
+      } else {
+        // タイプA: 出席/公欠/欠席を個別にカウント
+        attendCount = attendanceList.filter(a => a.status === '参加' || a.status === '出席').length;
+        officialAbsenceCount = attendanceList.filter(a => a.status === '公欠').length;
+        absentCount = attendanceList.filter(a => a.status === '不参加' || a.status === '欠席').length;
+      }
+
+      const unregisteredCount = attendanceList.filter(a => !a.status).length;
+      const checkinCount = attendanceList.filter(a => a.checked_in).length;
+
+      document.getElementById('modalAttendCount').textContent = attendCount;
+      document.getElementById('modalOfficialAbsenceCount').textContent = officialAbsenceCount;
+      document.getElementById('modalAbsentCount').textContent = absentCount;
+      document.getElementById('modalPendingCount').textContent = unregisteredCount;
+      document.getElementById('modalCheckinCount').textContent = checkinCount;
+
+      // オプション別集計を統計情報の後に挿入
+      const statsContainer = document.querySelector('.modal-stats');
+      if (statsContainer) {
+        // 既存のオプション集計があれば削除
+        const existingBreakdown = statsContainer.querySelector('.option-breakdown-container');
+        if (existingBreakdown) {
+          existingBreakdown.remove();
+        }
+
+        // 新しいオプション集計を追加
+        if (optionBreakdown) {
+          const breakdownDiv = document.createElement('div');
+          breakdownDiv.className = 'option-breakdown-container';
+          breakdownDiv.innerHTML = optionBreakdown;
+          statsContainer.appendChild(breakdownDiv);
+        }
+      }
+
+      // リスト表示
+      const listContainer = document.getElementById('attendanceList');
+      listContainer.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">
+                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()" style="cursor: pointer;">
+              </th>
+              <th>氏名</th>
+              <th>所属</th>
+              <th>出欠</th>
+              <th>メモ</th>
+              <th>チェックイン</th>
+              <th>登録日時</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${attendanceList.map(item => {
+              // 出欠ステータス表示
+              let statusText = item.status || '未登録';
+              let statusBadge;
+
+              if (!item.status) {
+                // 未登録
+                statusBadge = '<span class="badge badge-secondary">未登録</span>';
+              } else if (event.attendance_type === 'B') {
+                // タイプB: selected_optionを表示
+                statusText = item.selected_option || item.status;
+                if (item.status === '欠席') {
+                  statusBadge = `<span class="badge badge-danger">${Utils.escapeHtml(statusText)}</span>`;
+                } else {
+                  // 欠席以外は出席扱い
+                  statusBadge = `<span class="badge badge-success">${Utils.escapeHtml(statusText)}</span>`;
+                }
+              } else {
+                // タイプA: 通常の出席/欠席/公欠
+                if (item.status === '参加' || item.status === '出席') {
+                  statusBadge = `<span class="badge badge-success">${Utils.escapeHtml(statusText)}</span>`;
+                } else if (item.status === '公欠') {
+                  statusBadge = `<span class="badge" style="background-color: #fff4e6; color: #f59e0b;">${Utils.escapeHtml(statusText)}</span>`;
+                } else if (item.status === '不参加' || item.status === '欠席') {
+                  statusBadge = `<span class="badge badge-danger">${Utils.escapeHtml(statusText)}</span>`;
+                } else if (item.status === '未定') {
+                  statusBadge = `<span class="badge badge-warning">${Utils.escapeHtml(statusText)}</span>`;
+                } else {
+                  statusBadge = `<span class="badge badge-secondary">${Utils.escapeHtml(statusText)}</span>`;
+                }
+              }
+
+              const checkinBadge = item.checked_in
+                ? '<span class="badge badge-primary">済</span>'
+                : '<span style="color: var(--text-light);">-</span>';
+
+              const registeredAt = item.registered_at
+                ? new Date(item.registered_at).toLocaleString('ja-JP', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit'
+                  })
+                : '-';
+
+              // 所属カラーがある場合は行に背景色を適用
+              const rowStyle = item.affiliation_color
+                ? `style="background: linear-gradient(to right, ${item.affiliation_color}10, transparent);"`
+                : '';
+
+              const affiliationStyle = item.affiliation_color
+                ? `style="color: ${item.affiliation_color}; font-weight: 600; padding: 0.25rem 0.5rem; background-color: ${item.affiliation_color}20; border-radius: 4px; display: inline-block;"`
+                : '';
+
+              return `
+                <tr ${rowStyle}>
+                  <td style="text-align: center;">
+                    <input type="checkbox" class="member-checkbox" data-member-id="${Utils.escapeHtml(item.member_id)}" data-member-name="${Utils.escapeHtml(item.member_name)}" onchange="updateSelectedCount()" style="cursor: pointer;">
+                  </td>
+                  <td style="font-weight: 600;">${Utils.escapeHtml(item.member_name)}</td>
+                  <td><span ${affiliationStyle}>${Utils.escapeHtml(item.affiliation || '-')}</span></td>
+                  <td>${statusBadge}</td>
+                  <td style="max-width: 200px; white-space: pre-wrap;">${Utils.escapeHtml(item.memo || '-')}</td>
+                  <td>${checkinBadge}</td>
+                  <td style="font-size: 0.813rem; color: var(--text-secondary);">${registeredAt}</td>
+                  <td>
+                    <button class="table-action-btn" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="editAttendance('${Utils.escapeHtml(item.member_id)}', '${Utils.escapeHtml(item.member_name)}', '${Utils.escapeHtml(item.status || '')}', '${Utils.escapeHtml(item.selected_option || '')}', '${Utils.escapeHtml(item.memo || '')}')">
+                      編集
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // 一括設定のドロップダウンを更新
+      updateBulkStatusOptions(event);
+
+      // モーダル表示
+      document.getElementById('attendanceModal').classList.add('active');
+
+      // 選択カウントを初期化
+      updateSelectedCount();
+    }
+
+    // 一括設定のドロップダウンを更新
+    function updateBulkStatusOptions(event) {
+      const bulkStatusSelect = document.getElementById('bulkStatusSelect');
+
+      if (event.attendance_type === 'B') {
+        // タイプB: カスタムオプション
+        const options = typeof event.participation_options === 'string'
+          ? JSON.parse(event.participation_options)
+          : (event.participation_options || []);
+
+        let optionsHtml = '<option value="">選択してください</option>';
+        options.forEach(option => {
+          optionsHtml += `<option value="${Utils.escapeHtml(option.label)}">${Utils.escapeHtml(option.label)}</option>`;
+        });
+
+        bulkStatusSelect.innerHTML = optionsHtml;
+      } else {
+        // タイプA: 通常の出席/公欠/欠席
+        bulkStatusSelect.innerHTML = `
+          <option value="">選択してください</option>
+          <option value="出席">出席</option>
+          <option value="公欠">公欠</option>
+          <option value="欠席">欠席</option>
+        `;
+      }
+    }
+
+    // 全選択/全解除
+    function toggleSelectAll() {
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const memberCheckboxes = document.querySelectorAll('.member-checkbox');
+
+      memberCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+
+      updateSelectedCount();
+    }
+    window.toggleSelectAll = toggleSelectAll;
+
+    // 選択数を更新
+    function updateSelectedCount() {
+      const selectedCheckboxes = document.querySelectorAll('.member-checkbox:checked');
+      const count = selectedCheckboxes.length;
+      document.getElementById('selectedCount').textContent = count;
+
+      // 全選択チェックボックスの状態を更新
+      const memberCheckboxes = document.querySelectorAll('.member-checkbox');
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = memberCheckboxes.length > 0 && count === memberCheckboxes.length;
+      }
+    }
+    window.updateSelectedCount = updateSelectedCount;
+
+    // 一括出欠設定
+    async function applyBulkAttendance() {
+      const bulkStatus = document.getElementById('bulkStatusSelect').value;
+
+      if (!bulkStatus) {
+        Utils.showError('出欠状況を選択してください');
+        return;
+      }
+
+      const selectedCheckboxes = document.querySelectorAll('.member-checkbox:checked');
+
+      if (selectedCheckboxes.length === 0) {
+        Utils.showError('メンバーを選択してください');
+        return;
+      }
+
+      const memberIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.memberId);
+      const memberNames = Array.from(selectedCheckboxes).map(cb => cb.dataset.memberName);
+
+      if (!confirm(`${memberNames.join('、')} の${memberNames.length}名に「${bulkStatus}」を設定しますか？`)) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        // 一括登録APIを呼び出す
+        const attendances = memberIds.map(memberId => ({
+          member_id: memberId,
+          status: bulkStatus,
+          selected_option: currentEvent.attendance_type === 'B' ? bulkStatus : '',
+          memo: ''
+        }));
+
+        const result = await API.call('registerAttendanceBatch', {
+          event_id: currentEventId,
+          attendances: attendances
+        }, true); // POSTメソッドを使用
+
+        if (result.success) {
+          Utils.showSuccess(result.message || '一括登録が完了しました');
+
+          // チェックボックスをリセット
+          selectedCheckboxes.forEach(cb => cb.checked = false);
+          document.getElementById('selectAllCheckbox').checked = false;
+          document.getElementById('bulkStatusSelect').value = '';
+
+          // 出欠状況を再読み込み
+          await viewAttendance(currentEventId);
+        } else {
+          throw new Error(result.error || '一括登録に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Bulk attendance error:', error);
+        Utils.showError(error.message || '一括登録に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.applyBulkAttendance = applyBulkAttendance;
+
+    // 出欠状況モーダルを閉じる
+    function closeAttendanceModal() {
+      document.getElementById('attendanceModal').classList.remove('active');
+      currentEventId = null;
+    }
+    window.closeAttendanceModal = closeAttendanceModal;
+
+    // CSV出力
+    function exportAttendanceCSV() {
+      alert('CSV出力機能は実装中です');
+    }
+    window.exportAttendanceCSV = exportAttendanceCSV;
+
+    // 出欠編集モーダルを開く
+    function editAttendance(memberId, memberName, currentStatus, currentOption, currentMemo) {
+      currentEditMemberId = memberId;
+
+      // メンバー名とイベント名を表示
+      document.getElementById('editMemberName').textContent = memberName;
+      document.getElementById('editEventName').textContent = currentEvent.title;
+
+      // メモを設定
+      document.getElementById('editMemo').value = currentMemo;
+
+      // 出欠状況の選択肢を生成
+      const statusContainer = document.getElementById('editStatusContainer');
+
+      if (currentEvent.attendance_type === 'B') {
+        // タイプB: カスタムオプション
+        const options = typeof currentEvent.participation_options === 'string'
+          ? JSON.parse(currentEvent.participation_options)
+          : (currentEvent.participation_options || []);
+
+        let html = '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+
+        options.forEach(option => {
+          const isChecked = currentOption === option.label ? 'checked' : '';
+          html += `
+            <label class="radio-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+              <input type="radio" name="editStatus" value="${Utils.escapeHtml(option.label)}" ${isChecked} style="margin: 0;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; color: var(--text-color);">${Utils.escapeHtml(option.label)}</div>
+                ${option.amount > 0 ? `<div style="font-size: 0.813rem; color: var(--text-secondary);">¥${option.amount.toLocaleString()}</div>` : ''}
+              </div>
+            </label>
+          `;
+        });
+
+        html += '</div>';
+        statusContainer.innerHTML = html;
+      } else {
+        // タイプA: 通常の出席/公欠/欠席
+        const statusOptions = [
+          { value: '出席', label: '出席' },
+          { value: '公欠', label: '公欠' },
+          { value: '欠席', label: '欠席' }
+        ];
+
+        let html = '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+
+        statusOptions.forEach(option => {
+          const isChecked = currentStatus === option.value ? 'checked' : '';
+          html += `
+            <label class="radio-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+              <input type="radio" name="editStatus" value="${option.value}" ${isChecked} style="margin: 0;">
+              <div style="font-weight: 600; color: var(--text-color);">${option.label}</div>
+            </label>
+          `;
+        });
+
+        html += '</div>';
+        statusContainer.innerHTML = html;
+      }
+
+      // ラジオボタンのスタイリング
+      const radioLabels = statusContainer.querySelectorAll('.radio-label');
+      radioLabels.forEach(label => {
+        const radio = label.querySelector('input[type="radio"]');
+
+        // 初期状態の適用
+        if (radio.checked) {
+          label.style.borderColor = 'var(--primary-color)';
+          label.style.backgroundColor = 'var(--primary-bg)';
+        }
+
+        // 変更時のイベント
+        radio.addEventListener('change', function() {
+          radioLabels.forEach(l => {
+            l.style.borderColor = 'var(--border-color)';
+            l.style.backgroundColor = 'white';
+          });
+
+          if (this.checked) {
+            label.style.borderColor = 'var(--primary-color)';
+            label.style.backgroundColor = 'var(--primary-bg)';
+          }
+        });
+      });
+
+      // モーダルを表示
+      document.getElementById('editAttendanceModal').classList.add('active');
+    }
+    window.editAttendance = editAttendance;
+
+    // 出欠編集モーダルを閉じる
+    function closeEditAttendanceModal() {
+      document.getElementById('editAttendanceModal').classList.remove('active');
+      currentEditMemberId = null;
+    }
+    window.closeEditAttendanceModal = closeEditAttendanceModal;
+
+    // 出欠を保存
+    async function saveAttendance() {
+      const selectedStatus = document.querySelector('input[name="editStatus"]:checked');
+
+      if (!selectedStatus) {
+        Utils.showError('出欠状況を選択してください');
+        return;
+      }
+
+      const memo = document.getElementById('editMemo').value.trim();
+
+      Utils.showLoading();
+
+      try {
+        // 管理者用の出欠登録APIを呼び出す
+        // 既存のregisterAttendance APIを使用し、管理者がmember_idを指定できるように拡張が必要
+        const params = {
+          event_id: currentEventId,
+          member_id: currentEditMemberId,
+          status: selectedStatus.value,
+          memo: memo
+        };
+
+        // タイプBの場合はselected_optionも送信
+        if (currentEvent.attendance_type === 'B') {
+          params.selected_option = selectedStatus.value;
+        }
+
+        const result = await API.call('registerAttendance', params);
+
+        if (result.success) {
+          Utils.showSuccess('出欠を更新しました');
+          closeEditAttendanceModal();
+          // 出欠状況を再読み込み
+          await viewAttendance(currentEventId);
+        } else {
+          throw new Error(result.error || '出欠の更新に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Save attendance error:', error);
+        Utils.showError(error.message || '出欠の更新に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.saveAttendance = saveAttendance;
+
+    // イベント削除
+    async function deleteEvent(eventId) {
+      if (!confirm('このイベントを削除しますか？\n※出欠登録も含めてすべて削除されます。')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('deleteEvent', {
+          event_id: eventId
+        });
+
+        if (result.success) {
+          Utils.showSuccess('イベントを削除しました');
+          await loadEvents();
+        } else {
+          throw new Error(result.message || 'イベントの削除に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Delete event error:', error);
+        Utils.showError(error.message || 'イベントの削除に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.deleteEvent = deleteEvent;
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // モバイルメニュートグル
+      document.getElementById('mobileToggle').addEventListener('click', () => {
+        document.getElementById('adminSidebar').classList.toggle('mobile-open');
+      });
+
+      // フィルター変更
+      document.getElementById('periodFilter').addEventListener('change', (e) => {
+        filters.period = e.target.value;
+        applyFilters();
+      });
+
+      let searchTimeout;
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          filters.search = e.target.value.trim();
+          applyFilters();
+        }, 300);
+      });
+
+      document.getElementById('sortSelect').addEventListener('change', (e) => {
+        filters.sort = e.target.value;
+        applyFilters();
+      });
+
+      // モーダル外クリックで閉じる
+      document.getElementById('attendanceModal').addEventListener('click', (e) => {
+        if (e.target.id === 'attendanceModal') {
+          closeAttendanceModal();
+        }
+      });
+
+      document.getElementById('editAttendanceModal').addEventListener('click', (e) => {
+        if (e.target.id === 'editAttendanceModal') {
+          closeEditAttendanceModal();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

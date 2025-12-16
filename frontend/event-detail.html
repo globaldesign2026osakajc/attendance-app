@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>イベント詳細 - グローバルデザイン推進委員会 出欠管理</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--primary-color);
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+      transition: color 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: var(--secondary-color);
+    }
+
+    .event-detail-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .event-header {
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .event-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .event-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0;
+      flex: 1;
+    }
+
+    .event-badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .event-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .event-info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .event-info-icon {
+      font-size: 1.5rem;
+      min-width: 1.5rem;
+    }
+
+    .event-info-content {
+      flex: 1;
+    }
+
+    .event-info-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .event-info-value {
+      font-size: 1rem;
+      color: var(--text-color);
+      font-weight: 500;
+    }
+
+    .event-description {
+      background-color: var(--gray-light);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .event-description-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 0.75rem;
+    }
+
+    .event-description-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .attendance-section {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .attendance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .attendance-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .current-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .current-status.attend {
+      background-color: var(--success-bg);
+      color: var(--success-color);
+    }
+
+    .current-status.official-absence {
+      background-color: #fff4e6;
+      color: #f59e0b;
+    }
+
+    .current-status.absent {
+      background-color: var(--gray-light);
+      color: var(--text-secondary);
+    }
+
+    .current-status.pending {
+      background-color: var(--warning-bg);
+      color: var(--warning-color);
+    }
+
+    .deadline-notice {
+      background-color: var(--danger-bg);
+      color: var(--danger-color);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .deadline-notice.warning {
+      background-color: var(--warning-bg);
+      color: var(--warning-color);
+    }
+
+    .deadline-notice.expired {
+      background-color: var(--gray-light);
+      color: var(--text-secondary);
+    }
+
+    .attendance-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .attendance-btn {
+      padding: 1rem;
+      border: 2px solid var(--border-color);
+      background-color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .attendance-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .attendance-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .attendance-btn.selected {
+      border-color: var(--primary-color);
+      background-color: var(--primary-bg);
+    }
+
+    .attendance-btn-icon {
+      font-size: 2rem;
+    }
+
+    .attendance-btn-content {
+      flex: 1;
+    }
+
+    .attendance-btn-label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 0.25rem;
+    }
+
+    .attendance-btn-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .reason-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .reason-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .reason-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      resize: vertical;
+      transition: all 0.3s ease;
+    }
+
+    .reason-textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-bg);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .cancel-section {
+      background-color: var(--gray-light);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 2rem;
+    }
+
+    .cancel-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 1rem;
+    }
+
+    .cancel-info {
+      font-size: 0.813rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .stats-section {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .stats-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 1.5rem;
+      background-color: var(--gray-light);
+      border-radius: 8px;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* タブスタイル */
+    .tabs-container {
+      background-color: white;
+      border-radius: 12px;
+      padding: 0;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .tabs-header {
+      display: flex;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      background-color: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+      position: relative;
+      margin-bottom: -2px;
+    }
+
+    .tab-btn:hover {
+      background-color: var(--gray-light);
+    }
+
+    .tab-btn.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+      background-color: transparent;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 2rem;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* 参加者一覧スタイル */
+    .participants-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .participants-stat-card {
+      text-align: center;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    .participants-stat-card.attend {
+      background-color: var(--success-bg);
+    }
+
+    .participants-stat-card.absent {
+      background-color: var(--danger-bg);
+    }
+
+    .participants-stat-card.official-absence {
+      background-color: #fff4e6;
+    }
+
+    .participants-stat-card.pending {
+      background-color: var(--warning-bg);
+    }
+
+    .participants-stat-number {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .participants-stat-card.attend .participants-stat-number {
+      color: var(--success-color);
+    }
+
+    .participants-stat-card.absent .participants-stat-number {
+      color: var(--danger-color);
+    }
+
+    .participants-stat-card.official-absence .participants-stat-number {
+      color: #f59e0b;
+    }
+
+    .participants-stat-card.pending .participants-stat-number {
+      color: var(--warning-color);
+    }
+
+    .participants-stat-label {
+      font-size: 0.813rem;
+      font-weight: 600;
+    }
+
+    .participants-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .participant-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background-color: var(--gray-light);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .participant-item:hover {
+      background-color: #e8eaed;
+    }
+
+    .participant-icon {
+      font-size: 1.5rem;
+      min-width: 1.5rem;
+    }
+
+    .participant-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .participant-name {
+      font-size: 0.938rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 0.25rem;
+    }
+
+    .participant-affiliation {
+      font-size: 0.813rem;
+      color: var(--text-secondary);
+    }
+
+    .participant-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.813rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .participant-status.attend {
+      background-color: var(--success-bg);
+      color: var(--success-color);
+    }
+
+    .participant-status.absent {
+      background-color: var(--danger-bg);
+      color: var(--danger-color);
+    }
+
+    .participant-status.official-absence {
+      background-color: #fff4e6;
+      color: #f59e0b;
+    }
+
+    .participant-status.pending {
+      background-color: var(--warning-bg);
+      color: var(--warning-color);
+    }
+
+    @media (max-width: 768px) {
+      .event-detail-card,
+      .attendance-section,
+      .stats-section {
+        padding: 1.5rem;
+      }
+
+      .event-title {
+        font-size: 1.5rem;
+      }
+
+      .event-title-row {
+        flex-direction: column;
+      }
+
+      .event-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .attendance-buttons {
+        grid-template-columns: 1fr;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .action-buttons .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-container">
+      <!-- トップバー -->
+      <div class="header-top">
+        <h1 class="header-title">出欠管理システム</h1>
+        <div class="header-user">
+          <span id="userName" class="header-user-name"></span>
+          <button id="mobileNavToggle" class="mobile-nav-toggle">☰</button>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">ログアウト</button>
+        </div>
+      </div>
+
+      <!-- ナビゲーション -->
+      <nav class="nav">
+        <div class="nav-container">
+          <a href="home.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">HOME</span>
+          </a>
+          <a href="events.html" class="nav-item active">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">イベント</span>
+          </a>
+          <a href="members.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">メンバー</span>
+          </a>
+          <a href="history.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">履歴</span>
+          </a>
+          <a href="receipts.html" class="nav-item">
+            <span class="nav-icon">🧾</span>
+            <span class="nav-text">領収書</span>
+          </a>
+          <a href="profile.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">プロフィール</span>
+          </a>
+          <!-- 管理者用リンク -->
+          <a href="admin/dashboard.html" id="adminLink" class="nav-item" style="display: none;">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">管理画面</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container">
+      <a href="events.html" class="back-link">
+        ← イベント一覧に戻る
+      </a>
+
+      <!-- イベント詳細 -->
+      <div id="eventDetail" class="event-detail-card">
+        <!-- 動的に生成 -->
+      </div>
+
+      <!-- タブコンテナ -->
+      <div class="tabs-container">
+        <div class="tabs-header">
+          <button class="tab-btn active" onclick="switchTab('attendance')">出欠登録</button>
+          <button class="tab-btn" onclick="switchTab('participants')">参加者一覧</button>
+        </div>
+
+        <!-- 出欠登録タブ -->
+        <div id="attendanceTab" class="tab-content active">
+          <!-- 出欠登録セクション -->
+          <div id="attendanceSection">
+            <!-- 動的に生成 -->
+          </div>
+        </div>
+
+        <!-- 参加者一覧タブ -->
+        <div id="participantsTab" class="tab-content">
+          <div id="participantsSection">
+            <!-- 動的に生成 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 統計情報 -->
+      <div id="statsSection" class="stats-section">
+        <!-- 動的に生成 -->
+      </div>
+    </div>
+  </main>
+
+  <!-- JavaScriptファイル -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/nav.js"></script>
+
+  <script>
+    let eventData = null;
+    let selectedAttendance = null;
+    const userInfo = Auth.getUserInfo();
+    const eventId = Utils.getUrlParam('id');
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // ログインチェック
+      Auth.requireLogin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // イベントID確認
+      if (!eventId) {
+        Utils.showError('イベントIDが指定されていません');
+        window.location.href = 'events.html';
+        return;
+      }
+
+      // イベント詳細取得
+      await loadEventDetail();
+
+      // イベントリスナー設定
+      setupEventListeners();
+    });
+
+    // キャンセル料発生日をフォーマット
+    function formatCancellationFeeDate(cancellationFeeDate, eventDate) {
+      if (!cancellationFeeDate) return '';
+
+      const feeDate = new Date(cancellationFeeDate);
+      const evDate = new Date(eventDate);
+
+      // イベント日との差を計算
+      const diffTime = evDate - feeDate;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      // 日付表示
+      const month = feeDate.getMonth() + 1;
+      const day = feeDate.getDate();
+      const dateStr = `${month}月${day}日`;
+
+      if (diffDays > 0) {
+        return `${dateStr}（イベント${diffDays}日前）`;
+      } else if (diffDays === 0) {
+        return `${dateStr}（イベント当日）`;
+      } else {
+        return dateStr;
+      }
+    }
+
+    // イベント詳細取得
+    async function loadEventDetail() {
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getEventDetail', {
+          event_id: eventId,
+          member_id: userInfo.memberId
+        });
+
+        if (result.success && result.event) {
+          eventData = result.event;
+          displayEventDetail();
+          displayAttendanceSection();
+          displayStats();
+          await loadParticipants(); // 参加者一覧を取得
+        } else {
+          throw new Error(result.message || 'イベント情報の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load event detail error:', error);
+        Utils.showError('イベント情報の取得に失敗しました');
+        setTimeout(() => {
+          window.location.href = 'events.html';
+        }, 2000);
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // タブ切り替え
+    function switchTab(tabName) {
+      // すべてのタブボタンとコンテンツから active クラスを削除
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      // 選択されたタブをアクティブにする
+      if (tabName === 'attendance') {
+        document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+        document.getElementById('attendanceTab').classList.add('active');
+      } else if (tabName === 'participants') {
+        document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+        document.getElementById('participantsTab').classList.add('active');
+      }
+    }
+    window.switchTab = switchTab;
+
+    // 参加者一覧を取得
+    async function loadParticipants() {
+      try {
+        const result = await API.call('getEventAttendance', {
+          event_id: eventId
+        });
+
+        if (result.success) {
+          displayParticipants(result.attendance);
+        } else {
+          throw new Error(result.message || '参加者情報の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load participants error:', error);
+        document.getElementById('participantsSection').innerHTML = `
+          <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+            参加者情報の取得に失敗しました
+          </p>
+        `;
+      }
+    }
+
+    // 参加者一覧を表示
+    function displayParticipants(attendanceList) {
+      const container = document.getElementById('participantsSection');
+
+      if (!attendanceList || attendanceList.length === 0) {
+        container.innerHTML = `
+          <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+            参加者情報がありません
+          </p>
+        `;
+        return;
+      }
+
+      // タイプBイベントの判定
+      const isTypeB = eventData.attendance_type === 'B';
+
+      // 統計計算
+      let attendCount, officialAbsenceCount, absentCount, pendingCount;
+
+      if (isTypeB) {
+        // タイプB: 欠席を欠席、それ以外（statusがあるもの）を出席としてカウント
+        absentCount = attendanceList.filter(a => a.status === '欠席').length;
+        attendCount = attendanceList.filter(a => a.status && a.status !== '欠席').length;
+        officialAbsenceCount = 0; // タイプBには公欠なし
+      } else {
+        // タイプA: 出席/公欠/欠席を個別にカウント
+        attendCount = attendanceList.filter(a => a.status === '参加' || a.status === '出席').length;
+        officialAbsenceCount = attendanceList.filter(a => a.status === '公欠').length;
+        absentCount = attendanceList.filter(a => a.status === '不参加' || a.status === '欠席').length;
+      }
+
+      pendingCount = attendanceList.filter(a => !a.status).length;
+
+      // 統計カード
+      let statsHtml = '<div class="participants-stats">';
+      statsHtml += `
+        <div class="participants-stat-card attend">
+          <div class="participants-stat-number">${attendCount}</div>
+          <div class="participants-stat-label">出席</div>
+        </div>
+      `;
+
+      if (!isTypeB && officialAbsenceCount > 0) {
+        statsHtml += `
+          <div class="participants-stat-card official-absence">
+            <div class="participants-stat-number">${officialAbsenceCount}</div>
+            <div class="participants-stat-label">公欠</div>
+          </div>
+        `;
+      }
+
+      statsHtml += `
+        <div class="participants-stat-card absent">
+          <div class="participants-stat-number">${absentCount}</div>
+          <div class="participants-stat-label">欠席</div>
+        </div>
+        <div class="participants-stat-card pending">
+          <div class="participants-stat-number">${pendingCount}</div>
+          <div class="participants-stat-label">未登録</div>
+        </div>
+      `;
+      statsHtml += '</div>';
+
+      // 参加者リスト
+      let listHtml = '<div class="participants-list">';
+
+      attendanceList.forEach(item => {
+        let statusClass = 'pending';
+        let statusIcon = '❓';
+        let statusText = '未登録';
+
+        if (item.status) {
+          if (isTypeB) {
+            // タイプB: selected_optionを表示
+            statusText = item.selected_option || item.status;
+            if (item.status === '欠席') {
+              statusClass = 'absent';
+              statusIcon = '❌';
+            } else {
+              statusClass = 'attend';
+              statusIcon = '✅';
+            }
+          } else {
+            // タイプA: 通常の出席/欠席/公欠
+            if (item.status === '参加' || item.status === '出席') {
+              statusClass = 'attend';
+              statusIcon = '✅';
+              statusText = '出席';
+            } else if (item.status === '公欠') {
+              statusClass = 'official-absence';
+              statusIcon = '⚪';
+              statusText = '公欠';
+            } else if (item.status === '不参加' || item.status === '欠席') {
+              statusClass = 'absent';
+              statusIcon = '❌';
+              statusText = '欠席';
+            }
+          }
+        }
+
+        // 所属カラーがある場合はスタイルを追加
+        const itemStyle = item.affiliation_color
+          ? `style="background: linear-gradient(to right, ${item.affiliation_color}15, ${item.affiliation_color}08); border-left: 3px solid ${item.affiliation_color};"`
+          : '';
+
+        listHtml += `
+          <div class="participant-item" ${itemStyle}>
+            <div class="participant-icon">${statusIcon}</div>
+            <div class="participant-info">
+              <div class="participant-name">${Utils.escapeHtml(item.member_name)}</div>
+              ${item.affiliation ? `<div class="participant-affiliation" ${item.affiliation_color ? `style="color: ${item.affiliation_color}; font-weight: 600;"` : ''}>${Utils.escapeHtml(item.affiliation)}</div>` : ''}
+            </div>
+            <div class="participant-status ${statusClass}">
+              ${Utils.escapeHtml(statusText)}
+            </div>
+          </div>
+        `;
+      });
+
+      listHtml += '</div>';
+
+      container.innerHTML = statsHtml + listHtml;
+    }
+
+    // 任意項目表示
+    function renderOptionalFields(event, displayFields) {
+      let html = '';
+
+      // 登録料（display_fieldsでfee_amountが選択されている場合のみ）
+      if (displayFields.fee_amount !== false && event.fee_amount > 0) {
+        const fee = Utils.formatCurrency(event.fee_amount);
+        html += `
+          <div class="event-info-grid">
+            <div class="event-info-item">
+              <div class="event-info-icon">💰</div>
+              <div class="event-info-content">
+                <div class="event-info-label">登録料</div>
+                <div class="event-info-value">${fee}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 地図URL
+      if (displayFields.map_url !== false && event.map_url) {
+        html += `
+          <div class="event-info-grid">
+            <div class="event-info-item">
+              <div class="event-info-icon">🗺️</div>
+              <div class="event-info-content">
+                <div class="event-info-label">地図</div>
+                <div class="event-info-value"><a href="${Utils.escapeHtml(event.map_url)}" target="_blank" style="color: var(--primary-color); text-decoration: underline;">地図を開く</a></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 主催者
+      if (displayFields.host !== false && event.host) {
+        html += `
+          <div class="event-info-grid">
+            <div class="event-info-item">
+              <div class="event-info-icon">👤</div>
+              <div class="event-info-content">
+                <div class="event-info-label">主催者</div>
+                <div class="event-info-value">${Utils.escapeHtml(event.host)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 支払い方法
+      if (displayFields.payment_methods !== false && event.payment_methods) {
+        html += `
+          <div class="event-info-grid">
+            <div class="event-info-item">
+              <div class="event-info-icon">💳</div>
+              <div class="event-info-content">
+                <div class="event-info-label">支払い方法</div>
+                <div class="event-info-value">${Utils.escapeHtml(event.payment_methods)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 服装
+      if (displayFields.dress_code !== false && event.dress_code) {
+        html += `
+          <div class="event-info-grid">
+            <div class="event-info-item">
+              <div class="event-info-icon">👔</div>
+              <div class="event-info-content">
+                <div class="event-info-label">服装</div>
+                <div class="event-info-value">${Utils.escapeHtml(event.dress_code)}</div>
+                ${event.dress_code_note ? `<div class="event-info-value" style="font-size: 0.875rem; color: var(--text-secondary);">${Utils.escapeHtml(event.dress_code_note)}</div>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 備考
+      if (displayFields.notes !== false && event.notes) {
+        html += `
+          <div class="event-description">
+            <div class="event-description-title">備考</div>
+            <div class="event-description-text">${Utils.escapeHtml(event.notes)}</div>
+          </div>
+        `;
+      }
+
+      return html;
+    }
+
+    // イベント詳細表示
+    function displayEventDetail() {
+      const container = document.getElementById('eventDetail');
+      const event = eventData;
+
+      const dateStr = Utils.formatDateSlash(event.date);
+      const dayOfWeek = Utils.getDayOfWeek(event.date);
+      const startTime = Utils.formatTime(event.start_time);
+      const endTime = Utils.formatTime(event.end_time);
+      const fee = event.fee_amount > 0 ? Utils.formatCurrency(event.fee_amount) : '無料';
+
+      // バッジ
+      let badges = '';
+      if (event.urgent) {
+        badges += '<span class="badge badge-danger">緊急</span>';
+      }
+
+      const now = new Date();
+      const eventDate = new Date(event.date);
+      const isPast = eventDate < now;
+
+      if (isPast) {
+        badges += '<span class="badge badge-secondary">終了</span>';
+      }
+
+      // display_fieldsの取得
+      const displayFields = typeof event.display_fields === 'string'
+        ? JSON.parse(event.display_fields)
+        : (event.display_fields || {});
+
+      container.innerHTML = `
+        <div class="event-header">
+          <div class="event-title-row">
+            <h2 class="event-title">${Utils.escapeHtml(event.title)}</h2>
+            <div class="event-badges">${badges}</div>
+          </div>
+        </div>
+
+        <div class="event-info-grid">
+          <!-- 開催日 -->
+          <div class="event-info-item">
+            <div class="event-info-icon">📅</div>
+            <div class="event-info-content">
+              <div class="event-info-label">開催日</div>
+              <div class="event-info-value">${dateStr}（${dayOfWeek}）</div>
+              ${displayFields.time !== false && (event.start_time || event.end_time) ? `
+                <div class="event-info-value">${startTime} - ${endTime}</div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- 開催場所 -->
+          ${displayFields.location !== false && event.location ? `
+            <div class="event-info-item">
+              <div class="event-info-icon">📍</div>
+              <div class="event-info-content">
+                <div class="event-info-label">場所</div>
+                <div class="event-info-value">${Utils.escapeHtml(event.location)}</div>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- 出欠締切 -->
+          ${event.attendance_deadline ? `
+            <div class="event-info-item">
+              <div class="event-info-icon">⏰</div>
+              <div class="event-info-content">
+                <div class="event-info-label">出欠締切</div>
+                <div class="event-info-value">${Utils.formatDateSlash(event.attendance_deadline)}</div>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- キャンセル料発生日 -->
+          ${event.cancellation_fee_date ? `
+            <div class="event-info-item">
+              <div class="event-info-icon">💳</div>
+              <div class="event-info-content">
+                <div class="event-info-label">キャンセル料発生日</div>
+                <div class="event-info-value">${formatCancellationFeeDate(event.cancellation_fee_date, event.date)}</div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- 説明文 -->
+        ${displayFields.description !== false && event.description ? `
+          <div class="event-description">
+            <div class="event-description-title">詳細</div>
+            <div class="event-description-text">${Utils.escapeHtml(event.description)}</div>
+          </div>
+        ` : ''}
+
+        <!-- 任意項目（display_fieldsで選択されたもの） -->
+        ${renderOptionalFields(event, displayFields)}
+      `;
+    }
+
+    // 出欠ボタン生成（タイプA/B対応）
+    function renderAttendanceButtons(event, currentStatus, isPast) {
+      // タイプA: シンプルな出欠
+      if (!event.attendance_type || event.attendance_type === 'A') {
+        return `
+          <div class="attendance-buttons">
+            <button class="attendance-btn ${currentStatus === '出席' ? 'selected' : ''}"
+                    onclick="selectAttendance('出席')"
+                    ${isPast ? 'disabled' : ''}>
+              <div class="attendance-btn-icon">✓</div>
+              <div class="attendance-btn-content">
+                <div class="attendance-btn-label">出席</div>
+                <div class="attendance-btn-desc">イベントに参加します</div>
+              </div>
+            </button>
+
+            <button class="attendance-btn ${currentStatus === '公欠' ? 'selected' : ''}"
+                    onclick="selectAttendance('公欠')"
+                    ${isPast ? 'disabled' : ''}>
+              <div class="attendance-btn-icon">📋</div>
+              <div class="attendance-btn-content">
+                <div class="attendance-btn-label">公欠</div>
+                <div class="attendance-btn-desc">公務による欠席</div>
+              </div>
+            </button>
+
+            <button class="attendance-btn ${currentStatus === '欠席' ? 'selected' : ''}"
+                    onclick="selectAttendance('欠席')"
+                    ${isPast ? 'disabled' : ''}>
+              <div class="attendance-btn-icon">✗</div>
+              <div class="attendance-btn-content">
+                <div class="attendance-btn-label">欠席</div>
+                <div class="attendance-btn-desc">参加できません</div>
+              </div>
+            </button>
+          </div>
+        `;
+      }
+
+      // タイプB: 参加オプション
+      const participationOptions = typeof event.participation_options === 'string'
+        ? JSON.parse(event.participation_options)
+        : (event.participation_options || []);
+
+      let buttonsHTML = '<div class="attendance-buttons">';
+      participationOptions.forEach((option, index) => {
+        const amountText = option.amount > 0
+          ? `${option.amount.toLocaleString()}円`
+          : '無料';
+        const isSelected = currentStatus === option.label;
+
+        buttonsHTML += `
+          <button class="attendance-btn ${isSelected ? 'selected' : ''}"
+                  onclick="selectAttendance('${Utils.escapeHtml(option.label)}')"
+                  ${isPast ? 'disabled' : ''}>
+            <div class="attendance-btn-icon">${option.amount > 0 ? '💰' : '✓'}</div>
+            <div class="attendance-btn-content">
+              <div class="attendance-btn-label">${Utils.escapeHtml(option.label)}</div>
+              <div class="attendance-btn-desc">${amountText}</div>
+            </div>
+          </button>
+        `;
+      });
+      buttonsHTML += '</div>';
+      return buttonsHTML;
+    }
+
+    // 出欠登録セクション表示
+    function displayAttendanceSection() {
+      const container = document.getElementById('attendanceSection');
+      const event = eventData;
+      const now = new Date();
+
+      // 現在の出欠状況
+      const currentStatus = event.my_attendance_status;
+      selectedAttendance = currentStatus;
+
+      let statusHTML = '';
+      let statusClass = 'pending';
+
+      // タイプBの場合、選択されたオプションを表示
+      if (event.attendance_type === 'B' && currentStatus) {
+        if (currentStatus === '欠席') {
+          statusHTML = '✗ 欠席';
+          statusClass = 'absent';
+        } else {
+          statusHTML = `✓ ${currentStatus}`;
+          statusClass = 'attend';
+        }
+      } else if (currentStatus === '出席') {
+        statusHTML = '✓ 出席予定';
+        statusClass = 'attend';
+      } else if (currentStatus === '公欠') {
+        statusHTML = '📋 公欠';
+        statusClass = 'official-absence';
+      } else if (currentStatus === '欠席') {
+        statusHTML = '✗ 欠席';
+        statusClass = 'absent';
+      } else {
+        statusHTML = '未登録';
+        statusClass = 'pending';
+      }
+
+      // 締切チェック
+      let deadlineNotice = '';
+      let isExpired = false;
+
+      if (event.attendance_deadline) {
+        const deadline = new Date(event.attendance_deadline);
+        const daysUntil = Utils.getDaysUntil(event.attendance_deadline);
+
+        if (now > deadline) {
+          deadlineNotice = `
+            <div class="deadline-notice expired">
+              <span>⏰</span>
+              <span>登録締切を過ぎています（${Utils.formatDateSlash(event.attendance_deadline)}）</span>
+            </div>
+          `;
+          isExpired = true;
+        } else if (daysUntil <= 1) {
+          deadlineNotice = `
+            <div class="deadline-notice">
+              <span>⚠️</span>
+              <span>締切まであと${daysUntil === 0 ? '今日' : '1日'}です！（${Utils.formatDateSlash(event.attendance_deadline)}）</span>
+            </div>
+          `;
+        } else if (daysUntil <= 3) {
+          deadlineNotice = `
+            <div class="deadline-notice warning">
+              <span>⏰</span>
+              <span>締切まであと${daysUntil}日です（${Utils.formatDateSlash(event.attendance_deadline)}）</span>
+            </div>
+          `;
+        }
+      }
+
+      // 過去のイベントかチェック
+      const eventDate = new Date(event.date);
+      const isPast = eventDate < now;
+
+      container.innerHTML = `
+        <div class="attendance-header">
+          <h3 class="attendance-title">出欠登録</h3>
+          <div class="current-status ${statusClass}">${statusHTML}</div>
+        </div>
+
+        ${deadlineNotice}
+
+        ${isPast ? `
+          <div class="deadline-notice expired">
+            <span>📅</span>
+            <span>このイベントは終了しました</span>
+          </div>
+        ` : !isExpired ? `
+          ${renderAttendanceButtons(event, currentStatus, isPast)}
+
+          <div class="reason-section" id="reasonSection" style="display: none;">
+            <label class="reason-label">理由・備考（任意）</label>
+            <textarea
+              id="reasonInput"
+              class="reason-textarea"
+              placeholder="欠席理由や備考があれば入力してください..."
+            >${event.my_reason || ''}</textarea>
+          </div>
+
+          <div class="action-buttons">
+            <button id="submitBtn" class="btn btn-primary btn-lg" disabled>
+              ${currentStatus ? '出欠を変更' : '出欠を登録'}
+            </button>
+            ${currentStatus ? `
+              <button id="cancelBtn" class="btn btn-outline btn-lg">
+                登録をキャンセル
+              </button>
+            ` : ''}
+          </div>
+
+          ${currentStatus === '出席' ? `
+            <div class="cancel-section">
+              <div class="cancel-title">キャンセルポリシー</div>
+              <div class="cancel-info">
+                ${event.cancellation_fee_date && event.fee_amount > 0 ? `
+                  <p>• ${formatCancellationFeeDate(event.cancellation_fee_date, event.date)}以降のキャンセル：登録料の100%</p>
+                  <p>• ${formatCancellationFeeDate(event.cancellation_fee_date, event.date)}より前のキャンセル：キャンセル料なし</p>
+                ` : event.fee_amount > 0 ? `
+                  <p>登録料が設定されていますが、キャンセル料は発生しません。</p>
+                ` : `
+                  <p>登録料無料のイベントのため、キャンセル料はかかりません。</p>
+                `}
+              </div>
+            </div>
+          ` : ''}
+        ` : ''}
+      `;
+
+      // 理由入力欄の表示制御
+      if (currentStatus === '欠席') {
+        const reasonSection = document.getElementById('reasonSection');
+        if (reasonSection) {
+          reasonSection.style.display = 'block';
+        }
+      }
+    }
+
+    // 統計情報表示
+    function displayStats() {
+      const container = document.getElementById('statsSection');
+      const event = eventData;
+
+      container.innerHTML = `
+        <h3 class="stats-title">参加状況</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">${event.attend_count || 0}</div>
+            <div class="stat-label">出席</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${event.official_absence_count || 0}</div>
+            <div class="stat-label">公欠</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${event.absent_count || 0}</div>
+            <div class="stat-label">欠席</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${event.pending_count || 0}</div>
+            <div class="stat-label">未登録</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 出欠選択
+    function selectAttendance(status) {
+      selectedAttendance = status;
+
+      // ボタンの状態更新
+      document.querySelectorAll('.attendance-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      event.target.classList.add('selected');
+
+      // 理由入力欄の表示制御
+      const reasonSection = document.getElementById('reasonSection');
+      if (status === '欠席') {
+        reasonSection.style.display = 'block';
+      } else {
+        reasonSection.style.display = 'none';
+      }
+
+      // 登録ボタンの有効化
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = false;
+    }
+    window.selectAttendance = selectAttendance;
+
+    // 出欠登録
+    async function submitAttendance() {
+      if (!selectedAttendance) {
+        Utils.showError('出欠を選択してください');
+        return;
+      }
+
+      const reason = document.getElementById('reasonInput')?.value || '';
+
+      // 確認
+      const confirmMessage = eventData.my_attendance_status
+        ? `出欠を「${selectedAttendance}」に変更しますか？`
+        : `「${selectedAttendance}」で登録しますか？`;
+
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const requestData = {
+          event_id: eventId,
+          member_id: userInfo.memberId,
+          status: selectedAttendance,
+          memo: reason
+        };
+
+        // タイプBの場合、selected_optionを送信
+        if (eventData.attendance_type === 'B') {
+          requestData.selected_option = selectedAttendance;
+        }
+
+        const result = await API.call('registerAttendance', requestData);
+
+        if (result.success) {
+          Utils.showSuccess('出欠を登録しました');
+          // データを再取得
+          await loadEventDetail();
+        } else {
+          throw new Error(result.message || '出欠登録に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Submit attendance error:', error);
+        Utils.showError(error.message || '出欠登録に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 出欠キャンセル
+    async function cancelAttendance() {
+      if (!confirm('出欠登録をキャンセルしますか？')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('cancelAttendance', {
+          event_id: eventId,
+          member_id: userInfo.memberId
+        });
+
+        if (result.success) {
+          Utils.showSuccess('出欠登録をキャンセルしました');
+          // データを再取得
+          await loadEventDetail();
+        } else {
+          throw new Error(result.message || '出欠キャンセルに失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Cancel attendance error:', error);
+        Utils.showError(error.message || '出欠キャンセルに失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // 出欠登録ボタン（動的に生成されるため、イベント委譲を使用）
+      document.addEventListener('click', (e) => {
+        if (e.target.id === 'submitBtn' || e.target.closest('#submitBtn')) {
+          submitAttendance();
+        }
+        if (e.target.id === 'cancelBtn' || e.target.closest('#cancelBtn')) {
+          cancelAttendance();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

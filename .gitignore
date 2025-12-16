@@ -1,0 +1,41 @@
+# Node modules
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+.out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 環境変数（ローカル設定）
+.env
+.env.local
+
+# キャッシュ
+.cache/
+.eslintcache
+
+# Test coverage
+coverage/
+
+# バックアップファイル
+*.bak
+*.backup
+*~
+
+# APIやIDファイル（本番環境のシークレット情報）
+APIやID

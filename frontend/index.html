@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>ログイン - グローバルデザイン推進委員会 出欠管理</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .login-card {
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .login-form {
+      margin-bottom: 1.5rem;
+    }
+
+    .login-footer {
+      text-align: center;
+      font-size: 0.813rem;
+      color: var(--text-light);
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 480px) {
+      .login-card {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ログインコンテナ -->
+  <div class="login-container">
+    <div class="login-card">
+      <!-- ヘッダー -->
+      <div class="login-header">
+        <h1 class="login-title">出欠管理システム</h1>
+        <p class="login-subtitle">グローバルデザイン推進委員会</p>
+      </div>
+
+      <!-- エラーメッセージ -->
+      <div id="errorMessage" class="alert alert-danger hidden"></div>
+
+      <!-- ログインフォーム -->
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="loginId" class="form-label required">ログインID</label>
+          <input
+            type="text"
+            id="loginId"
+            class="form-input"
+            placeholder="yamada"
+            required
+            autocomplete="username"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label required">パスワード</label>
+          <input
+            type="password"
+            id="password"
+            class="form-input"
+            placeholder="パスワードを入力"
+            required
+            autocomplete="current-password"
+          >
+        </div>
+
+        <div class="form-check">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            class="form-check-input"
+          >
+          <label for="rememberMe" class="form-check-label">
+            ログイン情報を保存
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
+          ログイン
+        </button>
+      </form>
+
+      <!-- フッター -->
+      <div class="login-footer">
+        <p>初回ログイン時はIDとパスワードを管理者にお問い合わせください</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScriptファイル -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+
+  <script>
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', () => {
+      // 既にログイン済みの場合はホーム画面へリダイレクト
+      if (Auth.isLoggedIn()) {
+        window.location.href = 'home.html';
+        return;
+      }
+
+      // 保存済みログイン情報を復元
+      const saved = Auth.loadSavedCredentials();
+      if (saved) {
+        document.getElementById('loginId').value = saved.loginId;
+        document.getElementById('password').value = saved.password;
+        document.getElementById('rememberMe').checked = saved.rememberMe;
+      }
+
+      // フォーム送信処理
+      document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    });
+
+    // ログイン処理
+    async function handleLogin(e) {
+      e.preventDefault();
+
+      const loginId = document.getElementById('loginId').value.trim();
+      const password = document.getElementById('password').value;
+      const rememberMe = document.getElementById('rememberMe').checked;
+      const errorMessage = document.getElementById('errorMessage');
+
+      // バリデーション
+      if (!loginId || !password) {
+        showError('ログインIDとパスワードを入力してください');
+        return;
+      }
+
+      // エラーメッセージをクリア
+      errorMessage.classList.add('hidden');
+
+      // ローディング表示
+      Utils.showLoading();
+
+      try {
+        // ログイン実行
+        const success = await Auth.login(loginId, password, rememberMe);
+
+        if (success) {
+          // ログイン成功
+          window.location.href = 'home.html';
+        } else {
+          // ログイン失敗
+          showError('ログインIDまたはパスワードが正しくありません');
+        }
+
+      } catch (error) {
+        console.error('Login error:', error);
+        showError('ログインに失敗しました。もう一度お試しください。');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // エラーメッセージ表示
+    function showError(message) {
+      const errorMessage = document.getElementById('errorMessage');
+      errorMessage.textContent = message;
+      errorMessage.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

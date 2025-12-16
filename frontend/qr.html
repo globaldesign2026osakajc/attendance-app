@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>QRコード - グローバルデザイン推進委員会 出欠管理</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .qr-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .qr-card {
+      background-color: white;
+      border-radius: 16px;
+      padding: 2.5rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .qr-header {
+      margin-bottom: 2rem;
+    }
+
+    .qr-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .qr-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .qr-code-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      background: linear-gradient(135deg, var(--primary-bg) 0%, var(--gray-light) 100%);
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .qr-code {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      background-color: white;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .member-info {
+      background-color: var(--gray-light);
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .member-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .member-info-row:last-child {
+      border-bottom: none;
+    }
+
+    .member-info-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .member-info-value {
+      font-size: 0.875rem;
+      color: var(--text-color);
+      font-weight: 600;
+    }
+
+    .qr-instructions {
+      background-color: var(--info-bg);
+      color: var(--info-color);
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+
+    .qr-instructions-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .qr-instructions-list {
+      font-size: 0.813rem;
+      line-height: 1.8;
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+
+    .qr-instructions-list li {
+      margin-bottom: 0.5rem;
+    }
+
+    .qr-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .brightness-notice {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: var(--warning-bg);
+      color: var(--warning-color);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .loading-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .loading-qr-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .qr-card {
+        padding: 2rem 1.5rem;
+      }
+
+      .qr-code-wrapper {
+        padding: 1.5rem;
+      }
+
+      .qr-actions {
+        flex-direction: column;
+      }
+
+      .qr-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-container">
+      <!-- トップバー -->
+      <div class="header-top">
+        <h1 class="header-title">出欠管理システム</h1>
+        <div class="header-user">
+          <span id="userName" class="header-user-name"></span>
+          <button id="mobileNavToggle" class="mobile-nav-toggle">☰</button>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">ログアウト</button>
+        </div>
+      </div>
+
+      <!-- ナビゲーション -->
+      <nav class="nav">
+        <div class="nav-container">
+          <a href="home.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">HOME</span>
+          </a>
+          <a href="events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">イベント</span>
+          </a>
+          <a href="members.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">メンバー</span>
+          </a>
+          <a href="history.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">履歴</span>
+          </a>
+          <a href="receipts.html" class="nav-item">
+            <span class="nav-icon">🧾</span>
+            <span class="nav-text">領収書</span>
+          </a>
+          <a href="profile.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">プロフィール</span>
+          </a>
+          <!-- 管理者用リンク -->
+          <a href="admin/dashboard.html" id="adminLink" class="nav-item" style="display: none;">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">管理画面</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container">
+      <a href="home.html" class="back-link" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary-color); text-decoration: none; font-size: 0.875rem; margin-bottom: 1.5rem;">
+        ← HOMEに戻る
+      </a>
+
+      <div class="qr-container">
+        <div class="qr-card">
+          <!-- ヘッダー -->
+          <div class="qr-header">
+            <h2 class="qr-title">あなたのQRコード</h2>
+            <p class="qr-subtitle">
+              イベント会場でこのQRコードを提示してチェックインしてください
+            </p>
+          </div>
+
+          <!-- QRコード -->
+          <div class="qr-code-wrapper">
+            <div id="qrCodeContainer">
+              <div class="loading-qr">
+                <div class="loading-qr-spinner"></div>
+                <p>QRコードを生成中...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- メンバー情報 -->
+          <div class="member-info">
+            <div class="member-info-row">
+              <span class="member-info-label">氏名</span>
+              <span class="member-info-value" id="memberName">-</span>
+            </div>
+            <div class="member-info-row">
+              <span class="member-info-label">メンバーID</span>
+              <span class="member-info-value" id="memberId">-</span>
+            </div>
+          </div>
+
+          <!-- 使い方 -->
+          <div class="qr-instructions">
+            <div class="qr-instructions-title">
+              <span>💡</span>
+              <span>使い方</span>
+            </div>
+            <ol class="qr-instructions-list">
+              <li>イベント会場の受付でこの画面を提示してください</li>
+              <li>管理者がQRコードをスキャンします</li>
+              <li>チェックインが完了すると参加が記録されます</li>
+              <li>参加費がある場合は、その場でお支払いください</li>
+            </ol>
+          </div>
+
+          <!-- 注意事項 -->
+          <div class="brightness-notice">
+            <span>💡</span>
+            <span>画面の明るさを上げるとスキャンしやすくなります</span>
+          </div>
+
+          <!-- アクション -->
+          <div class="qr-actions" style="margin-top: 2rem;">
+            <button id="refreshBtn" class="btn btn-outline">
+              🔄 QRコードを更新
+            </button>
+            <button id="downloadBtn" class="btn btn-secondary">
+              📥 画像として保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- JavaScriptファイル -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/nav.js"></script>
+
+  <script>
+    const userInfo = Auth.getUserInfo();
+    let qrCodeUrl = '';
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // ログインチェック
+      Auth.requireLogin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // メンバー情報表示
+      displayMemberInfo();
+
+      // QRコード生成（Google Charts APIを使用）
+      await generateQRCode();
+
+      // イベントリスナー設定
+      setupEventListeners();
+
+      // 画面の明るさを最大に設定（可能な場合）
+      try {
+        if ('wakeLock' in navigator) {
+          const wakeLock = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock is active');
+        }
+      } catch (err) {
+        console.log('Wake Lock error:', err);
+      }
+    });
+
+    // メンバー情報表示
+    function displayMemberInfo() {
+      document.getElementById('memberName').textContent = userInfo.name;
+      document.getElementById('memberId').textContent = userInfo.memberId;
+    }
+
+    // QRコード生成（QR Server APIを使用）
+    async function generateQRCode() {
+      const container = document.getElementById('qrCodeContainer');
+
+      try {
+        // QRコードデータ（メンバーID）
+        const qrData = encodeURIComponent(userInfo.memberId);
+
+        // QR Server APIを使用してQRコードを生成
+        // https://goqr.me/api/ - 無料のQRコード生成API
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrData}`;
+
+        // 画像要素を作成
+        const img = document.createElement('img');
+        img.className = 'qr-code';
+        img.alt = 'QRコード';
+
+        // 画像読み込み完了時の処理
+        img.onload = () => {
+          container.innerHTML = '';
+          container.appendChild(img);
+
+          // ダウンロード用にURLを保存
+          qrCodeUrl = qrApiUrl;
+          console.log('QRコード生成成功');
+        };
+
+        // 画像読み込みエラー時の処理
+        img.onerror = () => {
+          console.error('QR Code image load error');
+          handleQRError();
+        };
+
+        // 画像のsrcを設定（読み込み開始）
+        img.src = qrApiUrl;
+
+      } catch (error) {
+        console.error('QR Code generation error:', error);
+        handleQRError();
+      }
+    }
+
+    // QRコード読み込みエラー処理
+    function handleQRError() {
+      const container = document.getElementById('qrCodeContainer');
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">❌</div>
+          <p class="empty-state-text">QRコードの読み込みに失敗しました</p>
+          <button onclick="generateQRCode()" class="btn btn-primary btn-sm" style="margin-top: 1rem;">
+            再試行
+          </button>
+        </div>
+      `;
+    }
+    window.handleQRError = handleQRError;
+
+    // QRコードをダウンロード
+    async function downloadQRCode() {
+      try {
+        if (!qrCodeUrl) {
+          throw new Error('QRコードが生成されていません');
+        }
+
+        // 新しいCanvasを作成（情報を追加するため）
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Canvasサイズを設定
+        canvas.width = 400;
+        canvas.height = 480;
+
+        // 背景色（白）
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // QRコード画像を読み込み
+        const qrImg = new Image();
+        qrImg.crossOrigin = 'anonymous'; // CORS対策
+
+        qrImg.onload = () => {
+          // QRコードを中央に配置
+          const qrSize = 300;
+          const qrX = (canvas.width - qrSize) / 2;
+          const qrY = 50;
+          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+          // テキスト追加
+          ctx.fillStyle = '#333333';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(userInfo.name, canvas.width / 2, 380);
+
+          ctx.font = '14px sans-serif';
+          ctx.fillStyle = '#666666';
+          ctx.fillText(`ID: ${userInfo.memberId}`, canvas.width / 2, 410);
+
+          ctx.font = '12px sans-serif';
+          ctx.fillText('グローバルデザイン推進委員会', canvas.width / 2, 440);
+
+          // ダウンロード
+          canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qr-code-${userInfo.memberId}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('QRコードを保存しました');
+          });
+        };
+
+        qrImg.onerror = () => {
+          throw new Error('QRコード画像の読み込みに失敗しました');
+        };
+
+        qrImg.src = qrCodeUrl;
+
+      } catch (error) {
+        console.error('Download error:', error);
+        alert('QRコードの保存に失敗しました: ' + error.message);
+      }
+    }
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // QRコード更新
+      document.getElementById('refreshBtn').addEventListener('click', () => {
+        generateQRCode();
+      });
+
+      // QRコードダウンロード
+      document.getElementById('downloadBtn').addEventListener('click', () => {
+        downloadQRCode();
+      });
+    }
+  </script>
+</body>
+</html>

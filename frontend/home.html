@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>HOME - グローバルデザイン推進委員会 出欠管理</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .welcome-section {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .welcome-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .welcome-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .qr-button {
+      background-color: white;
+      color: var(--primary-color);
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .qr-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .qr-icon::before {
+      content: '📱';
+      font-size: 1.2rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .view-all-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: color 0.3s ease;
+    }
+
+    .view-all-link:hover {
+      color: var(--secondary-color);
+      text-decoration: underline;
+    }
+
+    .event-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border-left: 4px solid var(--border-color);
+    }
+
+    .event-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .event-card.urgent {
+      border-left-color: var(--danger-color);
+      background: linear-gradient(to right, #fff5f5 0%, white 10%);
+    }
+
+    .event-card.pending {
+      border-left-color: var(--warning-color);
+      background: linear-gradient(to right, #fffbeb 0%, white 10%);
+    }
+
+    .event-card.upcoming {
+      border-left-color: var(--primary-color);
+    }
+
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .event-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin: 0;
+      flex: 1;
+    }
+
+    .event-badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .event-info {
+      display: grid;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .event-info-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .event-info-icon {
+      font-size: 1rem;
+      min-width: 1.25rem;
+      text-align: center;
+    }
+
+    .event-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 0.75rem;
+    }
+
+    .attendance-status {
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .attendance-status.attend {
+      color: var(--success-color);
+    }
+
+    .attendance-status.absent {
+      color: var(--text-secondary);
+    }
+
+    .attendance-status.pending {
+      color: var(--warning-color);
+    }
+
+    .deadline-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.75rem;
+      background-color: var(--danger-bg);
+      color: var(--danger-color);
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .deadline-badge.warning {
+      background-color: var(--warning-bg);
+      color: var(--warning-color);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* コンパクトイベントカード */
+    .event-card-compact {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      border-left: 4px solid var(--border-color);
+    }
+
+    .event-card-compact:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .event-date-badge {
+      color: white;
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+      min-width: 60px;
+      flex-shrink: 0;
+    }
+
+    /* 月ごとの色設定 */
+    .event-date-badge.month-1 {
+      background: linear-gradient(135deg, #1976d2, #1565c0);
+    }
+    .event-date-badge.month-2 {
+      background: linear-gradient(135deg, #7b1fa2, #6a1b9a);
+    }
+    .event-date-badge.month-3 {
+      background: linear-gradient(135deg, #e91e63, #c2185b);
+    }
+    .event-date-badge.month-4 {
+      background: linear-gradient(135deg, #fb8c00, #f57c00);
+    }
+    .event-date-badge.month-5 {
+      background: linear-gradient(135deg, #66bb6a, #43a047);
+    }
+    .event-date-badge.month-6 {
+      background: linear-gradient(135deg, #26c6da, #00acc1);
+    }
+    .event-date-badge.month-7 {
+      background: linear-gradient(135deg, #ff7043, #f4511e);
+    }
+    .event-date-badge.month-8 {
+      background: linear-gradient(135deg, #8d6e63, #6d4c41);
+    }
+    .event-date-badge.month-9 {
+      background: linear-gradient(135deg, #5c6bc0, #3f51b5);
+    }
+    .event-date-badge.month-10 {
+      background: linear-gradient(135deg, #ff9800, #f57c00);
+    }
+    .event-date-badge.month-11 {
+      background: linear-gradient(135deg, #78909c, #546e7a);
+    }
+    .event-date-badge.month-12 {
+      background: linear-gradient(135deg, #d32f2f, #c62828);
+    }
+
+    .date-day {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .date-month {
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .date-relative {
+      font-size: 0.7rem;
+      margin-top: 0.25rem;
+      opacity: 0.9;
+    }
+
+    .event-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .event-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .event-name {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text-color);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .deadline-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .deadline-badge.urgent {
+      background-color: #ff4444;
+      color: white;
+    }
+
+    .deadline-badge.expired {
+      background-color: #999;
+      color: white;
+    }
+
+    .event-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .event-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .event-status {
+      margin-top: 0.5rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-badge.status-attend {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status-badge.status-absent {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+
+    .status-badge.status-none {
+      background-color: #fff3e0;
+      color: #ef6c00;
+    }
+
+    .event-arrow {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      .welcome-section {
+        padding: 1.5rem;
+      }
+
+      .welcome-title {
+        font-size: 1.25rem;
+      }
+
+      .qr-button {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .event-header {
+        flex-direction: column;
+      }
+
+      .event-badges {
+        width: 100%;
+      }
+
+      .event-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-container">
+      <!-- トップバー -->
+      <div class="header-top">
+        <h1 class="header-title">出欠管理システム</h1>
+        <div class="header-user">
+          <span id="userName" class="header-user-name"></span>
+          <button id="mobileNavToggle" class="mobile-nav-toggle">☰</button>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">ログアウト</button>
+        </div>
+      </div>
+
+      <!-- ナビゲーション -->
+      <nav class="nav">
+        <div class="nav-container">
+          <a href="home.html" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">HOME</span>
+          </a>
+          <a href="events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">イベント</span>
+          </a>
+          <a href="members.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">メンバー</span>
+          </a>
+          <a href="history.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">履歴</span>
+          </a>
+          <a href="receipts.html" class="nav-item">
+            <span class="nav-icon">🧾</span>
+            <span class="nav-text">領収書</span>
+          </a>
+          <a href="profile.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">プロフィール</span>
+          </a>
+          <!-- 管理者用リンク -->
+          <a href="admin/dashboard.html" id="adminLink" class="nav-item" style="display: none;">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">管理画面</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container">
+      <!-- ウェルカムセクション -->
+      <div class="welcome-section">
+        <div class="welcome-header">
+          <h2 class="welcome-title">
+            <span id="welcomeGreeting">こんにちは</span>、<span id="welcomeName"></span>さん
+          </h2>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button id="showQrBtn" class="qr-button">
+              <span class="qr-icon"></span>
+              <span>QRコード表示</span>
+            </button>
+            <!-- 管理者用ボタン -->
+            <button id="adminDashboardBtn" class="qr-button" style="display: none; background-color: rgba(255,255,255,0.2); color: white; border: 2px solid white;" onclick="window.location.href='admin/dashboard.html'">
+              <span style="font-size: 1.2rem;">⚙️</span>
+              <span>管理画面</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 緊急登録が必要なイベント -->
+      <section id="urgentSection" class="section hidden">
+        <div class="section-header">
+          <h3 class="section-title">🚨 緊急登録が必要なイベント</h3>
+        </div>
+        <div id="urgentEvents"></div>
+      </section>
+
+      <!-- 出欠登録が未完了のイベント -->
+      <section id="pendingSection" class="section hidden">
+        <div class="section-header">
+          <h3 class="section-title">⚠️ 出欠登録が未完了</h3>
+          <a href="events.html" class="view-all-link">すべて見る →</a>
+        </div>
+        <div id="pendingEvents"></div>
+      </section>
+
+      <!-- 今後のイベント -->
+      <section id="upcomingSection" class="section">
+        <div class="section-header">
+          <h3 class="section-title">📅 今後のイベント</h3>
+          <a href="events.html" class="view-all-link">すべて見る →</a>
+        </div>
+        <div id="upcomingEvents"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- JavaScriptファイル -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>

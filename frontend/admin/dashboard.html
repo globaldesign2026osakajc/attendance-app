@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>ダッシュボード - 管理者画面</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- 管理者レイアウト -->
+  <div class="admin-layout">
+    <!-- サイドバー -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-header">
+        <h1 class="admin-sidebar-title">管理者画面</h1>
+        <p class="admin-sidebar-subtitle">出欠管理システム</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <a href="dashboard.html" class="admin-sidebar-item active">
+          <span class="admin-sidebar-icon">📊</span>
+          <span class="admin-sidebar-text">ダッシュボード</span>
+        </a>
+        <a href="events.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📅</span>
+          <span class="admin-sidebar-text">イベント管理</span>
+        </a>
+        <a href="members.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">👥</span>
+          <span class="admin-sidebar-text">メンバー管理</span>
+        </a>
+        <a href="analytics.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📈</span>
+          <span class="admin-sidebar-text">出席率分析</span>
+        </a>
+        <a href="payments.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">💰</span>
+          <span class="admin-sidebar-text">支払い管理</span>
+        </a>
+        <a href="checkin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">📱</span>
+          <span class="admin-sidebar-text">QRチェックイン</span>
+        </a>
+        <a href="receipts-admin.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🧾</span>
+          <span class="admin-sidebar-text">領収書管理</span>
+        </a>
+
+        <div class="admin-sidebar-divider"></div>
+
+        <a href="../home.html" class="admin-sidebar-item">
+          <span class="admin-sidebar-icon">🏠</span>
+          <span class="admin-sidebar-text">ユーザー画面へ</span>
+        </a>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button id="logoutBtn" class="btn btn-outline btn-block" style="color: white; border-color: rgba(255,255,255,0.3);">
+          ログアウト
+        </button>
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="admin-main">
+      <!-- トップバー -->
+      <div class="admin-topbar">
+        <button class="admin-mobile-toggle" id="mobileToggle">
+          ☰
+        </button>
+        <h2 class="admin-topbar-title">ダッシュボード</h2>
+        <div class="admin-topbar-actions">
+          <div class="admin-user-info">
+            <span class="admin-user-icon">👤</span>
+            <div class="admin-user-details">
+              <span class="admin-user-name" id="userName">管理者</span>
+              <span class="admin-user-role">管理者</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- コンテンツ -->
+      <div class="admin-content">
+        <!-- 統計カード -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <div>
+                <div class="stat-card-value" id="totalEvents">0</div>
+                <div class="stat-card-label">総イベント数</div>
+              </div>
+              <div class="stat-card-icon primary">
+                📅
+              </div>
+            </div>
+            <div class="stat-card-change positive" id="eventsChange">
+              ↗ 今月 <span id="eventsThisMonth">0</span> 件
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <div>
+                <div class="stat-card-value" id="attendanceRate">0%</div>
+                <div class="stat-card-label">全体出欠率</div>
+              </div>
+              <div class="stat-card-icon success">
+                📊
+              </div>
+            </div>
+            <div class="stat-card-change" id="attendanceChange">
+              過去3ヶ月の平均
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <div>
+                <div class="stat-card-value" id="unansweredCount">0</div>
+                <div class="stat-card-label">未回答者数</div>
+              </div>
+              <div class="stat-card-icon warning">
+                ⏰
+              </div>
+            </div>
+            <div class="stat-card-change" id="unansweredChange">
+              直近イベント対象
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <div>
+                <div class="stat-card-value" id="weeklyEvents">0</div>
+                <div class="stat-card-label">今週のイベント数</div>
+              </div>
+              <div class="stat-card-icon danger">
+                📆
+              </div>
+            </div>
+            <div class="stat-card-change" id="weeklyChange">
+              今週の予定
+            </div>
+          </div>
+        </div>
+
+        <!-- アラート -->
+        <div id="alertsContainer"></div>
+
+        <!-- クイックアクション -->
+        <div class="admin-card" style="margin-bottom: 2rem;">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">クイックアクション</h3>
+          </div>
+          <div class="admin-card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <button class="btn btn-primary btn-block" onclick="location.href='events.html?action=create'" style="padding: 1.5rem; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 2rem;">📅</span>
+                <span>新規イベント登録</span>
+              </button>
+              <button class="btn btn-success btn-block" onclick="location.href='members.html'" style="padding: 1.5rem; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 2rem;">👥</span>
+                <span>メンバー管理</span>
+              </button>
+              <button class="btn btn-warning btn-block" onclick="location.href='checkin.html'" style="padding: 1.5rem; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 2rem;">📱</span>
+                <span>QRチェックイン</span>
+              </button>
+              <button class="btn btn-info btn-block" onclick="location.href='analytics.html'" style="padding: 1.5rem; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 2rem;">📈</span>
+                <span>出席率分析</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- グラフセクション -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+          <!-- 月別イベント数推移 -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h3 class="admin-card-title">月別イベント数推移</h3>
+            </div>
+            <div class="admin-card-body">
+              <canvas id="monthlyEventsChart" style="max-height: 300px;"></canvas>
+            </div>
+          </div>
+
+          <!-- 出欠状況の割合 -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h3 class="admin-card-title">出欠状況の割合</h3>
+            </div>
+            <div class="admin-card-body">
+              <canvas id="attendanceStatusChart" style="max-height: 300px;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2カラムレイアウト -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+          <!-- 今後のイベント -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h3 class="admin-card-title">今後のイベント</h3>
+              <a href="events.html" class="btn btn-sm btn-outline">すべて見る</a>
+            </div>
+            <div class="admin-card-body">
+              <div id="upcomingEvents"></div>
+            </div>
+          </div>
+
+          <!-- 最近の出欠登録 -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h3 class="admin-card-title">最近の出欠登録</h3>
+              <a href="events.html" class="btn btn-sm btn-outline">すべて見る</a>
+            </div>
+            <div class="admin-card-body">
+              <div id="recentAttendance"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 未対応タスク -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">未対応タスク</h3>
+          </div>
+          <div class="admin-card-body">
+            <div id="pendingTasks"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScriptファイル -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+
+  <script>
+    const userInfo = Auth.getUserInfo();
+
+    // グラフインスタンス
+    let monthlyEventsChart = null;
+    let attendanceStatusChart = null;
+
+    // ページ読み込み時の処理
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 管理者権限チェック
+      Auth.requireAdmin();
+
+      // ユーザー名表示
+      document.getElementById('userName').textContent = userInfo.name;
+
+      // ダッシュボードデータ取得
+      await loadDashboardData();
+
+      // イベントリスナー設定
+      setupEventListeners();
+    });
+
+    // ダッシュボードデータ取得
+    async function loadDashboardData() {
+      Utils.showLoading();
+
+      try {
+        // 各種データを並行取得
+        const [eventsResult, membersResult, statsResult, tasksResult, alertsResult] = await Promise.all([
+          API.call('getEvents', {}),
+          API.call('getMembers', {}),
+          API.call('getDashboardStats', {}),
+          API.call('getPendingTasks', {}),
+          API.call('getAlerts', {})
+        ]);
+
+        // 統計情報を更新
+        updateStats(eventsResult, membersResult, statsResult);
+
+        // 今後のイベント表示
+        displayUpcomingEvents(eventsResult.events || []);
+
+        // 最近の出欠登録表示
+        displayRecentAttendance(statsResult.recent_attendance || []);
+
+        // アラート表示
+        displayAlerts(alertsResult.alerts || statsResult.alerts || []);
+
+        // 未対応タスク表示
+        displayPendingTasks(tasksResult.tasks || []);
+
+        // グラフ表示
+        renderCharts(eventsResult.events || [], statsResult);
+
+      } catch (error) {
+        console.error('Load dashboard error:', error);
+        Utils.showError('ダッシュボードデータの取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 統計情報更新
+    function updateStats(eventsResult, membersResult, statsResult) {
+      const events = eventsResult.events || [];
+      const members = membersResult.members || [];
+      const stats = statsResult.stats || {};
+
+      // 総イベント数
+      document.getElementById('totalEvents').textContent = events.length;
+
+      // 今月のイベント数
+      const now = new Date();
+      const thisMonth = events.filter(e => {
+        const eventDate = new Date(e.event_date);
+        return eventDate.getMonth() === now.getMonth() &&
+               eventDate.getFullYear() === now.getFullYear();
+      }).length;
+      document.getElementById('eventsThisMonth').textContent = thisMonth;
+
+      // 平均出席率（全体出欠率）
+      const attendanceRate = stats.attendance_rate || 0;
+      document.getElementById('attendanceRate').textContent = attendanceRate + '%';
+
+      // 未回答者数
+      const unansweredCount = stats.unanswered_count || 0;
+      document.getElementById('unansweredCount').textContent = unansweredCount;
+
+      // 今週のイベント数
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // 今週の日曜日
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6); // 今週の土曜日
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      const weeklyEvents = events.filter(e => {
+        const eventDate = new Date(e.event_date);
+        return eventDate >= startOfWeek && eventDate <= endOfWeek;
+      }).length;
+      document.getElementById('weeklyEvents').textContent = weeklyEvents;
+    }
+
+    // 今後のイベント表示
+    function displayUpcomingEvents(events) {
+      const container = document.getElementById('upcomingEvents');
+      const now = new Date();
+
+      // 未来のイベントのみ抽出して日付順にソート
+      const upcomingEvents = events
+        .filter(e => new Date(e.date) >= now)
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(0, 5);
+
+      if (upcomingEvents.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">今後のイベントはありません</p>';
+        return;
+      }
+
+      container.innerHTML = upcomingEvents.map(event => {
+        const eventDate = Utils.formatDateSlash(event.date);
+        const dayOfWeek = Utils.getDayOfWeek(event.date);
+        const attendCount = event.attend_count || 0;
+        const pendingCount = event.pending_count || 0;
+
+        return `
+          <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); cursor: pointer;"
+               onclick="location.href='events.html?id=${event.event_id}'">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <div style="font-weight: 600; color: var(--text-color);">${Utils.escapeHtml(event.title)}</div>
+              ${event.urgent ? '<span class="badge badge-danger">緊急</span>' : ''}
+            </div>
+            <div style="font-size: 0.813rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+              📅 ${eventDate}（${dayOfWeek}）
+            </div>
+            <div style="font-size: 0.813rem; color: var(--text-secondary);">
+              出席: ${attendCount}名 / 未登録: ${pendingCount}名
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 最近の出欠登録表示
+    function displayRecentAttendance(attendanceList) {
+      const container = document.getElementById('recentAttendance');
+
+      if (attendanceList.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">最近の出欠登録はありません</p>';
+        return;
+      }
+
+      container.innerHTML = attendanceList.slice(0, 5).map(item => {
+        const registeredAt = Utils.formatDateTime(item.registered_at);
+        const statusClass = item.status === '出席' ? 'success' : 'secondary';
+
+        return `
+          <div style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <div style="font-weight: 600; color: var(--text-color);">${Utils.escapeHtml(item.member_name)}</div>
+              <span class="badge badge-${statusClass}">${item.status}</span>
+            </div>
+            <div style="font-size: 0.813rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+              ${Utils.escapeHtml(item.event_name)}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-light);">
+              ${registeredAt}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // アラート表示
+    function displayAlerts(alerts) {
+      const container = document.getElementById('alertsContainer');
+
+      if (!alerts || alerts.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = alerts.map(alert => {
+        const typeClass = alert.type || 'info';
+        const icon = {
+          danger: '⚠️',
+          warning: '⏰',
+          info: 'ℹ️',
+          success: '✓'
+        }[typeClass] || 'ℹ️';
+
+        const actionButton = alert.action_url ? `
+          <button class="btn btn-sm btn-${typeClass}" onclick="location.href='${alert.action_url}'" style="margin-top: 0.5rem;">
+            詳細を見る
+          </button>
+        ` : '';
+
+        return `
+          <div class="admin-alert ${typeClass}" style="margin-bottom: 1rem;">
+            <div class="admin-alert-icon">${icon}</div>
+            <div class="admin-alert-content">
+              <div class="admin-alert-title">${Utils.escapeHtml(alert.title)}</div>
+              <div class="admin-alert-message">${Utils.escapeHtml(alert.message)}</div>
+              ${actionButton}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 未対応タスク表示
+    function displayPendingTasks(tasks) {
+      const container = document.getElementById('pendingTasks');
+
+      if (tasks.length === 0) {
+        container.innerHTML = '<p style="color: var(--success-color); text-align: center; padding: 2rem;">✓ すべてのタスクが完了しています</p>';
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="display: grid; gap: 1rem;">
+          ${tasks.map(task => `
+            <div style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">
+                  ${Utils.escapeHtml(task.title)}
+                </div>
+                <div style="font-size: 0.813rem; color: var(--text-secondary);">
+                  ${Utils.escapeHtml(task.description)}
+                </div>
+              </div>
+              <button class="btn btn-sm btn-primary" onclick="handleTask('${task.id}', '${task.action}')">
+                対応する
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // タスク対応
+    function handleTask(taskId, action) {
+      // タスクに応じた画面に遷移
+      const actionMap = {
+        'confirm_payment': 'payments.html',
+        'issue_receipt': 'receipts-admin.html',
+        'check_attendance': 'events.html'
+      };
+
+      const targetPage = actionMap[action] || 'dashboard.html';
+      window.location.href = targetPage;
+    }
+    window.handleTask = handleTask;
+
+    // グラフ描画
+    function renderCharts(events, statsResult) {
+      // 月別イベント数推移グラフ
+      renderMonthlyEventsChart(events);
+
+      // 出欠状況の割合グラフ
+      renderAttendanceStatusChart(statsResult);
+    }
+
+    // 月別イベント数推移グラフ
+    function renderMonthlyEventsChart(events) {
+      const ctx = document.getElementById('monthlyEventsChart');
+      if (!ctx) return;
+
+      // 既存のグラフがあれば破棄
+      if (monthlyEventsChart) {
+        monthlyEventsChart.destroy();
+      }
+
+      // 過去6ヶ月のデータを準備
+      const now = new Date();
+      const labels = [];
+      const data = [];
+
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthLabel = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        labels.push(monthLabel);
+
+        // その月のイベント数をカウント
+        const count = events.filter(e => {
+          const eventDate = new Date(e.event_date);
+          return eventDate.getFullYear() === date.getFullYear() &&
+                 eventDate.getMonth() === date.getMonth();
+        }).length;
+        data.push(count);
+      }
+
+      // グラフ描画
+      monthlyEventsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'イベント数',
+            data: data,
+            borderColor: 'rgb(79, 70, 229)',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              titleFont: {
+                size: 14
+              },
+              bodyFont: {
+                size: 13
+              },
+              callbacks: {
+                label: function(context) {
+                  return `イベント数: ${context.parsed.y}件`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                font: {
+                  size: 11
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  size: 11
+                }
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 出欠状況の割合グラフ
+    function renderAttendanceStatusChart(statsResult) {
+      const ctx = document.getElementById('attendanceStatusChart');
+      if (!ctx) return;
+
+      // 既存のグラフがあれば破棄
+      if (attendanceStatusChart) {
+        attendanceStatusChart.destroy();
+      }
+
+      const stats = statsResult.stats || {};
+      const attendanceStats = stats.attendance_stats || {
+        attend: 0,
+        absent: 0,
+        pending: 0
+      };
+
+      // グラフ描画
+      attendanceStatusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['出席', '欠席', '未回答'],
+          datasets: [{
+            data: [
+              attendanceStats.attend || 0,
+              attendanceStats.absent || 0,
+              attendanceStats.pending || 0
+            ],
+            backgroundColor: [
+              'rgba(34, 197, 94, 0.8)',   // 緑（出席）
+              'rgba(239, 68, 68, 0.8)',    // 赤（欠席）
+              'rgba(156, 163, 175, 0.8)'   // グレー（未回答）
+            ],
+            borderColor: [
+              'rgb(34, 197, 94)',
+              'rgb(239, 68, 68)',
+              'rgb(156, 163, 175)'
+            ],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 15,
+                font: {
+                  size: 12
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              titleFont: {
+                size: 14
+              },
+              bodyFont: {
+                size: 13
+              },
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return `${label}: ${value}名 (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // イベントリスナー設定
+    function setupEventListeners() {
+      // ログアウト
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('ログアウトしますか？')) {
+          await Auth.logout();
+        }
+      });
+
+      // モバイルメニュートグル
+      document.getElementById('mobileToggle').addEventListener('click', () => {
+        document.getElementById('adminSidebar').classList.toggle('mobile-open');
+      });
+
+      // サイドバー外クリックで閉じる
+      document.addEventListener('click', (e) => {
+        const sidebar = document.getElementById('adminSidebar');
+        const toggle = document.getElementById('mobileToggle');
+
+        if (window.innerWidth <= 1024 &&
+            sidebar.classList.contains('mobile-open') &&
+            !sidebar.contains(e.target) &&
+            !toggle.contains(e.target)) {
+          sidebar.classList.remove('mobile-open');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
