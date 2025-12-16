@@ -1,0 +1,21 @@
+# GitHub Pages Configuration
+
+# Site settings
+title: 出欠管理アプリ
+description: グローバルデザイン推進委員会向け出欠管理WEBアプリケーション
+
+# Build settings
+markdown: kramdown
+theme: jekyll-theme-minimal
+
+# Exclude files
+exclude:
+  - GAS/
+  - attendance-api-proxy/
+  - cloudflare-workers/
+  - node_modules/
+  - .gitignore
+  - package-lock.json
+  - APIやID
+  - README_old.md
+  - '*.bak'
