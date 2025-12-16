@@ -301,6 +301,7 @@ function getMyAttendance(token) {
       attendance_id: att.attendance_id,
       event_id: att.event_id,
       event_title: event ? event.title : '',
+      event_name: event ? event.title : '',  // フロント互換性用
       event_date: event ? event.date : '',
       status: att.status,
       attendance_status: att.status,  // フロント互換性用
