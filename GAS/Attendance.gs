@@ -286,6 +286,22 @@ function getMyAttendance(token) {
       }
     }
 
+    // 参加費を計算（Bタイプの場合は選択したオプションの金額）
+    let participationFee = 0;
+    if (event) {
+      if (event.attendance_type === 'B' && att.selected_option) {
+        // Bタイプ：選択したオプションの金額を取得
+        const participationOptions = parseJSON(event.participation_options);
+        if (participationOptions && Array.isArray(participationOptions)) {
+          const selectedOpt = participationOptions.find(opt => opt.label === att.selected_option);
+          participationFee = selectedOpt ? (selectedOpt.amount || 0) : 0;
+        }
+      } else {
+        // Aタイプ：イベントのfee_amountを使用
+        participationFee = event.fee_amount || 0;
+      }
+    }
+
     // デバッグ: 最初の1件だけログ出力
     if (att.attendance_id === myAttendances[0].attendance_id) {
       Logger.log('イベント詳細: ' + JSON.stringify({
@@ -293,7 +309,10 @@ function getMyAttendance(token) {
         title: event ? event.title : null,
         tags_raw: event ? event.tags : null,
         tags_type: event && event.tags ? typeof event.tags : null,
-        tags_parsed: tags
+        tags_parsed: tags,
+        attendance_type: event ? event.attendance_type : null,
+        selected_option: att.selected_option,
+        participation_fee: participationFee
       }));
     }
 
@@ -311,7 +330,7 @@ function getMyAttendance(token) {
       checked_in: !!checkin,
       checked_in_at: checkin ? checkin.checked_in_at : null,
       tags: tags,  // イベントのタグ情報
-      participation_fee: event ? (event.fee_amount || 0) : 0,  // 参加費
+      participation_fee: participationFee,  // 参加費（Bタイプの場合は選択したオプションの金額）
       payment_confirmed: payment ? payment.paid : false,  // 支払い確認
       payment_method: payment ? payment.payment_method : ''  // 支払い方法
     };
