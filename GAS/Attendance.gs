@@ -274,10 +274,27 @@ function getMyAttendance(token) {
     let tags = [];
     if (event && event.tags) {
       if (typeof event.tags === 'string') {
-        tags = parseJSON(event.tags) || [];
+        // 文字列の場合、カンマ区切りまたはJSON配列として解析
+        try {
+          tags = JSON.parse(event.tags);
+        } catch (e) {
+          // JSON配列でない場合はカンマ区切りとして処理
+          tags = event.tags.split(',').map(t => t.trim()).filter(t => t);
+        }
       } else if (Array.isArray(event.tags)) {
         tags = event.tags;
       }
+    }
+
+    // デバッグ: 最初の1件だけログ出力
+    if (att.attendance_id === myAttendances[0].attendance_id) {
+      Logger.log('イベント詳細: ' + JSON.stringify({
+        event_id: event ? event.event_id : null,
+        title: event ? event.title : null,
+        tags_raw: event ? event.tags : null,
+        tags_type: event && event.tags ? typeof event.tags : null,
+        tags_parsed: tags
+      }));
     }
 
     return {

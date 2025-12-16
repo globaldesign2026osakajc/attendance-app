@@ -555,6 +555,17 @@
             console.log('checked_in:', allHistory[0].checked_in);
             console.log('checkin_time:', allHistory[0].checkin_time);
             console.log('全フィールド:', Object.keys(allHistory[0]));
+
+            // タグ情報がどのフィールドにあるか確認
+            console.log('=== タグ関連フィールド確認 ===');
+            for (let key in allHistory[0]) {
+              const value = allHistory[0][key];
+              if (key.toLowerCase().includes('tag') ||
+                  key.toLowerCase().includes('type') ||
+                  key.toLowerCase().includes('category')) {
+                console.log(`${key}:`, typeof value, value);
+              }
+            }
           }
 
           applyFilters();

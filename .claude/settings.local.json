@@ -6,7 +6,10 @@
       "Bash(do cp \"$file\" \"$file.bak\")",
       "Bash(done)",
       "Bash(for file in \"G:\\出欠アプリ\\frontend\\history.html\" \"G:\\出欠アプリ\\frontend\\event-detail.html\" \"G:\\出欠アプリ\\frontend\\profile.html\" \"G:\\出欠アプリ\\frontend\\receipts.html\" \"G:\\出欠アプリ\\frontend\\qr.html\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []
