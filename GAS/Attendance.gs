@@ -377,19 +377,3 @@ function getEventAttendance(token, eventId) {
     attendance: result
   };
 }
-    };
-  });
-
-  // member_idでソート
-  result.sort((a, b) => {
-    const idA = a.member_id || '';
-    const idB = b.member_id || '';
-    return idA.localeCompare(idB);
-  });
-
-  return {
-    success: true,
-    event: event,
-    attendance: result
-  };
-}
