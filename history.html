@@ -9,42 +9,89 @@
   <link rel="stylesheet" href="css/common.css">
   <style>
     .stats-overview {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       margin-bottom: 2rem;
     }
 
+    .stats-section {
+      margin-bottom: 2rem;
+    }
+
+    .stats-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .stats-section-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary-color);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
     .stat-card {
-      background-color: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      text-align: center;
+      background-color: var(--gray-light);
+      border-radius: 8px;
+      padding: 1rem;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .stat-card.committee {
+      border-left-color: #2196F3;
+    }
+
+    .stat-card.monthly-meeting {
+      border-left-color: #4CAF50;
+    }
+
+    .stat-card.other {
+      border-left-color: #FF9800;
+    }
+
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
     }
 
     .stat-card-icon {
-      font-size: 2.5rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .stat-card-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--primary-color);
-      margin-bottom: 0.5rem;
+      font-size: 1.25rem;
     }
 
     .stat-card-label {
       font-size: 0.875rem;
-      color: var(--text-secondary);
+      color: var(--text-color);
       font-weight: 600;
     }
 
+    .stat-card-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.25rem;
+    }
+
     .stat-card-detail {
-      font-size: 0.75rem;
-      color: var(--text-light);
-      margin-top: 0.5rem;
+      font-size: 0.813rem;
+      color: var(--text-secondary);
+    }
+
+    .stat-card-rate {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--success-color);
+      margin-left: 0.5rem;
     }
 
     .filter-section {
@@ -317,29 +364,88 @@
 
       <!-- 統計概要 -->
       <div class="stats-overview">
-        <div class="stat-card">
-          <div class="stat-card-icon">📅</div>
-          <div class="stat-card-value" id="totalEvents">0</div>
-          <div class="stat-card-label">総イベント数</div>
+        <!-- 登録単位 -->
+        <div class="stats-section">
+          <h3 class="stats-section-title">📝 登録単位</h3>
+          <div class="stats-grid">
+            <div class="stat-card committee">
+              <div class="stat-card-header">
+                <div class="stat-card-icon">🏢</div>
+                <div class="stat-card-label">委員会</div>
+              </div>
+              <div class="stat-card-value" id="regCommitteeAttend">0</div>
+              <div class="stat-card-detail">
+                <span id="regCommitteeDetail">0 / 0</span>
+                <span class="stat-card-rate" id="regCommitteeRate">0%</span>
+              </div>
+            </div>
+
+            <div class="stat-card monthly-meeting">
+              <div class="stat-card-header">
+                <div class="stat-card-icon">📅</div>
+                <div class="stat-card-label">月例会</div>
+              </div>
+              <div class="stat-card-value" id="regMonthlyAttend">0</div>
+              <div class="stat-card-detail">
+                <span id="regMonthlyDetail">0 / 0</span>
+                <span class="stat-card-rate" id="regMonthlyRate">0%</span>
+              </div>
+            </div>
+
+            <div class="stat-card other">
+              <div class="stat-card-header">
+                <div class="stat-card-icon">📌</div>
+                <div class="stat-card-label">その他</div>
+              </div>
+              <div class="stat-card-value" id="regOtherAttend">0</div>
+              <div class="stat-card-detail">
+                <span id="regOtherDetail">0 / 0</span>
+                <span class="stat-card-rate" id="regOtherRate">0%</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-card-icon">✓</div>
-          <div class="stat-card-value" id="attendCount">0</div>
-          <div class="stat-card-label">出席回数</div>
-        </div>
+        <!-- 実出席 -->
+        <div class="stats-section">
+          <h3 class="stats-section-title">✅ 実出席（チェックイン）</h3>
+          <div class="stats-grid">
+            <div class="stat-card committee">
+              <div class="stat-card-header">
+                <div class="stat-card-icon">🏢</div>
+                <div class="stat-card-label">委員会</div>
+              </div>
+              <div class="stat-card-value" id="actualCommitteeAttend">0</div>
+              <div class="stat-card-detail">
+                <span id="actualCommitteeDetail">0 / 0</span>
+                <span class="stat-card-rate" id="actualCommitteeRate">0%</span>
+              </div>
+            </div>
 
-        <div class="stat-card">
-          <div class="stat-card-icon">📈</div>
-          <div class="stat-card-value" id="attendanceRate">0%</div>
-          <div class="stat-card-label">出席率</div>
-          <div class="stat-card-detail" id="attendanceDetail"></div>
-        </div>
+            <div class="stat-card monthly-meeting">
+              <div class="stat-card-header">
+                <div class="stat-card-icon">📅</div>
+                <div class="stat-card-label">月例会</div>
+              </div>
+              <div class="stat-card-value" id="actualMonthlyAttend">0</div>
+              <div class="stat-card-detail">
+                <span id="actualMonthlyDetail">0 / 0</span>
+                <span class="stat-card-rate" id="actualMonthlyRate">0%</span>
+              </div>
+            </div>
 
-        <div class="stat-card">
-          <div class="stat-card-icon">💰</div>
-          <div class="stat-card-value" id="totalPayment">¥0</div>
-          <div class="stat-card-label">総支払額</div>
+            <div class="stat-card other">
+              <div class="stat-card-header">
+                <div class="stat-card-icon">📌</div>
+                <div class="stat-card-label">その他</div>
+              </div>
+              <div class="stat-card-value" id="actualOtherAttend">0</div>
+              <div class="stat-card-detail">
+                <span id="actualOtherDetail">0 / 0</span>
+                <span class="stat-card-rate" id="actualOtherRate">0%</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -521,27 +627,48 @@
       const now = new Date();
       const pastEvents = allHistory.filter(item => new Date(item.event_date) < now);
 
-      // 総イベント数
-      document.getElementById('totalEvents').textContent = pastEvents.length;
+      // タグ別にイベントを分類
+      const committeeEvents = pastEvents.filter(item =>
+        item.tags && item.tags.includes('委員会')
+      );
+      const monthlyEvents = pastEvents.filter(item =>
+        item.tags && item.tags.includes('月例会')
+      );
+      const otherEvents = pastEvents.filter(item =>
+        !item.tags || (!item.tags.includes('委員会') && !item.tags.includes('月例会'))
+      );
 
-      // 出席回数
-      const attendCount = pastEvents.filter(item => item.attendance_status === '出席').length;
-      document.getElementById('attendCount').textContent = attendCount;
+      // 登録単位の統計
+      updateCategoryStats('reg', 'Committee', committeeEvents, false);
+      updateCategoryStats('reg', 'Monthly', monthlyEvents, false);
+      updateCategoryStats('reg', 'Other', otherEvents, false);
 
-      // 出席率
-      let attendanceRate = 0;
-      if (pastEvents.length > 0) {
-        attendanceRate = Math.round((attendCount / pastEvents.length) * 100);
+      // 実出席の統計（チェックイン済み）
+      updateCategoryStats('actual', 'Committee', committeeEvents, true);
+      updateCategoryStats('actual', 'Monthly', monthlyEvents, true);
+      updateCategoryStats('actual', 'Other', otherEvents, true);
+    }
+
+    // カテゴリー別統計更新
+    function updateCategoryStats(type, category, events, useCheckin) {
+      const totalEvents = events.length;
+      let attendCount = 0;
+
+      if (useCheckin) {
+        // 実出席：チェックイン済みのみカウント
+        attendCount = events.filter(item => item.checked_in).length;
+      } else {
+        // 登録単位：出席登録があるものをカウント
+        attendCount = events.filter(item => item.attendance_status === '出席').length;
       }
-      document.getElementById('attendanceRate').textContent = attendanceRate + '%';
-      document.getElementById('attendanceDetail').textContent =
-        `${attendCount} / ${pastEvents.length} イベント`;
 
-      // 総支払額
-      const totalPayment = pastEvents
-        .filter(item => item.payment_confirmed)
-        .reduce((sum, item) => sum + (item.participation_fee || 0), 0);
-      document.getElementById('totalPayment').textContent = Utils.formatCurrency(totalPayment);
+      const rate = totalEvents > 0 ? Math.round((attendCount / totalEvents) * 100) : 0;
+
+      // 値を更新
+      document.getElementById(`${type}${category}Attend`).textContent = attendCount;
+      document.getElementById(`${type}${category}Detail`).textContent =
+        `${attendCount} / ${totalEvents}`;
+      document.getElementById(`${type}${category}Rate`).textContent = `${rate}%`;
     }
 
     // 履歴表示
