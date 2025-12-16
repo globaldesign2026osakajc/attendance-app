@@ -259,14 +259,26 @@ function getMyAttendance(token) {
   const attendances = getSheetData('attendance');
   const events = getSheetData('events');
   const checkins = getSheetData('checkin');
+  const payments = getSheetData('payments');
 
   // 自分の出欠のみフィルター
   const myAttendances = attendances.filter(att => att.member_id === member.member_id);
 
-  // イベント情報とチェックイン情報を結合
+  // イベント情報とチェックイン情報、支払い情報を結合
   const result = myAttendances.map(att => {
     const event = events.find(e => e.event_id === att.event_id);
     const checkin = checkins.find(c => c.event_id === att.event_id && c.member_id === member.member_id);
+    const payment = payments.find(p => p.event_id === att.event_id && p.member_id === member.member_id);
+
+    // tagsをパース（文字列の場合）
+    let tags = [];
+    if (event && event.tags) {
+      if (typeof event.tags === 'string') {
+        tags = parseJSON(event.tags) || [];
+      } else if (Array.isArray(event.tags)) {
+        tags = event.tags;
+      }
+    }
 
     return {
       attendance_id: att.attendance_id,
@@ -274,11 +286,16 @@ function getMyAttendance(token) {
       event_title: event ? event.title : '',
       event_date: event ? event.date : '',
       status: att.status,
+      attendance_status: att.status,  // フロント互換性用
       selected_option: att.selected_option,
       memo: att.memo,
       registered_at: att.registered_at,
       checked_in: !!checkin,
-      checked_in_at: checkin ? checkin.checked_in_at : null
+      checked_in_at: checkin ? checkin.checked_in_at : null,
+      tags: tags,  // イベントのタグ情報
+      participation_fee: event ? (event.fee_amount || 0) : 0,  // 参加費
+      payment_confirmed: payment ? payment.paid : false,  // 支払い確認
+      payment_method: payment ? payment.payment_method : ''  // 支払い方法
     };
   });
 

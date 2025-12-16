@@ -539,10 +539,13 @@
       Utils.showLoading();
 
       try {
-        const result = await API.getAttendanceHistory();
+        // ラッパーが未定義の場合に備え、直接APIを呼ぶ
+        const result = await (API.getAttendanceHistory ? API.getAttendanceHistory() : API.call('getMyAttendance'));
 
         if (result.success) {
-          allHistory = result.history || [];
+          // GAS側は `attendances` を返すためそれを優先して扱う。
+          // 互換性のため `history` / `data` もフォールバックで受け取る。
+          allHistory = result.attendances || result.history || result.data || [];
           applyFilters();
           updateStats();
         } else {
