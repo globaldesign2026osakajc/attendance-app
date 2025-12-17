@@ -539,7 +539,6 @@
 
     // ページ読み込み時の処理
     window.addEventListener('DOMContentLoaded', async () => {
-      console.log('DOMContentLoaded - payments.html');
       // 管理者権限チェック
       Auth.requireAdmin();
 
@@ -617,14 +616,11 @@
 
     // すべてのデータを読み込み
     async function loadAllData() {
-      console.log('loadAllData called');
       Utils.showLoading();
 
       try {
         // イベントリスト取得
-        console.log('Calling loadEventsList...');
         await loadEventsList();
-        console.log('loadEventsList completed');
 
         // 各タブのデータを読み込み
         await loadUnpaidData();
@@ -646,14 +642,9 @@
     async function loadEventsList() {
       try {
         const result = await API.call('getEvents', {});
-        console.log('getEvents result:', result);
 
         if (result.success && result.events) {
           eventsList = result.events;
-          console.log('Events loaded:', eventsList.length, 'events');
-          if (eventsList.length > 0) {
-            console.log('First event:', eventsList[0]);
-          }
 
           // フィルター用のイベント選択肢を設定
           const eventSelects = [
@@ -670,13 +661,9 @@
               const option = document.createElement('option');
               option.value = event.event_id;
               option.textContent = event.title;
-              console.log('Adding event option:', event.event_id, event.title);
               select.appendChild(option);
             });
           });
-          console.log('Event options added to selects');
-        } else {
-          console.warn('No events returned or request failed:', result);
         }
       } catch (error) {
         console.error('Load events error:', error);
@@ -840,7 +827,7 @@
 
       tbody.innerHTML = data.map(payment => `
         <tr>
-          <td>${Utils.escapeHtml(payment.event_name)}</td>
+          <td>${Utils.escapeHtml(payment.event_title)}</td>
           <td>${Utils.escapeHtml(payment.member_name)}</td>
           <td>¥${Utils.formatNumber(payment.amount)}</td>
           <td>
@@ -885,7 +872,7 @@
 
       tbody.innerHTML = data.map(payment => `
         <tr>
-          <td>${Utils.escapeHtml(payment.event_name)}</td>
+          <td>${Utils.escapeHtml(payment.event_title)}</td>
           <td>${Utils.escapeHtml(payment.member_name)}</td>
           <td>¥${Utils.formatNumber(payment.amount)}</td>
           <td>
@@ -928,9 +915,9 @@
 
       tbody.innerHTML = data.map(cancel => `
         <tr>
-          <td>${Utils.escapeHtml(cancel.event_name)}</td>
+          <td>${Utils.escapeHtml(cancel.event_title)}</td>
           <td>${Utils.escapeHtml(cancel.member_name)}</td>
-          <td>¥${Utils.formatNumber(cancel.amount)}</td>
+          <td>¥${Utils.formatNumber(cancel.cancellation_fee)}</td>
           <td>
             <span class="badge ${cancel.paid ? 'badge-paid' : 'badge-unpaid'}">
               ${cancel.paid ? '受領済み' : '未払い'}
