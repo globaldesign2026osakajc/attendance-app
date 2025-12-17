@@ -230,6 +230,8 @@
                 <tr>
                   <th>メンバー名</th>
                   <th>所属</th>
+                  <th>出欠登録</th>
+                  <th>実出席</th>
                   <th>金額</th>
                   <th>支払い方法</th>
                   <th>ステータス</th>
@@ -239,7 +241,7 @@
               </thead>
               <tbody id="paymentsTableBody">
                 <tr>
-                  <td colspan="7">
+                  <td colspan="9">
                     <div class="empty-state">
                       <div class="empty-state-icon">💰</div>
                       <div class="empty-state-text">イベントを選択してください</div>
@@ -449,13 +451,19 @@
           event_id: eventId
         });
 
+        // チェックイン情報を取得
+        const checkinResult = await API.call('getCheckinList', {
+          event_id: eventId
+        });
+
         // イベント詳細を取得（登録料の金額を取得）
         const eventDetail = allEvents.find(e => e.event_id === eventId);
         const feeAmount = eventDetail ? eventDetail.fee_amount : 0;
 
-        if (attendanceResult.success && paymentResult.success) {
+        if (attendanceResult.success && paymentResult.success && checkinResult.success) {
           const attendances = attendanceResult.attendance || [];
           const payments = paymentResult.payments || [];
+          const checkins = checkinResult.checkins || [];
 
           // 出席予定者（出席または公欠）のメンバーIDを取得
           const attendingMemberIds = attendances
@@ -466,14 +474,22 @@
           allPayments = allMembers
             .filter(member => attendingMemberIds.includes(member.member_id))
             .map(member => {
+              // 該当メンバーの出席登録情報を探す
+              const attendance = attendances.find(a => a.member_id === member.member_id);
+
               // 該当メンバーの支払い情報を探す
               const payment = payments.find(p => p.member_id === member.member_id);
+
+              // 該当メンバーのチェックイン情報を探す
+              const checkin = checkins.find(c => c.member_id === member.member_id);
 
               return {
                 payment_id: payment ? payment.payment_id : '',
                 member_id: member.member_id,
                 member_name: member.name,
                 affiliation: member.affiliation,
+                attendance_status: attendance ? attendance.status : '-',
+                checked_in: checkin ? true : false,
                 payment_method: payment ? payment.payment_method : '-',
                 amount: payment ? payment.amount : feeAmount,
                 paid: payment ? payment.paid : false,
@@ -536,10 +552,18 @@
         const paidAtText = payment.paid && payment.paid_at ?
           Utils.formatDateTime(payment.paid_at) : '-';
 
+        // 出欠登録ステータスの表示
+        const attendanceStatusText = payment.attendance_status || '-';
+
+        // 実出席の表示
+        const checkedInText = payment.checked_in ? '✓' : '-';
+
         return `
           <tr>
             <td>${Utils.escapeHtml(payment.member_name)}</td>
             <td>${Utils.escapeHtml(payment.affiliation || '-')}</td>
+            <td>${Utils.escapeHtml(attendanceStatusText)}</td>
+            <td>${checkedInText}</td>
             <td>${Utils.formatCurrency(payment.amount)}</td>
             <td>${Utils.escapeHtml(payment.payment_method || '-')}</td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
@@ -567,7 +591,7 @@
       const tbody = document.getElementById('paymentsTableBody');
       tbody.innerHTML = `
         <tr>
-          <td colspan="7">
+          <td colspan="9">
             <div class="empty-state">
               <div class="empty-state-icon">💰</div>
               <div class="empty-state-text">${Utils.escapeHtml(title)}</div>
