@@ -406,9 +406,15 @@
         <div class="scanner-container">
           <h3 class="scanner-section-title">イベント選択</h3>
           <div class="form-group">
+            <label for="monthSelect" class="form-label required">年月を選択</label>
+            <select id="monthSelect" class="form-input" required>
+              <option value="">年月を選択してください</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="eventSelect" class="form-label required">チェックインするイベント</label>
-            <select id="eventSelect" class="form-input" required>
-              <option value="">イベントを選択してください</option>
+            <select id="eventSelect" class="form-input" required disabled>
+              <option value="">まず年月を選択してください</option>
             </select>
           </div>
         </div>
@@ -551,6 +557,9 @@
       setupEventListeners();
     });
 
+    // 全イベントデータを保持する変数
+    let allEvents = [];
+
     // イベントリスト読み込み
     async function loadEvents() {
       Utils.showLoading();
@@ -559,27 +568,10 @@
         const result = await API.call('getEvents');
 
         if (result.success && result.events) {
-          const select = document.getElementById('eventSelect');
+          allEvents = result.events;
 
-          // 今日以降のイベントのみ表示
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          const upcomingEvents = result.events.filter(event => {
-            const eventDate = new Date(event.date);
-            return eventDate >= today;
-          });
-
-          upcomingEvents.forEach(event => {
-            const option = document.createElement('option');
-            option.value = event.event_id;
-            option.textContent = `${event.title} (${event.date})`;
-            select.appendChild(option);
-          });
-
-          if (upcomingEvents.length === 0) {
-            showToast('チェックイン可能なイベントがありません', 'warning');
-          }
+          // 年月リストを生成
+          populateMonthSelector();
         }
 
       } catch (error) {
@@ -587,6 +579,88 @@
         showToast('イベントリストの取得に失敗しました', 'error');
       } finally {
         Utils.hideLoading();
+      }
+    }
+
+    // 年月セレクターを生成
+    function populateMonthSelector() {
+      const monthSelect = document.getElementById('monthSelect');
+      monthSelect.innerHTML = '<option value="">年月を選択してください</option>';
+
+      // イベントの年月を抽出してユニーク化
+      const monthsSet = new Set();
+
+      allEvents.forEach(event => {
+        const eventDate = new Date(event.date);
+        const yearMonth = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+        monthsSet.add(yearMonth);
+      });
+
+      // 年月を配列に変換してソート（降順）
+      const months = Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
+
+      // 現在の年月を取得
+      const today = new Date();
+      const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+      // オプションを追加
+      months.forEach(yearMonth => {
+        const option = document.createElement('option');
+        option.value = yearMonth;
+
+        const [year, month] = yearMonth.split('-');
+        option.textContent = `${year}年${parseInt(month)}月`;
+
+        monthSelect.appendChild(option);
+
+        // 現在の月をデフォルト選択
+        if (yearMonth === currentYearMonth) {
+          option.selected = true;
+        }
+      });
+
+      // 現在の月が存在する場合、自動的にイベントを読み込む
+      if (monthSelect.value) {
+        filterEventsByMonth(monthSelect.value);
+      }
+    }
+
+    // 年月でイベントをフィルタリング
+    function filterEventsByMonth(yearMonth) {
+      const eventSelect = document.getElementById('eventSelect');
+      eventSelect.innerHTML = '<option value="">イベントを選択してください</option>';
+      eventSelect.disabled = false;
+
+      if (!yearMonth) {
+        eventSelect.disabled = true;
+        eventSelect.innerHTML = '<option value="">まず年月を選択してください</option>';
+        return;
+      }
+
+      // 選択された年月のイベントをフィルタリング
+      const filteredEvents = allEvents.filter(event => {
+        const eventDate = new Date(event.date);
+        const eventYearMonth = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+        return eventYearMonth === yearMonth;
+      });
+
+      // 日付でソート（降順）
+      filteredEvents.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA;
+      });
+
+      // オプションを追加
+      filteredEvents.forEach(event => {
+        const option = document.createElement('option');
+        option.value = event.event_id;
+        option.textContent = `${event.title} (${event.date})`;
+        eventSelect.appendChild(option);
+      });
+
+      if (filteredEvents.length === 0) {
+        showToast('選択された年月にイベントがありません', 'warning');
       }
     }
 
@@ -930,6 +1004,17 @@
       // モバイルメニュートグル
       document.getElementById('mobileToggle').addEventListener('click', () => {
         document.getElementById('adminSidebar').classList.toggle('mobile-open');
+      });
+
+      // 年月選択
+      document.getElementById('monthSelect').addEventListener('change', (e) => {
+        filterEventsByMonth(e.target.value);
+        // イベント選択をリセット
+        document.getElementById('eventSelect').value = '';
+        // スキャナーと履歴を非表示
+        document.getElementById('scannerContainer').style.display = 'none';
+        document.getElementById('checkinStatsContainer').style.display = 'none';
+        document.getElementById('checkinHistoryContainer').style.display = 'none';
       });
 
       // イベント選択
