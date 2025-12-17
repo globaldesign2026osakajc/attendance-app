@@ -145,8 +145,14 @@ function handleRequest(e) {
       case 'confirmPayment':
         result = confirmPayment(token, params);
         break;
+      case 'unpaidPayment':
+        result = unpaidPayment(token, params);
+        break;
       case 'getUnpaidList':
         result = getUnpaidList(token);
+        break;
+      case 'getPaidList':
+        result = getPaidList(token);
         break;
       case 'getCancellationFeeList':
         result = getCancellationFeeList(token);

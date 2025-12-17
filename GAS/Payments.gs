@@ -111,7 +111,55 @@ function getUnpaidList(token) {
 
   return {
     success: true,
-    unpaid_payments: result
+    payments: result
+  };
+}
+
+/**
+ * 支払い済み一覧取得（管理者のみ）
+ */
+function getPaidList(token) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const payments = getSheetData('payments');
+  const events = getSheetData('events');
+  const members = getSheetData('members');
+
+  // 支払い済みのみフィルター
+  const paidPayments = payments.filter(p => p.paid);
+
+  // イベント情報とメンバー情報を結合
+  const result = paidPayments.map(payment => {
+    const event = events.find(e => e.event_id === payment.event_id);
+    const member = members.find(m => m.member_id === payment.member_id);
+
+    return {
+      payment_id: payment.payment_id,
+      event_id: payment.event_id,
+      event_title: event ? event.title : '',
+      event_date: event ? event.date : '',
+      member_id: payment.member_id,
+      member_name: member ? member.name : '',
+      affiliation: member ? member.affiliation : '',
+      payment_method: payment.payment_method,
+      amount: payment.amount,
+      paid_at: payment.paid_at,
+      notes: payment.notes
+    };
+  });
+
+  // イベント日付でソート（降順）
+  result.sort((a, b) => {
+    const dateA = new Date(a.event_date);
+    const dateB = new Date(b.event_date);
+    return dateB - dateA;
+  });
+
+  return {
+    success: true,
+    payments: result
   };
 }
 
@@ -180,7 +228,7 @@ function getCancellationFeeList(token) {
 
   return {
     success: true,
-    cancellation_fees: result
+    cancellations: result
   };
 }
 
