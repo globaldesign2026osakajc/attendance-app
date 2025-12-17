@@ -658,6 +658,8 @@
   <script>
     let eventData = null;
     let selectedAttendance = null;
+    let participantsData = null;
+    let participantsLoaded = false;
     const userInfo = Auth.getUserInfo();
     const eventId = Utils.getUrlParam('id');
 
@@ -713,26 +715,16 @@
       Utils.showLoading();
 
       try {
-        // イベント詳細と参加者一覧を並列で取得
-        const [eventResult, participantsResult] = await Promise.all([
-          API.call('getEventDetail', {
-            event_id: eventId,
-            member_id: userInfo.memberId
-          }),
-          API.call('getEventAttendance', {
-            event_id: eventId
-          })
-        ]);
+        // イベント詳細のみを取得（参加者一覧は遅延読み込み）
+        const eventResult = await API.call('getEventDetail', {
+          event_id: eventId,
+          member_id: userInfo.memberId
+        });
 
         if (eventResult.success && eventResult.event) {
           eventData = eventResult.event;
           displayEventDetail();
           displayAttendanceSection();
-
-          // 参加者一覧を表示
-          if (participantsResult.success) {
-            displayParticipants(participantsResult.attendance);
-          }
         } else {
           throw new Error(eventResult.message || 'イベント情報の取得に失敗しました');
         }
@@ -743,6 +735,37 @@
         setTimeout(() => {
           window.location.href = 'events.html';
         }, 2000);
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 参加者一覧を取得
+    async function loadParticipants() {
+      if (participantsLoaded) {
+        // 既に読み込み済みの場合は再表示のみ
+        displayParticipants(participantsData);
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const participantsResult = await API.call('getEventAttendance', {
+          event_id: eventId
+        });
+
+        if (participantsResult.success) {
+          participantsData = participantsResult.attendance;
+          participantsLoaded = true;
+          displayParticipants(participantsData);
+        } else {
+          throw new Error(participantsResult.message || '参加者一覧の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load participants error:', error);
+        Utils.showError('参加者一覧の取得に失敗しました');
       } finally {
         Utils.hideLoading();
       }
@@ -761,6 +784,8 @@
       } else if (tabName === 'participants') {
         document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
         document.getElementById('participantsTab').classList.add('active');
+        // 参加者一覧タブを開いたときに初めてデータを取得
+        loadParticipants();
       }
     }
     window.switchTab = switchTab;
@@ -1351,6 +1376,7 @@
         if (result.success) {
           Utils.showSuccess('出欠を登録しました');
           // データを再取得
+          participantsLoaded = false; // 参加者一覧を再読み込みするためにフラグをリセット
           await loadEventDetail();
         } else {
           throw new Error(result.message || '出欠登録に失敗しました');
@@ -1381,6 +1407,7 @@
         if (result.success) {
           Utils.showSuccess('出欠登録をキャンセルしました');
           // データを再取得
+          participantsLoaded = false; // 参加者一覧を再読み込みするためにフラグをリセット
           await loadEventDetail();
         } else {
           throw new Error(result.message || '出欠キャンセルに失敗しました');
