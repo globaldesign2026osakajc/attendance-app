@@ -322,13 +322,26 @@
       const monthSelect = document.getElementById('monthSelect');
       monthSelect.innerHTML = '<option value="">年月を選択してください</option>';
 
+      if (allEvents.length === 0) {
+        console.warn('No events available for month selector');
+        return;
+      }
+
       // イベントから年月を抽出（重複なし）
       const yearMonths = new Set();
       allEvents.forEach(event => {
-        const date = new Date(event.date);
-        const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        yearMonths.add(yearMonth);
+        // event.dateは "YYYY-MM-DD" 形式の文字列として扱う
+        const dateStr = event.date;
+        console.log('Event date:', dateStr); // デバッグ用
+
+        // YYYY-MM-DD形式から年月を抽出
+        if (dateStr && typeof dateStr === 'string') {
+          const yearMonth = dateStr.substring(0, 7); // "YYYY-MM"
+          yearMonths.add(yearMonth);
+        }
       });
+
+      console.log('Available year-months:', Array.from(yearMonths)); // デバッグ用
 
       // ソート（降順）
       const sortedYearMonths = Array.from(yearMonths).sort().reverse();
@@ -344,9 +357,15 @@
       // 現在の月をデフォルト選択
       const now = new Date();
       const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      console.log('Current year-month:', currentYearMonth); // デバッグ用
+
       if (sortedYearMonths.includes(currentYearMonth)) {
         monthSelect.value = currentYearMonth;
         filterEventsByMonth(currentYearMonth);
+      } else if (sortedYearMonths.length > 0) {
+        // 現在の月がない場合は、最新の月を選択
+        monthSelect.value = sortedYearMonths[0];
+        filterEventsByMonth(sortedYearMonths[0]);
       }
     }
 
@@ -361,12 +380,20 @@
         return;
       }
 
+      console.log('Filtering events for year-month:', yearMonth); // デバッグ用
+
       // 選択された月のイベントをフィルター
       const filteredEvents = allEvents.filter(event => {
-        const date = new Date(event.date);
-        const eventYearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        return eventYearMonth === yearMonth;
+        // event.dateは "YYYY-MM-DD" 形式の文字列として扱う
+        const dateStr = event.date;
+        if (dateStr && typeof dateStr === 'string') {
+          const eventYearMonth = dateStr.substring(0, 7); // "YYYY-MM"
+          return eventYearMonth === yearMonth;
+        }
+        return false;
       });
+
+      console.log('Filtered events count:', filteredEvents.length); // デバッグ用
 
       if (filteredEvents.length === 0) {
         eventSelect.disabled = true;
