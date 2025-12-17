@@ -641,7 +641,7 @@
     // イベントリスト取得
     async function loadEventsList() {
       try {
-        const result = await API.call('getEventList', {});
+        const result = await API.call('getEvents', {});
         if (result.success && result.events) {
           eventsList = result.events;
 
