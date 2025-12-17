@@ -911,13 +911,18 @@
 
       // 地図URL
       if (displayFields.map_url !== false && event.map_url) {
+        // map_urlがhttpで始まる場合はそのまま使用、それ以外は住所としてGoogle Mapsの検索URLを生成
+        const mapUrl = event.map_url.startsWith('http')
+          ? event.map_url
+          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.map_url)}`;
+
         html += `
           <div class="event-info-grid">
             <div class="event-info-item">
               <div class="event-info-icon">🗺️</div>
               <div class="event-info-content">
                 <div class="event-info-label">地図</div>
-                <div class="event-info-value"><a href="${Utils.escapeHtml(event.map_url)}" target="_blank" style="color: var(--primary-color); text-decoration: underline;">地図を開く</a></div>
+                <div class="event-info-value"><a href="${Utils.escapeHtml(mapUrl)}" target="_blank" style="color: var(--primary-color); text-decoration: underline;">地図を開く</a></div>
               </div>
             </div>
           </div>
