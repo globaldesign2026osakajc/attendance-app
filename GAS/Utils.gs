@@ -105,7 +105,8 @@ function findRow(sheetName, columnName, value) {
 
         // 日付・時刻カラムを文字列にフォーマット
         if (cellValue instanceof Date) {
-          if (header === 'date' || header === 'birthday' || header.includes('_date')) {
+          if (header === 'date' || header === 'birthday' || header.includes('_date') ||
+              header === 'attendance_deadline' || header === 'registration_deadline' || header === 'cancellation_fee_date') {
             row[header] = formatDate(cellValue);
           } else if (header === 'start_time' || header === 'end_time' || header.includes('_time')) {
             row[header] = formatTime(cellValue);
