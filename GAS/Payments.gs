@@ -255,18 +255,36 @@ function getPaymentsByEvent(token, eventId) {
   // 指定イベントの支払いのみフィルター
   const eventPayments = payments.filter(p => p.event_id === eventId);
 
+  // チェックイン情報を取得
+  const checkins = getSheetData('checkin');
+
   // メンバー情報とキャンセル料情報を結合
   const result = eventPayments.map(payment => {
     const member = members.find(m => m.member_id === payment.member_id);
     const attendance = attendances.find(a => a.event_id === eventId && a.member_id === payment.member_id);
+    const checkin = checkins.find(c => c.event_id === eventId && c.member_id === payment.member_id);
 
     // キャンセル料が発生しているかチェック
     let isCancellationFee = false;
-    if (event && event.cancellation_fee_date && attendance && attendance.status === '不参加') {
+    if (event && event.cancellation_fee_date && attendance) {
       const cancellationFeeDate = new Date(event.cancellation_fee_date);
       const registeredAt = new Date(attendance.registered_at);
-      // キャンセル料発生日以降の不参加登録
-      isCancellationFee = registeredAt >= cancellationFeeDate;
+
+      // ケース1: キャンセル料発生日以降に「不参加」に変更した場合
+      if (attendance.status === '不参加' && registeredAt >= cancellationFeeDate) {
+        isCancellationFee = true;
+      }
+
+      // ケース2: 「出席」と登録したのに実際には来なかった場合（チェックインしていない）
+      // イベント日が過ぎている、かつ出席登録していたのにチェックインしていない
+      if (attendance.status === '出席' && !checkin) {
+        const eventDate = new Date(event.date);
+        const today = new Date();
+        // イベント日を過ぎている場合のみ判定
+        if (today > eventDate) {
+          isCancellationFee = true;
+        }
+      }
     }
 
     return {
