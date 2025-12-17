@@ -151,9 +151,15 @@ function getCheckinList(token, eventId) {
   const checkins = getSheetData('checkin');
   const members = getSheetData('members');
   const payments = getSheetData('payments');
+  const attendances = getSheetData('attendance');
 
   // 指定イベントのチェックインのみフィルター
   const eventCheckins = checkins.filter(c => c.event_id === eventId);
+
+  // 出席予定者数を取得（出席または公欠を選択した人）
+  const expectedAttendees = attendances.filter(a =>
+    a.event_id === eventId && (a.status === '出席' || a.status === '公欠')
+  );
 
   // メンバー情報と支払い情報を結合
   const result = eventCheckins.map(checkin => {
@@ -164,7 +170,7 @@ function getCheckinList(token, eventId) {
       checkin_id: checkin.checkin_id,
       member_id: checkin.member_id,
       member_name: member ? member.name : '',
-      checked_in_at: checkin.checked_in_at,
+      checkin_time: checkin.checked_in_at,
       payment_method: payment ? payment.payment_method : '',
       paid: payment ? payment.paid : false
     };
@@ -172,14 +178,16 @@ function getCheckinList(token, eventId) {
 
   // チェックイン時刻でソート（降順）
   result.sort((a, b) => {
-    const dateA = new Date(a.checked_in_at);
-    const dateB = new Date(b.checked_in_at);
+    const dateA = new Date(a.checkin_time);
+    const dateB = new Date(b.checkin_time);
     return dateB - dateA;
   });
 
   return {
     success: true,
-    checkins: result
+    checkins: result,
+    expected_count: expectedAttendees.length,
+    checked_in_count: eventCheckins.length
   };
 }
 
