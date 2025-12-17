@@ -79,7 +79,9 @@ const Auth = {
     }
 
     // ログイン画面にリダイレクト
-    window.location.href = '/index.html';
+    // 現在のパスがadmin配下かどうかで判定
+    const isAdminPage = window.location.pathname.includes('/admin/');
+    window.location.href = isAdminPage ? '../index.html' : 'index.html';
   },
 
   /**
@@ -138,7 +140,8 @@ const Auth = {
    */
   requireLogin() {
     if (!this.isLoggedIn()) {
-      window.location.href = '/index.html';
+      const isAdminPage = window.location.pathname.includes('/admin/');
+      window.location.href = isAdminPage ? '../index.html' : 'index.html';
     }
   },
 
@@ -147,10 +150,11 @@ const Auth = {
    */
   requireAdmin() {
     if (!this.isLoggedIn()) {
-      window.location.href = '/index.html';
+      const isAdminPage = window.location.pathname.includes('/admin/');
+      window.location.href = isAdminPage ? '../index.html' : 'index.html';
     } else if (!this.isAdmin()) {
       alert('管理者権限が必要です');
-      window.location.href = '/home.html';
+      window.location.href = '../home.html';
     }
   },
 
