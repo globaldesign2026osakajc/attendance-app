@@ -9,45 +9,6 @@
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/admin.css">
   <style>
-    .tabs {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
-      border-bottom: 2px solid var(--border-color);
-    }
-
-    .tab {
-      padding: 1rem 1.5rem;
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 500;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s;
-      position: relative;
-      bottom: -2px;
-    }
-
-    .tab:hover {
-      color: var(--primary-color);
-    }
-
-    .tab.active {
-      color: var(--primary-color);
-      border-bottom-color: var(--primary-color);
-      font-weight: 600;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
     .filter-section {
       background-color: white;
       border-radius: 12px;
@@ -98,66 +59,33 @@
       background-color: #f8f9fa;
     }
 
-    .data-table td {
-      color: var(--text-color);
-    }
-
-    .badge {
+    .status-badge {
       display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
+      padding: 0.375rem 0.75rem;
+      border-radius: 20px;
       font-size: 0.75rem;
       font-weight: 600;
-      white-space: nowrap;
+      text-align: center;
     }
 
-    .badge-unpaid {
+    .status-badge.unpaid {
       background-color: #fff3cd;
       color: #856404;
     }
 
-    .badge-paid {
+    .status-badge.paid {
       background-color: #d4edda;
       color: #155724;
     }
 
-    .badge-bank {
-      background-color: #d1ecf1;
-      color: #0c5460;
-    }
-
-    .badge-cash {
-      background-color: #e2e3e5;
-      color: #383d41;
-    }
-
-    .badge-cancel {
-      background-color: #f8d7da;
-      color: #721c24;
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
     }
 
     .btn-sm {
       padding: 0.375rem 0.75rem;
       font-size: 0.875rem;
-      border-radius: 6px;
-      white-space: nowrap;
-    }
-
-    .btn-confirm {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-confirm:hover {
-      background-color: var(--primary-dark);
-    }
-
-    .btn-confirm:disabled {
-      background-color: #6c757d;
-      cursor: not-allowed;
     }
 
     .empty-state {
@@ -169,62 +97,17 @@
     .empty-state-icon {
       font-size: 3rem;
       margin-bottom: 1rem;
-      opacity: 0.5;
     }
 
     .empty-state-text {
-      font-size: 1rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-color);
       margin-bottom: 0.5rem;
     }
 
     .empty-state-subtext {
       font-size: 0.875rem;
-      color: var(--text-tertiary);
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .stat-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .stat-card.unpaid {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    .stat-card.paid {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-    .stat-card.cancel {
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    }
-
-    .stat-label {
-      font-size: 0.875rem;
-      opacity: 0.9;
-      margin-bottom: 0.5rem;
-    }
-
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-    }
-
-    .notes-cell {
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
   </style>
 </head>
@@ -309,233 +192,73 @@
 
       <!-- コンテンツ -->
       <div class="admin-content">
-        <!-- 統計カード -->
-        <div class="stats-grid">
-          <div class="stat-card unpaid">
-            <div class="stat-label">未払い件数</div>
-            <div class="stat-value" id="unpaidCount">0</div>
-          </div>
-          <div class="stat-card paid">
-            <div class="stat-label">支払い済み件数</div>
-            <div class="stat-value" id="paidCount">0</div>
-          </div>
-          <div class="stat-card cancel">
-            <div class="stat-label">キャンセル料件数</div>
-            <div class="stat-value" id="cancelCount">0</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">未払い合計金額</div>
-            <div class="stat-value" id="unpaidTotal">¥0</div>
-          </div>
-        </div>
-
-        <!-- タブナビゲーション -->
-        <div class="tabs">
-          <button class="tab active" data-tab="unpaid">未払い一覧</button>
-          <button class="tab" data-tab="paid">支払い済み一覧</button>
-          <button class="tab" data-tab="cancellation">キャンセル料一覧</button>
-        </div>
-
-        <!-- 未払い一覧タブ -->
-        <div class="tab-content active" id="unpaid-content">
-          <!-- フィルター -->
-          <div class="filter-section">
-            <div class="filter-row">
-              <div class="form-group">
-                <label for="unpaidEventFilter" class="form-label">イベント選択</label>
-                <select id="unpaidEventFilter" class="form-input">
-                  <option value="">すべてのイベント</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="unpaidPaymentMethodFilter" class="form-label">支払い方法</label>
-                <select id="unpaidPaymentMethodFilter" class="form-input">
-                  <option value="">すべて</option>
-                  <option value="現地払い">現地払い</option>
-                  <option value="銀行振込">銀行振込</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="unpaidMemberSearch" class="form-label">メンバー検索</label>
-                <input type="text" id="unpaidMemberSearch" class="form-input" placeholder="名前で検索...">
-              </div>
-              <div class="form-group">
-                <label class="form-label" style="opacity: 0;">ボタン</label>
-                <button id="unpaidFilterBtn" class="btn btn-primary btn-block">絞り込み</button>
-              </div>
+        <!-- イベント選択 -->
+        <div class="filter-section">
+          <div class="filter-row">
+            <div class="form-group">
+              <label for="eventSelect" class="form-label required">イベント選択</label>
+              <select id="eventSelect" class="form-input" required>
+                <option value="">イベントを選択してください</option>
+              </select>
             </div>
-          </div>
-
-          <!-- データテーブル -->
-          <div class="data-section">
-            <div class="table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>イベント名</th>
-                    <th>メンバー名</th>
-                    <th>金額</th>
-                    <th>支払い方法</th>
-                    <th>締切日</th>
-                    <th>ステータス</th>
-                    <th>備考</th>
-                    <th>アクション</th>
-                  </tr>
-                </thead>
-                <tbody id="unpaidTableBody">
-                  <tr>
-                    <td colspan="8">
-                      <div class="empty-state">
-                        <div class="empty-state-icon">💰</div>
-                        <div class="empty-state-text">未払いの支払いはありません</div>
-                        <div class="empty-state-subtext">データがありません</div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="form-group">
+              <label for="memberSearch" class="form-label">メンバー検索</label>
+              <input type="text" id="memberSearch" class="form-input" placeholder="名前で検索...">
+            </div>
+            <div class="form-group">
+              <label for="statusFilter" class="form-label">ステータス</label>
+              <select id="statusFilter" class="form-input">
+                <option value="">すべて</option>
+                <option value="unpaid">未払い</option>
+                <option value="paid">支払い済み</option>
+              </select>
             </div>
           </div>
         </div>
 
-        <!-- 支払い済み一覧タブ -->
-        <div class="tab-content" id="paid-content">
-          <!-- フィルター -->
-          <div class="filter-section">
-            <div class="filter-row">
-              <div class="form-group">
-                <label for="paidEventFilter" class="form-label">イベント選択</label>
-                <select id="paidEventFilter" class="form-input">
-                  <option value="">すべてのイベント</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="paidPaymentMethodFilter" class="form-label">支払い方法</label>
-                <select id="paidPaymentMethodFilter" class="form-input">
-                  <option value="">すべて</option>
-                  <option value="現地払い">現地払い</option>
-                  <option value="銀行振込">銀行振込</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="paidMemberSearch" class="form-label">メンバー検索</label>
-                <input type="text" id="paidMemberSearch" class="form-input" placeholder="名前で検索...">
-              </div>
-              <div class="form-group">
-                <label class="form-label" style="opacity: 0;">ボタン</label>
-                <button id="paidFilterBtn" class="btn btn-primary btn-block">絞り込み</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- データテーブル -->
-          <div class="data-section">
-            <div class="table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>イベント名</th>
-                    <th>メンバー名</th>
-                    <th>金額</th>
-                    <th>支払い方法</th>
-                    <th>支払い日時</th>
-                    <th>確認者</th>
-                    <th>備考</th>
-                    <th>アクション</th>
-                  </tr>
-                </thead>
-                <tbody id="paidTableBody">
-                  <tr>
-                    <td colspan="8">
-                      <div class="empty-state">
-                        <div class="empty-state-icon">✅</div>
-                        <div class="empty-state-text">支払い済みの記録はありません</div>
-                        <div class="empty-state-subtext">データがありません</div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- キャンセル料一覧タブ -->
-        <div class="tab-content" id="cancellation-content">
-          <!-- フィルター -->
-          <div class="filter-section">
-            <div class="filter-row">
-              <div class="form-group">
-                <label for="cancelEventFilter" class="form-label">イベント選択</label>
-                <select id="cancelEventFilter" class="form-input">
-                  <option value="">すべてのイベント</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="cancelStatusFilter" class="form-label">支払い状況</label>
-                <select id="cancelStatusFilter" class="form-input">
-                  <option value="">すべて</option>
-                  <option value="unpaid">未払い</option>
-                  <option value="paid">受領済み</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="cancelMemberSearch" class="form-label">メンバー検索</label>
-                <input type="text" id="cancelMemberSearch" class="form-input" placeholder="名前で検索...">
-              </div>
-              <div class="form-group">
-                <label class="form-label" style="opacity: 0;">ボタン</label>
-                <button id="cancelFilterBtn" class="btn btn-primary btn-block">絞り込み</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- データテーブル -->
-          <div class="data-section">
-            <div class="table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>イベント名</th>
-                    <th>メンバー名</th>
-                    <th>キャンセル料</th>
-                    <th>支払い状況</th>
-                    <th>受領日時</th>
-                    <th>備考</th>
-                    <th>アクション</th>
-                  </tr>
-                </thead>
-                <tbody id="cancelTableBody">
-                  <tr>
-                    <td colspan="7">
-                      <div class="empty-state">
-                        <div class="empty-state-icon">❌</div>
-                        <div class="empty-state-text">キャンセル料の記録はありません</div>
-                        <div class="empty-state-subtext">データがありません</div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        <!-- データテーブル -->
+        <div class="data-section">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>メンバー名</th>
+                  <th>所属</th>
+                  <th>金額</th>
+                  <th>支払い方法</th>
+                  <th>ステータス</th>
+                  <th>支払い日時</th>
+                  <th>アクション</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody">
+                <tr>
+                  <td colspan="7">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">💰</div>
+                      <div class="empty-state-text">イベントを選択してください</div>
+                      <div class="empty-state-subtext">イベントを選択すると支払い情報が表示されます</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- JavaScriptファイル -->
-  <script src="../js/config.js"></script>
+  <!-- スクリプト -->
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
-  <script src="../js/utils.js?v=2"></script>
+  <script src="../js/utils.js"></script>
 
   <script>
-    const userInfo = Auth.getUserInfo();
-    let allUnpaidData = [];
-    let allPaidData = [];
-    let allCancellationData = [];
-    let eventsList = [];
+    // グローバル変数
+    let allPayments = [];
+    let allMembers = [];
+    let currentEvent = null;
 
     // ページ読み込み時の処理
     window.addEventListener('DOMContentLoaded', async () => {
@@ -543,14 +266,240 @@
       Auth.requireAdmin();
 
       // ユーザー名表示
-      document.getElementById('userName').textContent = userInfo.name;
+      const userInfo = Auth.getUserInfo();
+      if (userInfo) {
+        document.getElementById('userName').textContent = userInfo.name || '管理者';
+      }
+
+      // イベントリスト読み込み
+      await loadEvents();
 
       // イベントリスナー設定
       setupEventListeners();
-
-      // データ読み込み
-      await loadAllData();
     });
+
+    // イベントリスト読み込み
+    async function loadEvents() {
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getEvents', {});
+
+        if (result.success && result.events) {
+          const select = document.getElementById('eventSelect');
+          select.innerHTML = '<option value="">イベントを選択してください</option>';
+
+          // 登録料があるイベントのみ表示
+          const eventsWithFee = result.events.filter(e => e.fee_amount && e.fee_amount > 0);
+
+          // 日付でソート（降順）
+          eventsWithFee.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB - dateA;
+          });
+
+          eventsWithFee.forEach(event => {
+            const option = document.createElement('option');
+            option.value = event.event_id;
+            option.textContent = `${event.title} (${event.date})`;
+            select.appendChild(option);
+          });
+        }
+
+      } catch (error) {
+        console.error('Load events error:', error);
+        Utils.showError('イベントリストの取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // メンバーリスト読み込み
+    async function loadMembers() {
+      try {
+        const result = await API.call('getMembers');
+
+        if (result.success && result.members) {
+          allMembers = result.members;
+        }
+
+      } catch (error) {
+        console.error('Load members error:', error);
+      }
+    }
+
+    // イベント別支払い情報読み込み
+    async function loadPayments(eventId) {
+      if (!eventId) {
+        renderEmptyState('イベントを選択してください', 'イベントを選択すると支払い情報が表示されます');
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        // メンバーリストを取得（まだ取得していない場合）
+        if (allMembers.length === 0) {
+          await loadMembers();
+        }
+
+        const result = await API.call('getPaymentsByEvent', {
+          event_id: eventId
+        });
+
+        if (result.success) {
+          allPayments = result.payments || [];
+          renderTable();
+        } else {
+          throw new Error(result.message || '支払い情報の取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Load payments error:', error);
+        Utils.showError('支払い情報の取得に失敗しました');
+        renderEmptyState('エラーが発生しました', error.message);
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // テーブル描画
+    function renderTable() {
+      const tbody = document.getElementById('paymentsTableBody');
+
+      // フィルタリング
+      const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      let filteredPayments = allPayments;
+
+      // 検索フィルター
+      if (searchTerm) {
+        filteredPayments = filteredPayments.filter(payment =>
+          payment.member_name.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // ステータスフィルター
+      if (statusFilter === 'unpaid') {
+        filteredPayments = filteredPayments.filter(p => !p.paid);
+      } else if (statusFilter === 'paid') {
+        filteredPayments = filteredPayments.filter(p => p.paid);
+      }
+
+      if (filteredPayments.length === 0) {
+        renderEmptyState('該当する支払い情報がありません', '条件を変更してください');
+        return;
+      }
+
+      tbody.innerHTML = filteredPayments.map(payment => {
+        const statusClass = payment.paid ? 'paid' : 'unpaid';
+        const statusText = payment.paid ? '支払い済み' : '未払い';
+        const paidAtText = payment.paid && payment.paid_at ?
+          Utils.formatDateTime(payment.paid_at) : '-';
+
+        return `
+          <tr>
+            <td>${Utils.escapeHtml(payment.member_name)}</td>
+            <td>${Utils.escapeHtml(payment.affiliation || '-')}</td>
+            <td>${Utils.formatCurrency(payment.amount)}</td>
+            <td>${Utils.escapeHtml(payment.payment_method || '-')}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td>${paidAtText}</td>
+            <td>
+              <div class="action-buttons">
+                ${!payment.paid ? `
+                  <button class="btn btn-primary btn-sm" onclick="confirmPayment('${payment.payment_id}')">
+                    支払い確認
+                  </button>
+                ` : `
+                  <button class="btn btn-outline btn-sm" onclick="unpaidPayment('${payment.payment_id}')">
+                    未払いに戻す
+                  </button>
+                `}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 空状態表示
+    function renderEmptyState(title, subtitle) {
+      const tbody = document.getElementById('paymentsTableBody');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-icon">💰</div>
+              <div class="empty-state-text">${Utils.escapeHtml(title)}</div>
+              <div class="empty-state-subtext">${Utils.escapeHtml(subtitle)}</div>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    // 支払い確認
+    async function confirmPayment(paymentId) {
+      if (!confirm('この支払いを確認済みにしますか?')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('confirmPayment', {
+          payment_id: paymentId
+        });
+
+        if (result.success) {
+          Utils.showSuccess('支払いを確認しました');
+          // データを再読み込み
+          const eventId = document.getElementById('eventSelect').value;
+          await loadPayments(eventId);
+        } else {
+          throw new Error(result.message || '支払い確認に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Confirm payment error:', error);
+        Utils.showError(error.message || '支払い確認に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 未払いに戻す
+    async function unpaidPayment(paymentId) {
+      if (!confirm('この支払いを未払いに戻しますか?')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('unpaidPayment', {
+          payment_id: paymentId
+        });
+
+        if (result.success) {
+          Utils.showSuccess('未払いに戻しました');
+          // データを再読み込み
+          const eventId = document.getElementById('eventSelect').value;
+          await loadPayments(eventId);
+        } else {
+          throw new Error(result.message || '処理に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Unpaid payment error:', error);
+        Utils.showError(error.message || '処理に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
 
     // イベントリスナー設定
     function setupEventListeners() {
@@ -566,523 +515,20 @@
         document.getElementById('adminSidebar').classList.toggle('mobile-open');
       });
 
-      // タブ切り替え
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          const tabName = tab.dataset.tab;
-          switchTab(tabName);
-        });
+      // イベント選択
+      document.getElementById('eventSelect').addEventListener('change', (e) => {
+        loadPayments(e.target.value);
       });
 
-      // フィルターボタン
-      document.getElementById('unpaidFilterBtn').addEventListener('click', () => {
-        filterUnpaidData();
+      // メンバー検索
+      document.getElementById('memberSearch').addEventListener('input', () => {
+        renderTable();
       });
 
-      document.getElementById('paidFilterBtn').addEventListener('click', () => {
-        filterPaidData();
+      // ステータスフィルター
+      document.getElementById('statusFilter').addEventListener('change', () => {
+        renderTable();
       });
-
-      document.getElementById('cancelFilterBtn').addEventListener('click', () => {
-        filterCancellationData();
-      });
-
-      // Enterキーでフィルタリング
-      ['unpaidMemberSearch', 'paidMemberSearch', 'cancelMemberSearch'].forEach(id => {
-        document.getElementById(id).addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-            if (id.startsWith('unpaid')) filterUnpaidData();
-            else if (id.startsWith('paid')) filterPaidData();
-            else filterCancellationData();
-          }
-        });
-      });
-    }
-
-    // タブ切り替え
-    function switchTab(tabName) {
-      // タブのアクティブ状態を更新
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
-      // コンテンツの表示切り替え
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-      document.getElementById(`${tabName}-content`).classList.add('active');
-    }
-
-    // すべてのデータを読み込み
-    async function loadAllData() {
-      Utils.showLoading();
-
-      try {
-        // イベントリスト取得
-        await loadEventsList();
-
-        // 各タブのデータを読み込み
-        await loadUnpaidData();
-        await loadPaidData();
-        await loadCancellationData();
-
-        // 統計を更新
-        updateStats();
-
-      } catch (error) {
-        console.error('Load data error:', error);
-        Utils.showError('データの読み込みに失敗しました');
-      } finally {
-        Utils.hideLoading();
-      }
-    }
-
-    // イベントリスト取得
-    async function loadEventsList() {
-      try {
-        const result = await API.call('getEvents', {});
-
-        if (result.success && result.events) {
-          eventsList = result.events;
-
-          // フィルター用のイベント選択肢を設定
-          const eventSelects = [
-            document.getElementById('unpaidEventFilter'),
-            document.getElementById('paidEventFilter'),
-            document.getElementById('cancelEventFilter')
-          ];
-
-          eventSelects.forEach(select => {
-            // 既存のオプションをクリア（最初のオプションは残す）
-            select.innerHTML = '<option value="">すべてのイベント</option>';
-
-            eventsList.forEach(event => {
-              const option = document.createElement('option');
-              option.value = event.event_id;
-              option.textContent = event.title;
-              select.appendChild(option);
-            });
-          });
-        }
-      } catch (error) {
-        console.error('Load events error:', error);
-      }
-    }
-
-    // 未払いデータ読み込み
-    async function loadUnpaidData() {
-      try {
-        const result = await API.call('getUnpaidList', {});
-
-        if (result.success && result.payments) {
-          allUnpaidData = result.payments;
-          renderUnpaidTable(allUnpaidData);
-        } else {
-          allUnpaidData = [];
-          renderUnpaidTable([]);
-        }
-      } catch (error) {
-        console.error('Load unpaid data error:', error);
-        allUnpaidData = [];
-        renderUnpaidTable([]);
-      }
-    }
-
-    // 支払い済みデータ読み込み
-    async function loadPaidData() {
-      try {
-        const result = await API.call('getPaidList', {});
-
-        if (result.success && result.payments) {
-          allPaidData = result.payments;
-          renderPaidTable(allPaidData);
-        } else {
-          allPaidData = [];
-          renderPaidTable([]);
-        }
-      } catch (error) {
-        console.error('Load paid data error:', error);
-        allPaidData = [];
-        renderPaidTable([]);
-      }
-    }
-
-    // キャンセル料データ読み込み
-    async function loadCancellationData() {
-      try {
-        const result = await API.call('getCancellationFeeList', {});
-
-        if (result.success && result.cancellations) {
-          allCancellationData = result.cancellations;
-          renderCancellationTable(allCancellationData);
-        } else {
-          allCancellationData = [];
-          renderCancellationTable([]);
-        }
-      } catch (error) {
-        console.error('Load cancellation data error:', error);
-        allCancellationData = [];
-        renderCancellationTable([]);
-      }
-    }
-
-    // 未払いデータフィルタリング
-    function filterUnpaidData() {
-      const eventFilter = document.getElementById('unpaidEventFilter').value;
-      const methodFilter = document.getElementById('unpaidPaymentMethodFilter').value;
-      const searchText = document.getElementById('unpaidMemberSearch').value.toLowerCase();
-
-      let filtered = allUnpaidData;
-
-      if (eventFilter) {
-        filtered = filtered.filter(p => p.event_id === eventFilter);
-      }
-
-      if (methodFilter) {
-        filtered = filtered.filter(p => p.payment_method === methodFilter);
-      }
-
-      if (searchText) {
-        filtered = filtered.filter(p =>
-          p.member_name.toLowerCase().includes(searchText)
-        );
-      }
-
-      renderUnpaidTable(filtered);
-    }
-
-    // 支払い済みデータフィルタリング
-    function filterPaidData() {
-      const eventFilter = document.getElementById('paidEventFilter').value;
-      const methodFilter = document.getElementById('paidPaymentMethodFilter').value;
-      const searchText = document.getElementById('paidMemberSearch').value.toLowerCase();
-
-      let filtered = allPaidData;
-
-      if (eventFilter) {
-        filtered = filtered.filter(p => p.event_id === eventFilter);
-      }
-
-      if (methodFilter) {
-        filtered = filtered.filter(p => p.payment_method === methodFilter);
-      }
-
-      if (searchText) {
-        filtered = filtered.filter(p =>
-          p.member_name.toLowerCase().includes(searchText)
-        );
-      }
-
-      renderPaidTable(filtered);
-    }
-
-    // キャンセル料データフィルタリング
-    function filterCancellationData() {
-      const eventFilter = document.getElementById('cancelEventFilter').value;
-      const statusFilter = document.getElementById('cancelStatusFilter').value;
-      const searchText = document.getElementById('cancelMemberSearch').value.toLowerCase();
-
-      let filtered = allCancellationData;
-
-      if (eventFilter) {
-        filtered = filtered.filter(c => c.event_id === eventFilter);
-      }
-
-      if (statusFilter) {
-        if (statusFilter === 'paid') {
-          filtered = filtered.filter(c => c.paid);
-        } else if (statusFilter === 'unpaid') {
-          filtered = filtered.filter(c => !c.paid);
-        }
-      }
-
-      if (searchText) {
-        filtered = filtered.filter(c =>
-          c.member_name.toLowerCase().includes(searchText)
-        );
-      }
-
-      renderCancellationTable(filtered);
-    }
-
-    // 未払いテーブル描画
-    function renderUnpaidTable(data) {
-      const tbody = document.getElementById('unpaidTableBody');
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8">
-              <div class="empty-state">
-                <div class="empty-state-icon">💰</div>
-                <div class="empty-state-text">未払いの支払いはありません</div>
-                <div class="empty-state-subtext">データがありません</div>
-              </div>
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = data.map(payment => `
-        <tr>
-          <td>${Utils.escapeHtml(payment.event_title)}</td>
-          <td>${Utils.escapeHtml(payment.member_name)}</td>
-          <td>¥${Utils.formatNumber(payment.amount)}</td>
-          <td>
-            <span class="badge ${payment.payment_method === '銀行振込' ? 'badge-bank' : 'badge-cash'}">
-              ${Utils.escapeHtml(payment.payment_method)}
-            </span>
-          </td>
-          <td>${Utils.formatDate(payment.deadline) || '-'}</td>
-          <td>
-            <span class="badge badge-unpaid">未払い</span>
-          </td>
-          <td class="notes-cell" title="${Utils.escapeHtml(payment.notes || '')}">
-            ${Utils.escapeHtml(payment.notes || '-')}
-          </td>
-          <td>
-            <button class="btn btn-sm btn-confirm" onclick="confirmPayment('${payment.payment_id}')">
-              支払い確認
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    // 支払い済みテーブル描画
-    function renderPaidTable(data) {
-      const tbody = document.getElementById('paidTableBody');
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7">
-              <div class="empty-state">
-                <div class="empty-state-icon">✅</div>
-                <div class="empty-state-text">支払い済みの記録はありません</div>
-                <div class="empty-state-subtext">データがありません</div>
-              </div>
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = data.map(payment => `
-        <tr>
-          <td>${Utils.escapeHtml(payment.event_title)}</td>
-          <td>${Utils.escapeHtml(payment.member_name)}</td>
-          <td>¥${Utils.formatNumber(payment.amount)}</td>
-          <td>
-            <span class="badge ${payment.payment_method === '銀行振込' ? 'badge-bank' : 'badge-cash'}">
-              ${Utils.escapeHtml(payment.payment_method)}
-            </span>
-          </td>
-          <td>${Utils.formatDateTime(payment.paid_at) || '-'}</td>
-          <td>${payment.paid_by_admin ? '管理者確認' : 'QRチェックイン'}</td>
-          <td class="notes-cell" title="${Utils.escapeHtml(payment.notes || '')}">
-            ${Utils.escapeHtml(payment.notes || '-')}
-          </td>
-          <td>
-            <button class="btn btn-sm btn-secondary" onclick="unpaidPayment('${payment.payment_id}')">
-              未払いに戻す
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    // キャンセル料テーブル描画
-    function renderCancellationTable(data) {
-      const tbody = document.getElementById('cancelTableBody');
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7">
-              <div class="empty-state">
-                <div class="empty-state-icon">❌</div>
-                <div class="empty-state-text">キャンセル料の記録はありません</div>
-                <div class="empty-state-subtext">データがありません</div>
-              </div>
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = data.map(cancel => `
-        <tr>
-          <td>${Utils.escapeHtml(cancel.event_title)}</td>
-          <td>${Utils.escapeHtml(cancel.member_name)}</td>
-          <td>¥${Utils.formatNumber(cancel.cancellation_fee)}</td>
-          <td>
-            <span class="badge ${cancel.paid ? 'badge-paid' : 'badge-unpaid'}">
-              ${cancel.paid ? '受領済み' : '未払い'}
-            </span>
-          </td>
-          <td>${cancel.paid ? Utils.formatDateTime(cancel.paid_at) : '-'}</td>
-          <td class="notes-cell" title="${Utils.escapeHtml(cancel.notes || '')}">
-            ${Utils.escapeHtml(cancel.notes || '-')}
-          </td>
-          <td>
-            ${!cancel.paid ? `
-              <button class="btn btn-sm btn-confirm" onclick="confirmCancellationFee('${cancel.payment_id}')">
-                受領確認
-              </button>
-            ` : '-'}
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    // 統計更新
-    function updateStats() {
-      // 未払い件数
-      const unpaidCount = allUnpaidData.length;
-      document.getElementById('unpaidCount').textContent = unpaidCount;
-
-      // 支払い済み件数
-      const paidCount = allPaidData.length;
-      document.getElementById('paidCount').textContent = paidCount;
-
-      // キャンセル料件数
-      const cancelCount = allCancellationData.length;
-      document.getElementById('cancelCount').textContent = cancelCount;
-
-      // 未払い合計金額
-      const unpaidTotal = allUnpaidData.reduce((sum, p) => sum + (p.amount || 0), 0);
-      document.getElementById('unpaidTotal').textContent = '¥' + Utils.formatNumber(unpaidTotal);
-    }
-
-    // 支払い確認
-    async function confirmPayment(paymentId) {
-      if (!confirm('この支払いを確認済みにしますか？')) {
-        return;
-      }
-
-      Utils.showLoading();
-
-      try {
-        const result = await API.call('confirmPayment', {
-          payment_id: paymentId
-        });
-
-        if (result.success) {
-          Utils.showSuccess('支払いを確認しました');
-
-          // 現在のフィルター状態を保存
-          const currentEventFilter = document.getElementById('unpaidEventFilter').value;
-          const currentMethodFilter = document.getElementById('unpaidPaymentMethodFilter').value;
-          const currentSearch = document.getElementById('unpaidMemberSearch').value;
-
-          // データを再読み込み
-          await loadAllData();
-
-          // フィルター状態を復元
-          document.getElementById('unpaidEventFilter').value = currentEventFilter;
-          document.getElementById('unpaidPaymentMethodFilter').value = currentMethodFilter;
-          document.getElementById('unpaidMemberSearch').value = currentSearch;
-
-          // フィルターを適用
-          filterUnpaidData();
-        } else {
-          throw new Error(result.message || '支払い確認に失敗しました');
-        }
-
-      } catch (error) {
-        console.error('Confirm payment error:', error);
-        Utils.showError(error.message || '支払い確認に失敗しました');
-      } finally {
-        Utils.hideLoading();
-      }
-    }
-
-    // 未払いに戻す
-    async function unpaidPayment(paymentId) {
-      if (!confirm('この支払いを未払いに戻しますか？')) {
-        return;
-      }
-
-      Utils.showLoading();
-
-      try {
-        const result = await API.call('unpaidPayment', {
-          payment_id: paymentId
-        });
-
-        if (result.success) {
-          Utils.showSuccess('未払いに戻しました');
-
-          // 現在のフィルター状態を保存
-          const currentEventFilter = document.getElementById('paidEventFilter').value;
-          const currentMethodFilter = document.getElementById('paidPaymentMethodFilter').value;
-          const currentSearch = document.getElementById('paidMemberSearch').value;
-
-          // データを再読み込み
-          await loadAllData();
-
-          // フィルター状態を復元
-          document.getElementById('paidEventFilter').value = currentEventFilter;
-          document.getElementById('paidPaymentMethodFilter').value = currentMethodFilter;
-          document.getElementById('paidMemberSearch').value = currentSearch;
-
-          // フィルターを適用
-          filterPaidData();
-        } else {
-          throw new Error(result.message || '未払いへの変更に失敗しました');
-        }
-
-      } catch (error) {
-        console.error('Unpaid payment error:', error);
-        Utils.showError(error.message || '未払いへの変更に失敗しました');
-      } finally {
-        Utils.hideLoading();
-      }
-    }
-    window.unpaidPayment = unpaidPayment;
-
-    // キャンセル料受領確認
-    async function confirmCancellationFee(paymentId) {
-      if (!confirm('このキャンセル料を受領済みにしますか？')) {
-        return;
-      }
-
-      Utils.showLoading();
-
-      try {
-        const result = await API.call('confirmPayment', {
-          payment_id: paymentId
-        });
-
-        if (result.success) {
-          Utils.showSuccess('キャンセル料を受領確認しました');
-
-          // 現在のフィルター状態を保存
-          const currentEventFilter = document.getElementById('cancelEventFilter').value;
-          const currentSearch = document.getElementById('cancelMemberSearch').value;
-
-          // データを再読み込み
-          await loadAllData();
-
-          // フィルター状態を復元
-          document.getElementById('cancelEventFilter').value = currentEventFilter;
-          document.getElementById('cancelMemberSearch').value = currentSearch;
-
-          // フィルターを適用
-          filterCancellationData();
-        } else {
-          throw new Error(result.message || 'キャンセル料の受領確認に失敗しました');
-        }
-
-      } catch (error) {
-        console.error('Confirm cancellation fee error:', error);
-        Utils.showError(error.message || 'キャンセル料の受領確認に失敗しました');
-      } finally {
-        Utils.hideLoading();
-      }
     }
   </script>
 </body>
