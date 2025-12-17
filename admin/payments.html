@@ -972,8 +972,22 @@
 
         if (result.success) {
           Utils.showSuccess('支払いを確認しました');
+
+          // 現在のフィルター状態を保存
+          const currentEventFilter = document.getElementById('unpaidEventFilter').value;
+          const currentMethodFilter = document.getElementById('unpaidPaymentMethodFilter').value;
+          const currentSearch = document.getElementById('unpaidMemberSearch').value;
+
           // データを再読み込み
           await loadAllData();
+
+          // フィルター状態を復元
+          document.getElementById('unpaidEventFilter').value = currentEventFilter;
+          document.getElementById('unpaidPaymentMethodFilter').value = currentMethodFilter;
+          document.getElementById('unpaidMemberSearch').value = currentSearch;
+
+          // フィルターを適用
+          filterUnpaidData();
         } else {
           throw new Error(result.message || '支払い確認に失敗しました');
         }
@@ -1001,8 +1015,22 @@
 
         if (result.success) {
           Utils.showSuccess('未払いに戻しました');
+
+          // 現在のフィルター状態を保存
+          const currentEventFilter = document.getElementById('paidEventFilter').value;
+          const currentMethodFilter = document.getElementById('paidPaymentMethodFilter').value;
+          const currentSearch = document.getElementById('paidMemberSearch').value;
+
           // データを再読み込み
           await loadAllData();
+
+          // フィルター状態を復元
+          document.getElementById('paidEventFilter').value = currentEventFilter;
+          document.getElementById('paidPaymentMethodFilter').value = currentMethodFilter;
+          document.getElementById('paidMemberSearch').value = currentSearch;
+
+          // フィルターを適用
+          filterPaidData();
         } else {
           throw new Error(result.message || '未払いへの変更に失敗しました');
         }
@@ -1031,8 +1059,20 @@
 
         if (result.success) {
           Utils.showSuccess('キャンセル料を受領確認しました');
+
+          // 現在のフィルター状態を保存
+          const currentEventFilter = document.getElementById('cancelEventFilter').value;
+          const currentSearch = document.getElementById('cancelMemberSearch').value;
+
           // データを再読み込み
           await loadAllData();
+
+          // フィルター状態を復元
+          document.getElementById('cancelEventFilter').value = currentEventFilter;
+          document.getElementById('cancelMemberSearch').value = currentSearch;
+
+          // フィルターを適用
+          filterCancellationData();
         } else {
           throw new Error(result.message || 'キャンセル料の受領確認に失敗しました');
         }
