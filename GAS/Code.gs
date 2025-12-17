@@ -151,6 +151,9 @@ function handleRequest(e) {
       case 'updatePaymentMethod':
         result = updatePaymentMethod(token, params);
         break;
+      case 'createPaymentRecord':
+        result = createPaymentRecord(token, params);
+        break;
       case 'getUnpaidList':
         result = getUnpaidList(token);
         break;

@@ -308,3 +308,91 @@ function updatePaymentMethod(token, params) {
     message: '支払い方法を更新しました'
   };
 }
+
+/**
+ * 支払い情報を作成（チェックインなし・管理者のみ）
+ */
+function createPaymentRecord(token, params) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const eventId = params.event_id;
+  const memberId = params.member_id;
+  const paymentMethod = params.payment_method;
+  const amount = params.amount;
+
+  if (!eventId || !memberId || !paymentMethod || amount === undefined) {
+    return {success: false, error: '必須項目が不足しています'};
+  }
+
+  // イベント存在確認
+  const event = findRow('events', 'event_id', eventId);
+  if (!event) {
+    return {success: false, error: 'イベントが見つかりません'};
+  }
+
+  // メンバー存在確認
+  const member = findRow('members', 'member_id', memberId);
+  if (!member) {
+    return {success: false, error: 'メンバーが見つかりません'};
+  }
+
+  // 既存の支払い情報を確認
+  const existingPayment = findPaymentByEventAndMember(eventId, memberId);
+  if (existingPayment) {
+    return {success: false, error: '既に支払い情報が存在します'};
+  }
+
+  // 支払い情報を新規作成
+  const paymentSheet = getSheet('payments');
+  const paymentId = generateUniqueId('PAY', paymentSheet);
+
+  addRow('payments', {
+    payment_id: paymentId,
+    event_id: eventId,
+    member_id: memberId,
+    payment_method: paymentMethod,
+    amount: amount,
+    paid: false,
+    paid_at: '',
+    paid_by_admin: false,
+    receipt_issued: false,
+    receipt_number: '',
+    notes: ''
+  });
+
+  return {
+    success: true,
+    payment_id: paymentId,
+    message: '支払い情報を作成しました'
+  };
+}
+
+/**
+ * イベントとメンバーで支払い情報を検索（ヘルパー関数）
+ */
+function findPaymentByEventAndMember(eventId, memberId) {
+  const sheet = getSheet('payments');
+  const data = sheet.getDataRange().getValues();
+
+  if (data.length === 0) {
+    return null;
+  }
+
+  const headers = data[0];
+  const eventIdIndex = headers.indexOf('event_id');
+  const memberIdIndex = headers.indexOf('member_id');
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][eventIdIndex] === eventId && data[i][memberIdIndex] === memberId) {
+      const row = {rowIndex: i + 1};
+      for (let j = 0; j < headers.length; j++) {
+        row[headers[j]] = data[i][j];
+      }
+      return row;
+    }
+  }
+
+  return null;
+}

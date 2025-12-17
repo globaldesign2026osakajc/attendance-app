@@ -878,27 +878,18 @@
       Utils.showLoading();
 
       try {
-        // payment_idがない場合は新規作成、ある場合は更新
+        // payment_idがない場合は新規作成（チェックインなし）、ある場合は更新
         if (!editingPayment.payment_id) {
-          // 新規作成: checkinWithPaymentを使用
-          const result = await API.call('checkinWithPayment', {
+          // 新規作成: createPaymentRecordを使用（チェックインは行わない）
+          const result = await API.call('createPaymentRecord', {
             event_id: editingPayment.event_id,
             member_id: editingPayment.member_id,
-            payment_confirmed: false
+            payment_method: paymentMethod,
+            amount: editingPayment.amount
           });
 
           if (!result.success) {
             throw new Error(result.message || '支払い情報の作成に失敗しました');
-          }
-
-          // 作成後、支払い方法を更新する必要があるため、再度取得
-          await loadPayments(editingPayment.event_id);
-
-          // 新しく作成されたpayment_idを取得
-          const updatedPayment = allPayments.find(p => p.member_id === editingPayment.member_id);
-          if (updatedPayment && updatedPayment.payment_id) {
-            // 支払い方法を更新
-            await updatePaymentMethod(updatedPayment.payment_id, paymentMethod);
           }
         } else {
           // 更新
