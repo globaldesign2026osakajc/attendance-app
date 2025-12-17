@@ -298,13 +298,19 @@
 
         if (result.success && result.events) {
           // 登録料があるイベントのみフィルター
-          allEvents = result.events.filter(e => e.fee_amount && e.fee_amount > 0);
+          allEvents = result.events.filter(e => {
+            // fee_amountが存在し、0より大きい、またはdateが存在するイベント
+            return e.fee_amount && e.fee_amount > 0 && e.date;
+          });
+
+          console.log('All events with fee:', allEvents); // デバッグ用
 
           // 日付でソート（降順）
           allEvents.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-            return dateB - dateA;
+            // 日付文字列で直接比較
+            const dateA = a.date || '';
+            const dateB = b.date || '';
+            return dateB.localeCompare(dateA);
           });
 
           // 月セレクタを初期化
@@ -465,14 +471,12 @@
           const payments = paymentResult.payments || [];
           const checkins = checkinResult.checkins || [];
 
-          // 出席予定者（出席または公欠）のメンバーIDを取得
-          const attendingMemberIds = attendances
-            .filter(a => a.status === '出席' || a.status === '公欠')
-            .map(a => a.member_id);
+          // 出席登録したメンバーIDを取得
+          const registeredMemberIds = attendances.map(a => a.member_id);
 
-          // すべてのメンバーを表示（出席予定者のみ）
+          // 全メンバーを表示（出席登録した人を優先）
           allPayments = allMembers
-            .filter(member => attendingMemberIds.includes(member.member_id))
+            .filter(member => registeredMemberIds.includes(member.member_id))
             .map(member => {
               // 該当メンバーの出席登録情報を探す
               const attendance = attendances.find(a => a.member_id === member.member_id);
