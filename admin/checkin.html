@@ -730,6 +730,9 @@
 
           // 履歴を表示
           displayCheckinHistory(result.checkins || []);
+
+          // 手動チェックインのプルダウンを更新（チェックイン済みを除外）
+          updateManualMemberSelect(result.checkins || []);
         }
 
       } catch (error) {
@@ -793,6 +796,45 @@
           </div>
         `;
       }).join('');
+    }
+
+    // 手動チェックイン用のメンバー選択を更新（チェックイン済みを除外）
+    function updateManualMemberSelect(checkins) {
+      const select = document.getElementById('manualMemberSelect');
+
+      if (!membersList || membersList.length === 0) {
+        return;
+      }
+
+      // チェックイン済みのメンバーIDのセットを作成
+      const checkedInMemberIds = new Set(checkins.map(c => c.member_id));
+
+      // プルダウンを再構築
+      select.innerHTML = '<option value="">メンバーを選択...</option>';
+
+      // チェックイン済みでないメンバーのみを表示
+      const availableMembers = membersList.filter(member => !checkedInMemberIds.has(member.member_id));
+
+      // 名前順にソート
+      availableMembers.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+
+      availableMembers.forEach(member => {
+        const option = document.createElement('option');
+        option.value = member.member_id;
+        option.textContent = `${member.name}${member.affiliation ? ` (${member.affiliation})` : ''}`;
+        select.appendChild(option);
+      });
+
+      // チェックイン済みでないメンバーがいない場合
+      if (availableMembers.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '全員チェックイン済みです';
+        select.appendChild(option);
+        select.disabled = true;
+      } else {
+        select.disabled = false;
+      }
     }
 
     // QRコードスキャン開始
