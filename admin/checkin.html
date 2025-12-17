@@ -480,20 +480,20 @@
           <!-- 手動入力 -->
           <div class="manual-input-section">
             <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-color);">
-              手動入力
+              手動チェックイン
             </h4>
             <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
-              QRコードが読み取れない場合は、メンバーIDを直接入力してください。
+              QRコードが読み取れない場合や通信不良の場合は、メンバーを選択して手動でチェックインしてください。
             </p>
             <div class="manual-input-row">
               <div class="form-group">
-                <label for="manualMemberId" class="form-label">メンバーID</label>
-                <input
-                  type="text"
-                  id="manualMemberId"
+                <label for="manualMemberSelect" class="form-label">メンバー選択</label>
+                <select
+                  id="manualMemberSelect"
                   class="form-input"
-                  placeholder="例：M001"
                 >
+                  <option value="">メンバーを選択...</option>
+                </select>
               </div>
               <button id="manualCheckinBtn" class="btn btn-primary btn-lg">
                 チェックイン
@@ -530,6 +530,7 @@
     let videoStream = null;
     let scanningInterval = null;
     let pendingPaymentMemberId = null;
+    let membersList = [];
     const userInfo = Auth.getUserInfo();
 
     // ページ読み込み時の処理
@@ -540,8 +541,11 @@
       // ユーザー名表示
       document.getElementById('userName').textContent = userInfo.name;
 
-      // イベントリスト読み込み
-      await loadEvents();
+      // イベントリストとメンバーリスト読み込み
+      await Promise.all([
+        loadEvents(),
+        loadMembers()
+      ]);
 
       // イベントリスナー設定
       setupEventListeners();
@@ -583,6 +587,34 @@
         showToast('イベントリストの取得に失敗しました', 'error');
       } finally {
         Utils.hideLoading();
+      }
+    }
+
+    // メンバーリスト読み込み
+    async function loadMembers() {
+      try {
+        const result = await API.call('getMembers');
+
+        if (result.success && result.members) {
+          membersList = result.members;
+
+          const select = document.getElementById('manualMemberSelect');
+          select.innerHTML = '<option value="">メンバーを選択...</option>';
+
+          // 名前順にソート
+          membersList.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+
+          membersList.forEach(member => {
+            const option = document.createElement('option');
+            option.value = member.member_id;
+            option.textContent = `${member.name}${member.affiliation ? ` (${member.affiliation})` : ''}`;
+            select.appendChild(option);
+          });
+        }
+
+      } catch (error) {
+        console.error('Load members error:', error);
+        showToast('メンバーリストの取得に失敗しました', 'error');
       }
     }
 
@@ -810,8 +842,8 @@
           // チェックイン一覧を再読み込み
           await loadCheckinList();
 
-          // 手動入力欄をクリア
-          document.getElementById('manualMemberId').value = '';
+          // 手動選択をリセット
+          document.getElementById('manualMemberSelect').value = '';
 
         } else {
           throw new Error(result.message || 'チェックインに失敗しました');
@@ -909,16 +941,12 @@
 
       // 手動チェックイン
       document.getElementById('manualCheckinBtn').addEventListener('click', () => {
-        const memberId = document.getElementById('manualMemberId').value;
-        checkin(memberId);
-      });
-
-      // Enterキーでチェックイン
-      document.getElementById('manualMemberId').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          const memberId = document.getElementById('manualMemberId').value;
-          checkin(memberId);
+        const memberId = document.getElementById('manualMemberSelect').value;
+        if (!memberId) {
+          showToast('メンバーを選択してください', 'warning');
+          return;
         }
+        checkin(memberId);
       });
 
       // 支払い確認
