@@ -1267,12 +1267,12 @@
         ` : !isExpired ? `
           ${renderAttendanceButtons(event, currentStatus, isPast)}
 
-          <div class="reason-section" id="reasonSection" style="display: none;">
+          <div class="reason-section" id="reasonSection">
             <label class="reason-label">理由・備考（任意）</label>
             <textarea
               id="reasonInput"
               class="reason-textarea"
-              placeholder="欠席理由や備考があれば入力してください..."
+              placeholder="公欠の場合は、公欠理由を記載してください。&#10;遅参しそうなど、備考があれば記載してください。"
             >${event.my_reason || ''}</textarea>
           </div>
 
@@ -1304,14 +1304,6 @@
           ` : ''}
         ` : ''}
       `;
-
-      // 理由入力欄の表示制御
-      if (currentStatus === '欠席') {
-        const reasonSection = document.getElementById('reasonSection');
-        if (reasonSection) {
-          reasonSection.style.display = 'block';
-        }
-      }
     }
 
     // 出欠選択
@@ -1323,14 +1315,6 @@
         btn.classList.remove('selected');
       });
       event.target.classList.add('selected');
-
-      // 理由入力欄の表示制御
-      const reasonSection = document.getElementById('reasonSection');
-      if (status === '欠席') {
-        reasonSection.style.display = 'block';
-      } else {
-        reasonSection.style.display = 'none';
-      }
 
       // 登録ボタンの有効化
       const submitBtn = document.getElementById('submitBtn');
