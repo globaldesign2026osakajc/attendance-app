@@ -289,15 +289,17 @@
                   <th>出欠登録</th>
                   <th>実出席</th>
                   <th>金額</th>
+                  <th>キャンセル料</th>
                   <th>支払い方法</th>
                   <th>ステータス</th>
                   <th>支払い日時</th>
+                  <th>備考</th>
                   <th>アクション</th>
                 </tr>
               </thead>
               <tbody id="paymentsTableBody">
                 <tr>
-                  <td colspan="9">
+                  <td colspan="11">
                     <div class="empty-state">
                       <div class="empty-state-icon">💰</div>
                       <div class="empty-state-text">イベントを選択してください</div>
@@ -339,6 +341,25 @@
       <div class="action-buttons" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
         <button class="btn btn-outline" onclick="closePaymentMethodModal()">キャンセル</button>
         <button class="btn btn-primary" onclick="savePaymentMethod()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 備考編集モーダル -->
+  <div id="notesModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>備考を編集</h3>
+      <div class="form-group">
+        <label>メンバー名</label>
+        <input type="text" id="notesModalMemberName" readonly style="background-color: #f5f5f5;">
+      </div>
+      <div class="form-group">
+        <label>備考</label>
+        <textarea id="notesModalText" rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem;" placeholder="相殺により免除、など"></textarea>
+      </div>
+      <div class="action-buttons" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn btn-outline" onclick="closeNotesModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveNotes()">保存</button>
       </div>
     </div>
   </div>
@@ -634,7 +655,8 @@
                 amount: amount,
                 paid: payment ? payment.paid : false,
                 paid_at: payment ? payment.paid_at : '',
-                notes: payment ? payment.notes : ''
+                notes: payment ? payment.notes : '',
+                is_cancellation_fee: payment ? payment.is_cancellation_fee : false
               };
             });
 
@@ -698,6 +720,14 @@
         // 実出席の表示
         const checkedInText = payment.checked_in ? '✓' : '-';
 
+        // キャンセル料の表示
+        const cancellationFeeText = payment.is_cancellation_fee ?
+          '<span style="color: #ff6b6b; font-weight: 600;">⚠️ キャンセル料</span>' : '-';
+
+        // 備考の表示（短縮版）
+        const notesText = payment.notes ?
+          (payment.notes.length > 15 ? payment.notes.substring(0, 15) + '...' : payment.notes) : '';
+
         return `
           <tr>
             <td>${Utils.escapeHtml(payment.member_name)}</td>
@@ -705,6 +735,7 @@
             <td>${Utils.escapeHtml(attendanceStatusText)}</td>
             <td>${checkedInText}</td>
             <td>${Utils.formatCurrency(payment.amount)}</td>
+            <td>${cancellationFeeText}</td>
             <td>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span>${Utils.escapeHtml(payment.payment_method || '-')}</span>
@@ -716,7 +747,20 @@
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
             <td>${paidAtText}</td>
             <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>${Utils.escapeHtml(notesText)}</span>
+                <button class="btn btn-outline btn-sm" onclick="editNotes('${payment.payment_id}', '${payment.member_id}', '${Utils.escapeHtml(payment.notes || '').replace(/'/g, "\\'")}', ${payment.is_cancellation_fee})" title="備考を編集">
+                  📝
+                </button>
+              </div>
+            </td>
+            <td>
               <div class="action-buttons">
+                ${payment.is_cancellation_fee && payment.amount > 0 ? `
+                  <button class="btn btn-outline btn-sm" onclick="waiveFee('${payment.payment_id}')" style="margin-bottom: 4px;">
+                    免除
+                  </button>
+                ` : ''}
                 ${!payment.paid ? `
                   <button class="btn btn-primary btn-sm" onclick="confirmPayment('${payment.payment_id}', '${payment.member_id}')">
                     支払い確認
@@ -738,7 +782,7 @@
       const tbody = document.getElementById('paymentsTableBody');
       tbody.innerHTML = `
         <tr>
-          <td colspan="9">
+          <td colspan="11">
             <div class="empty-state">
               <div class="empty-state-icon">💰</div>
               <div class="empty-state-text">${Utils.escapeHtml(title)}</div>
@@ -922,6 +966,110 @@
 
       return result;
     }
+
+    // 備考編集（モーダル表示）
+    let editingNotes = null;
+
+    function editNotes(paymentId, memberId, currentNotes, isCancellationFee) {
+      const eventId = document.getElementById('eventSelect').value;
+
+      // 編集中の情報を保存
+      editingNotes = {
+        payment_id: paymentId,
+        member_id: memberId,
+        event_id: eventId,
+        is_cancellation_fee: isCancellationFee
+      };
+
+      // メンバー名を取得
+      const payment = allPayments.find(p => p.member_id === memberId);
+      const memberName = payment ? payment.member_name : '';
+
+      // モーダルに値を設定
+      document.getElementById('notesModalMemberName').value = memberName;
+      document.getElementById('notesModalText').value = currentNotes || '';
+
+      // モーダルを表示
+      document.getElementById('notesModal').style.display = 'flex';
+    }
+    window.editNotes = editNotes;
+
+    // 備考モーダルを閉じる
+    function closeNotesModal() {
+      document.getElementById('notesModal').style.display = 'none';
+      editingNotes = null;
+    }
+    window.closeNotesModal = closeNotesModal;
+
+    // 備考を保存
+    async function saveNotes() {
+      const notes = document.getElementById('notesModalText').value;
+
+      if (!editingNotes) {
+        Utils.showError('編集情報が見つかりません');
+        return;
+      }
+
+      if (!editingNotes.payment_id) {
+        Utils.showError('支払い情報がありません');
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('updatePaymentNotes', {
+          payment_id: editingNotes.payment_id,
+          notes: notes
+        });
+
+        if (!result.success) {
+          throw new Error(result.message || '備考の更新に失敗しました');
+        }
+
+        Utils.showSuccess('備考を更新しました');
+        await loadPayments(editingNotes.event_id);
+        closeNotesModal();
+
+      } catch (error) {
+        console.error('Save notes error:', error);
+        Utils.showError(error.message || '備考の更新に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.saveNotes = saveNotes;
+
+    // キャンセル料を免除
+    async function waiveFee(paymentId) {
+      if (!confirm('このキャンセル料を免除しますか？\n金額が0円になり、備考に「キャンセル料免除」と記載されます。')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('waiveCancellationFee', {
+          payment_id: paymentId,
+          reason: 'キャンセル料免除（相殺または特別事由）'
+        });
+
+        if (result.success) {
+          Utils.showSuccess('キャンセル料を免除しました');
+          const eventId = document.getElementById('eventSelect').value;
+          await loadPayments(eventId);
+        } else {
+          throw new Error(result.message || 'キャンセル料免除に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Waive fee error:', error);
+        Utils.showError(error.message || 'キャンセル料免除に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.waiveFee = waiveFee;
 
     // イベントリスナー設定
     function setupEventListeners() {

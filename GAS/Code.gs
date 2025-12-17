@@ -154,6 +154,12 @@ function handleRequest(e) {
       case 'createPaymentRecord':
         result = createPaymentRecord(token, params);
         break;
+      case 'updatePaymentNotes':
+        result = updatePaymentNotes(token, params);
+        break;
+      case 'waiveCancellationFee':
+        result = waiveCancellationFee(token, params);
+        break;
       case 'getUnpaidList':
         result = getUnpaidList(token);
         break;

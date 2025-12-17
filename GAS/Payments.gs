@@ -246,13 +246,28 @@ function getPaymentsByEvent(token, eventId) {
 
   const payments = getSheetData('payments');
   const members = getSheetData('members');
+  const attendances = getSheetData('attendance');
+  const events = getSheetData('events');
+
+  // イベント情報を取得
+  const event = events.find(e => e.event_id === eventId);
 
   // 指定イベントの支払いのみフィルター
   const eventPayments = payments.filter(p => p.event_id === eventId);
 
-  // メンバー情報を結合
+  // メンバー情報とキャンセル料情報を結合
   const result = eventPayments.map(payment => {
     const member = members.find(m => m.member_id === payment.member_id);
+    const attendance = attendances.find(a => a.event_id === eventId && a.member_id === payment.member_id);
+
+    // キャンセル料が発生しているかチェック
+    let isCancellationFee = false;
+    if (event && event.cancellation_fee_date && attendance && attendance.status === '不参加') {
+      const cancellationFeeDate = new Date(event.cancellation_fee_date);
+      const registeredAt = new Date(attendance.registered_at);
+      // キャンセル料発生日以降の不参加登録
+      isCancellationFee = registeredAt >= cancellationFeeDate;
+    }
 
     return {
       payment_id: payment.payment_id,
@@ -265,7 +280,8 @@ function getPaymentsByEvent(token, eventId) {
       paid_at: payment.paid_at,
       receipt_issued: payment.receipt_issued,
       receipt_number: payment.receipt_number,
-      notes: payment.notes
+      notes: payment.notes,
+      is_cancellation_fee: isCancellationFee
     };
   });
 
@@ -366,6 +382,70 @@ function createPaymentRecord(token, params) {
     success: true,
     payment_id: paymentId,
     message: '支払い情報を作成しました'
+  };
+}
+
+/**
+ * 支払い備考を更新（管理者のみ）
+ */
+function updatePaymentNotes(token, params) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const paymentId = params.payment_id;
+  const notes = params.notes || '';
+
+  if (!paymentId) {
+    return {success: false, error: '支払いIDが必要です'};
+  }
+
+  const payment = findRow('payments', 'payment_id', paymentId);
+
+  if (!payment) {
+    return {success: false, error: '支払い情報が見つかりません'};
+  }
+
+  updateRow('payments', payment.rowIndex, {
+    notes: notes
+  });
+
+  return {
+    success: true,
+    message: '備考を更新しました'
+  };
+}
+
+/**
+ * キャンセル料を免除（管理者のみ）
+ */
+function waiveCancellationFee(token, params) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const paymentId = params.payment_id;
+  const reason = params.reason || 'キャンセル料免除';
+
+  if (!paymentId) {
+    return {success: false, error: '支払いIDが必要です'};
+  }
+
+  const payment = findRow('payments', 'payment_id', paymentId);
+
+  if (!payment) {
+    return {success: false, error: '支払い情報が見つかりません'};
+  }
+
+  // 金額を0にして、備考に理由を記載
+  updateRow('payments', payment.rowIndex, {
+    amount: 0,
+    notes: reason
+  });
+
+  return {
+    success: true,
+    message: 'キャンセル料を免除しました'
   };
 }
 
