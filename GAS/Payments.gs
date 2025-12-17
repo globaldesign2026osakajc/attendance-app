@@ -326,13 +326,30 @@ function getPaymentsByEvent(token, eventId) {
     // キャンセル料対象の場合のみ結果に追加
     if (isCancellationFee) {
       const member = members.find(m => m.member_id === attendance.member_id);
+
+      // Bタイプイベントの場合、selected_optionから金額を取得
+      let amount = event.fee_amount || 0;
+      if (event.attendance_type === 'B' && event.participation_options && attendance.selected_option) {
+        try {
+          const options = typeof event.participation_options === 'string'
+            ? JSON.parse(event.participation_options)
+            : event.participation_options;
+          const selectedOpt = options.find(opt => opt.label === attendance.selected_option);
+          if (selectedOpt && selectedOpt.amount !== undefined) {
+            amount = selectedOpt.amount;
+          }
+        } catch (e) {
+          // パースエラーの場合はfee_amountを使用
+        }
+      }
+
       result.push({
         payment_id: '',  // 支払い情報なし
         member_id: attendance.member_id,
         member_name: member ? member.name : '',
         affiliation: member ? member.affiliation : '',
         payment_method: '',
-        amount: event.fee_amount || 0,  // イベントの参加費をキャンセル料として設定
+        amount: amount,
         paid: false,
         paid_at: '',
         receipt_issued: false,
