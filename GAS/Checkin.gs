@@ -61,11 +61,16 @@ function checkin(token, params) {
   // 支払い方法を確認
   const payment = findPayment(eventId, memberId);
 
+  // イベントに登録料がある場合、支払い確認が必要
+  const hasFee = event.fee_amount && event.fee_amount > 0;
+
   return {
     success: true,
     member_name: member.name,
-    payment_method: payment ? payment.payment_method : '',
+    payment_method: payment ? payment.payment_method : (hasFee ? '現地払い' : ''),
     paid: payment ? payment.paid : false,
+    has_fee: hasFee,
+    fee_amount: event.fee_amount || 0,
     message: 'チェックインが完了しました'
   };
 }
@@ -82,24 +87,47 @@ function checkinWithPayment(token, params) {
   const memberId = params.member_id;
   const paymentConfirmed = params.payment_confirmed === 'true' || params.payment_confirmed === true;
 
-  // まずチェックイン
+  // イベント情報を取得
+  const event = findRow('events', 'event_id', eventId);
+  if (!event) {
+    return {success: false, error: 'イベントが見つかりません'};
+  }
+
+  // まずチェックイン（既にチェックイン済みの場合はスキップ）
   const checkinResult = checkin(token, {event_id: eventId, member_id: memberId});
 
   if (!checkinResult.success && checkinResult.error !== 'このメンバーは既にチェックイン済みです') {
     return checkinResult;
   }
 
-  // 支払い確認
-  if (paymentConfirmed) {
-    const payment = findPayment(eventId, memberId);
+  // 支払い情報を取得または作成
+  let payment = findPayment(eventId, memberId);
 
-    if (payment) {
-      updateRow('payments', payment.rowIndex, {
-        paid: true,
-        paid_at: new Date(),
-        paid_by_admin: true
-      });
-    }
+  if (!payment && event.fee_amount && event.fee_amount > 0) {
+    // 支払い情報がない場合、新規作成
+    const paymentSheet = getSheet('payments');
+    const paymentId = generateUniqueId('PAY', paymentSheet);
+
+    addRow('payments', {
+      payment_id: paymentId,
+      event_id: eventId,
+      member_id: memberId,
+      payment_method: '現地払い',
+      amount: event.fee_amount,
+      paid: paymentConfirmed,
+      paid_at: paymentConfirmed ? new Date() : '',
+      paid_by_admin: paymentConfirmed,
+      receipt_issued: false,
+      receipt_number: '',
+      notes: ''
+    });
+  } else if (payment) {
+    // 支払い情報が既にある場合、支払い状態を更新
+    updateRow('payments', payment.rowIndex, {
+      paid: paymentConfirmed,
+      paid_at: paymentConfirmed ? new Date() : '',
+      paid_by_admin: paymentConfirmed
+    });
   }
 
   return {

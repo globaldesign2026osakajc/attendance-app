@@ -463,23 +463,26 @@
           <!-- 支払い確認UI -->
           <div id="paymentConfirmation" class="payment-confirmation">
             <div class="payment-confirmation-title">支払い状況の確認</div>
-            <p style="margin: 0 0 1rem 0; color: var(--warning-color);">
-              <span id="paymentMemberName"></span>さんの支払い状況を選択してください。
+            <p style="margin: 0 0 0.5rem 0; color: var(--text-color); font-weight: 600;">
+              <span id="paymentMemberName"></span>さん
+            </p>
+            <p style="margin: 0 0 1rem 0; color: var(--text-color); font-size: 1.25rem; font-weight: bold;">
+              参加費: <span id="paymentAmount"></span>
             </p>
             <div style="margin-bottom: 1rem;">
-              <div style="display: flex; gap: 1rem;">
-                <label style="display: flex; align-items: center; cursor: pointer;">
+              <div style="display: flex; gap: 1rem; justify-content: center;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.75rem 1.5rem; border: 2px solid var(--border-color); border-radius: 8px; background: white;">
                   <input type="radio" name="paymentStatus" value="paid" style="margin-right: 0.5rem;">
-                  支払い済み
+                  <span style="font-weight: 600;">支払い済み</span>
                 </label>
-                <label style="display: flex; align-items: center; cursor: pointer;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.75rem 1.5rem; border: 2px solid var(--border-color); border-radius: 8px; background: white;">
                   <input type="radio" name="paymentStatus" value="unpaid" checked style="margin-right: 0.5rem;">
-                  未払い
+                  <span style="font-weight: 600;">未払い</span>
                 </label>
               </div>
             </div>
-            <button id="confirmPaymentBtn" class="btn btn-warning btn-lg" style="margin-top: 1rem; width: 100%;">
-              チェックインを完了
+            <button id="confirmPaymentBtn" class="btn btn-primary btn-lg" style="margin-top: 1rem; width: 100%;">
+              確定
             </button>
           </div>
 
@@ -948,11 +951,11 @@
         });
 
         if (result.success) {
-          showToast(`${result.member_name}さん チェックイン完了`, 'success');
-
           // 登録料がある場合、支払い確認UIを表示
-          if (result.payment_method && !result.paid) {
-            showPaymentConfirmation(memberId, result.member_name);
+          if (result.has_fee) {
+            showPaymentConfirmation(memberId, result.member_name, result.fee_amount, result.paid);
+          } else {
+            showToast(`${result.member_name}さん チェックイン完了`, 'success');
           }
 
           // チェックイン一覧を再読み込み
@@ -974,11 +977,21 @@
     }
 
     // 支払い確認UI表示
-    function showPaymentConfirmation(memberId, memberName) {
+    function showPaymentConfirmation(memberId, memberName, feeAmount, currentPaidStatus) {
       pendingPaymentMemberId = memberId;
       document.getElementById('paymentMemberName').textContent = memberName;
-      // デフォルトは未払いを選択
-      document.querySelector('input[name="paymentStatus"][value="unpaid"]').checked = true;
+
+      // 金額を表示
+      const formattedAmount = '¥' + Number(feeAmount).toLocaleString('ja-JP');
+      document.getElementById('paymentAmount').textContent = formattedAmount;
+
+      // 既存の支払い状態に基づいてデフォルト選択
+      if (currentPaidStatus) {
+        document.querySelector('input[name="paymentStatus"][value="paid"]').checked = true;
+      } else {
+        document.querySelector('input[name="paymentStatus"][value="unpaid"]').checked = true;
+      }
+
       document.getElementById('paymentConfirmation').classList.add('show');
     }
 
