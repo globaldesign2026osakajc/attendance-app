@@ -277,3 +277,34 @@ function getPaymentsByEvent(token, eventId) {
     payments: result
   };
 }
+
+/**
+ * 支払い方法を更新（管理者のみ）
+ */
+function updatePaymentMethod(token, params) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const paymentId = params.payment_id;
+  const paymentMethod = params.payment_method;
+
+  if (!paymentId || !paymentMethod) {
+    return {success: false, error: '必須項目が不足しています'};
+  }
+
+  const payment = findRow('payments', 'payment_id', paymentId);
+
+  if (!payment) {
+    return {success: false, error: '支払い情報が見つかりません'};
+  }
+
+  updateRow('payments', payment.rowIndex, {
+    payment_method: paymentMethod
+  });
+
+  return {
+    success: true,
+    message: '支払い方法を更新しました'
+  };
+}

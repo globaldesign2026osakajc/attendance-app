@@ -148,6 +148,9 @@ function handleRequest(e) {
       case 'unpaidPayment':
         result = unpaidPayment(token, params);
         break;
+      case 'updatePaymentMethod':
+        result = updatePaymentMethod(token, params);
+        break;
       case 'getUnpaidList':
         result = getUnpaidList(token);
         break;

@@ -109,6 +109,62 @@
     .empty-state-subtext {
       font-size: 0.875rem;
     }
+
+    /* モーダルスタイル */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-content h3 {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      color: var(--primary-color);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
   </style>
 </head>
 <body>
@@ -257,6 +313,36 @@
     </main>
   </div>
 
+  <!-- 支払い方法編集モーダル -->
+  <div id="paymentMethodModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>支払い方法を編集</h3>
+      <div class="form-group">
+        <label>メンバー名</label>
+        <input type="text" id="modalMemberName" readonly style="background-color: #f5f5f5;">
+      </div>
+      <div class="form-group">
+        <label>金額</label>
+        <input type="text" id="modalAmount" readonly style="background-color: #f5f5f5;">
+      </div>
+      <div class="form-group">
+        <label>支払い方法 <span style="color: red;">*</span></label>
+        <select id="modalPaymentMethod" class="form-control">
+          <option value="">選択してください</option>
+          <option value="現地払い">現地払い</option>
+          <option value="銀行振込">銀行振込</option>
+          <option value="クレジットカード">クレジットカード</option>
+          <option value="電子マネー">電子マネー</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+      <div class="action-buttons" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn btn-outline" onclick="closePaymentMethodModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="savePaymentMethod()">保存</button>
+      </div>
+    </div>
+  </div>
+
   <!-- スクリプト -->
   <script src="../js/config.js"></script>
   <script src="../js/api.js"></script>
@@ -297,10 +383,18 @@
         const result = await API.call('getEvents', {});
 
         if (result.success && result.events) {
-          // 登録料があるイベントのみフィルター
+          // 登録料があるイベントのみフィルター（AタイプまたはBタイプ）
           allEvents = result.events.filter(e => {
-            // fee_amountが存在し、0より大きい、またはdateが存在するイベント
-            return e.fee_amount && e.fee_amount > 0 && e.date;
+            // dateが存在し、かつ以下のいずれかに該当
+            // 1. Aタイプ: fee_amountが0より大きい
+            // 2. Bタイプ: participation_optionsが存在する
+            if (!e.date) return false;
+
+            const hasFeeAmount = e.fee_amount && e.fee_amount > 0;
+            const hasParticipationOptions = e.participation_options &&
+              (typeof e.participation_options === 'string' ? e.participation_options.length > 0 : true);
+
+            return hasFeeAmount || hasParticipationOptions;
           });
 
           console.log('All events with fee:', allEvents); // デバッグ用
@@ -611,7 +705,14 @@
             <td>${Utils.escapeHtml(attendanceStatusText)}</td>
             <td>${checkedInText}</td>
             <td>${Utils.formatCurrency(payment.amount)}</td>
-            <td>${Utils.escapeHtml(payment.payment_method || '-')}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>${Utils.escapeHtml(payment.payment_method || '-')}</span>
+                <button class="btn btn-outline btn-sm" onclick="editPaymentMethod('${payment.payment_id}', '${payment.member_id}', '${Utils.escapeHtml(payment.payment_method || '')}', ${payment.amount})" title="支払い方法を編集">
+                  ✏️
+                </button>
+              </div>
+            </td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
             <td>${paidAtText}</td>
             <td>
@@ -723,6 +824,112 @@
       } finally {
         Utils.hideLoading();
       }
+    }
+
+    // 支払い方法編集（モーダル表示）
+    let editingPayment = null;
+
+    function editPaymentMethod(paymentId, memberId, currentMethod, amount) {
+      const eventId = document.getElementById('eventSelect').value;
+
+      // 編集中の支払い情報を保存
+      editingPayment = {
+        payment_id: paymentId,
+        member_id: memberId,
+        event_id: eventId,
+        amount: amount
+      };
+
+      // メンバー名を取得
+      const payment = allPayments.find(p => p.member_id === memberId);
+      const memberName = payment ? payment.member_name : '';
+
+      // モーダルに値を設定
+      document.getElementById('modalMemberName').value = memberName;
+      document.getElementById('modalAmount').value = Utils.formatCurrency(amount);
+      document.getElementById('modalPaymentMethod').value = currentMethod || '';
+
+      // モーダルを表示
+      document.getElementById('paymentMethodModal').style.display = 'flex';
+    }
+    window.editPaymentMethod = editPaymentMethod;
+
+    // モーダルを閉じる
+    function closePaymentMethodModal() {
+      document.getElementById('paymentMethodModal').style.display = 'none';
+      editingPayment = null;
+    }
+    window.closePaymentMethodModal = closePaymentMethodModal;
+
+    // 支払い方法を保存
+    async function savePaymentMethod() {
+      const paymentMethod = document.getElementById('modalPaymentMethod').value;
+
+      if (!paymentMethod) {
+        Utils.showError('支払い方法を選択してください');
+        return;
+      }
+
+      if (!editingPayment) {
+        Utils.showError('編集情報が見つかりません');
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        // payment_idがない場合は新規作成、ある場合は更新
+        if (!editingPayment.payment_id) {
+          // 新規作成: checkinWithPaymentを使用
+          const result = await API.call('checkinWithPayment', {
+            event_id: editingPayment.event_id,
+            member_id: editingPayment.member_id,
+            payment_confirmed: false
+          });
+
+          if (!result.success) {
+            throw new Error(result.message || '支払い情報の作成に失敗しました');
+          }
+
+          // 作成後、支払い方法を更新する必要があるため、再度取得
+          await loadPayments(editingPayment.event_id);
+
+          // 新しく作成されたpayment_idを取得
+          const updatedPayment = allPayments.find(p => p.member_id === editingPayment.member_id);
+          if (updatedPayment && updatedPayment.payment_id) {
+            // 支払い方法を更新
+            await updatePaymentMethod(updatedPayment.payment_id, paymentMethod);
+          }
+        } else {
+          // 更新
+          await updatePaymentMethod(editingPayment.payment_id, paymentMethod);
+        }
+
+        Utils.showSuccess('支払い方法を更新しました');
+        await loadPayments(editingPayment.event_id);
+        closePaymentMethodModal();
+
+      } catch (error) {
+        console.error('Save payment method error:', error);
+        Utils.showError(error.message || '支払い方法の更新に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.savePaymentMethod = savePaymentMethod;
+
+    // 支払い方法を更新（ヘルパー関数）
+    async function updatePaymentMethod(paymentId, paymentMethod) {
+      const result = await API.call('updatePaymentMethod', {
+        payment_id: paymentId,
+        payment_method: paymentMethod
+      });
+
+      if (!result.success) {
+        throw new Error(result.message || '支払い方法の更新に失敗しました');
+      }
+
+      return result;
     }
 
     // イベントリスナー設定
