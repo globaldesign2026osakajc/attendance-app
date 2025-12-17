@@ -539,6 +539,7 @@
 
     // ページ読み込み時の処理
     window.addEventListener('DOMContentLoaded', async () => {
+      console.log('DOMContentLoaded - payments.html');
       // 管理者権限チェック
       Auth.requireAdmin();
 
@@ -616,11 +617,14 @@
 
     // すべてのデータを読み込み
     async function loadAllData() {
+      console.log('loadAllData called');
       Utils.showLoading();
 
       try {
         // イベントリスト取得
+        console.log('Calling loadEventsList...');
         await loadEventsList();
+        console.log('loadEventsList completed');
 
         // 各タブのデータを読み込み
         await loadUnpaidData();
