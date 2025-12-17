@@ -196,9 +196,15 @@
         <div class="filter-section">
           <div class="filter-row">
             <div class="form-group">
+              <label for="monthSelect" class="form-label required">年月を選択</label>
+              <select id="monthSelect" class="form-input" required>
+                <option value="">年月を選択してください</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label for="eventSelect" class="form-label required">イベント選択</label>
-              <select id="eventSelect" class="form-input" required>
-                <option value="">イベントを選択してください</option>
+              <select id="eventSelect" class="form-input" required disabled>
+                <option value="">まず年月を選択してください</option>
               </select>
             </div>
             <div class="form-group">
@@ -259,6 +265,7 @@
     // グローバル変数
     let allPayments = [];
     let allMembers = [];
+    let allEvents = [];
     let currentEvent = null;
 
     // ページ読み込み時の処理
@@ -272,8 +279,9 @@
         document.getElementById('userName').textContent = userInfo.name || '管理者';
       }
 
-      // イベントリスト読み込み
+      // イベントリストとメンバーリスト読み込み
       await loadEvents();
+      await loadMembers();
 
       // イベントリスナー設定
       setupEventListeners();
@@ -287,25 +295,18 @@
         const result = await API.call('getEvents', {});
 
         if (result.success && result.events) {
-          const select = document.getElementById('eventSelect');
-          select.innerHTML = '<option value="">イベントを選択してください</option>';
-
-          // 登録料があるイベントのみ表示
-          const eventsWithFee = result.events.filter(e => e.fee_amount && e.fee_amount > 0);
+          // 登録料があるイベントのみフィルター
+          allEvents = result.events.filter(e => e.fee_amount && e.fee_amount > 0);
 
           // 日付でソート（降順）
-          eventsWithFee.sort((a, b) => {
+          allEvents.sort((a, b) => {
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
             return dateB - dateA;
           });
 
-          eventsWithFee.forEach(event => {
-            const option = document.createElement('option');
-            option.value = event.event_id;
-            option.textContent = `${event.title} (${event.date})`;
-            select.appendChild(option);
-          });
+          // 月セレクタを初期化
+          populateMonthSelector();
         }
 
       } catch (error) {
@@ -314,6 +315,72 @@
       } finally {
         Utils.hideLoading();
       }
+    }
+
+    // 月セレクタを生成
+    function populateMonthSelector() {
+      const monthSelect = document.getElementById('monthSelect');
+      monthSelect.innerHTML = '<option value="">年月を選択してください</option>';
+
+      // イベントから年月を抽出（重複なし）
+      const yearMonths = new Set();
+      allEvents.forEach(event => {
+        const date = new Date(event.date);
+        const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        yearMonths.add(yearMonth);
+      });
+
+      // ソート（降順）
+      const sortedYearMonths = Array.from(yearMonths).sort().reverse();
+
+      sortedYearMonths.forEach(yearMonth => {
+        const [year, month] = yearMonth.split('-');
+        const option = document.createElement('option');
+        option.value = yearMonth;
+        option.textContent = `${year}年${parseInt(month)}月`;
+        monthSelect.appendChild(option);
+      });
+
+      // 現在の月をデフォルト選択
+      const now = new Date();
+      const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      if (sortedYearMonths.includes(currentYearMonth)) {
+        monthSelect.value = currentYearMonth;
+        filterEventsByMonth(currentYearMonth);
+      }
+    }
+
+    // 月で絞り込んでイベントセレクタを更新
+    function filterEventsByMonth(yearMonth) {
+      const eventSelect = document.getElementById('eventSelect');
+      eventSelect.innerHTML = '<option value="">イベントを選択してください</option>';
+
+      if (!yearMonth) {
+        eventSelect.disabled = true;
+        eventSelect.innerHTML = '<option value="">まず年月を選択してください</option>';
+        return;
+      }
+
+      // 選択された月のイベントをフィルター
+      const filteredEvents = allEvents.filter(event => {
+        const date = new Date(event.date);
+        const eventYearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        return eventYearMonth === yearMonth;
+      });
+
+      if (filteredEvents.length === 0) {
+        eventSelect.disabled = true;
+        eventSelect.innerHTML = '<option value="">この月にはイベントがありません</option>';
+        return;
+      }
+
+      eventSelect.disabled = false;
+      filteredEvents.forEach(event => {
+        const option = document.createElement('option');
+        option.value = event.event_id;
+        option.textContent = `${event.title} (${event.date})`;
+        eventSelect.appendChild(option);
+      });
     }
 
     // メンバーリスト読み込み
@@ -345,15 +412,57 @@
           await loadMembers();
         }
 
-        const result = await API.call('getPaymentsByEvent', {
+        // 出席登録情報を取得
+        const attendanceResult = await API.call('getEventAttendance', {
           event_id: eventId
         });
 
-        if (result.success) {
-          allPayments = result.payments || [];
+        // 支払い情報を取得
+        const paymentResult = await API.call('getPaymentsByEvent', {
+          event_id: eventId
+        });
+
+        // イベント詳細を取得（登録料の金額を取得）
+        const eventDetail = allEvents.find(e => e.event_id === eventId);
+        const feeAmount = eventDetail ? eventDetail.fee_amount : 0;
+
+        if (attendanceResult.success && paymentResult.success) {
+          const attendances = attendanceResult.attendance || [];
+          const payments = paymentResult.payments || [];
+
+          // 出席予定者（出席または公欠）のメンバーIDを取得
+          const attendingMemberIds = attendances
+            .filter(a => a.status === '出席' || a.status === '公欠')
+            .map(a => a.member_id);
+
+          // すべてのメンバーを表示（出席予定者のみ）
+          allPayments = allMembers
+            .filter(member => attendingMemberIds.includes(member.member_id))
+            .map(member => {
+              // 該当メンバーの支払い情報を探す
+              const payment = payments.find(p => p.member_id === member.member_id);
+
+              return {
+                payment_id: payment ? payment.payment_id : '',
+                member_id: member.member_id,
+                member_name: member.name,
+                affiliation: member.affiliation,
+                payment_method: payment ? payment.payment_method : '-',
+                amount: payment ? payment.amount : feeAmount,
+                paid: payment ? payment.paid : false,
+                paid_at: payment ? payment.paid_at : '',
+                notes: payment ? payment.notes : ''
+              };
+            });
+
+          // メンバーID順にソート
+          allPayments.sort((a, b) => {
+            return a.member_id.localeCompare(b.member_id);
+          });
+
           renderTable();
         } else {
-          throw new Error(result.message || '支払い情報の取得に失敗しました');
+          throw new Error('支払い情報の取得に失敗しました');
         }
 
       } catch (error) {
@@ -411,7 +520,7 @@
             <td>
               <div class="action-buttons">
                 ${!payment.paid ? `
-                  <button class="btn btn-primary btn-sm" onclick="confirmPayment('${payment.payment_id}')">
+                  <button class="btn btn-primary btn-sm" onclick="confirmPayment('${payment.payment_id}', '${payment.member_id}')">
                     支払い確認
                   </button>
                 ` : `
@@ -443,7 +552,7 @@
     }
 
     // 支払い確認
-    async function confirmPayment(paymentId) {
+    async function confirmPayment(paymentId, memberId) {
       if (!confirm('この支払いを確認済みにしますか?')) {
         return;
       }
@@ -451,17 +560,34 @@
       Utils.showLoading();
 
       try {
-        const result = await API.call('confirmPayment', {
-          payment_id: paymentId
-        });
-
-        if (result.success) {
-          Utils.showSuccess('支払いを確認しました');
-          // データを再読み込み
+        // payment_idがない場合は、チェックイン時の支払い確認APIを使用
+        if (!paymentId) {
           const eventId = document.getElementById('eventSelect').value;
-          await loadPayments(eventId);
+          const result = await API.call('checkinWithPayment', {
+            event_id: eventId,
+            member_id: memberId,
+            payment_confirmed: true
+          });
+
+          if (result.success) {
+            Utils.showSuccess('支払いを確認しました');
+            await loadPayments(eventId);
+          } else {
+            throw new Error(result.message || '支払い確認に失敗しました');
+          }
         } else {
-          throw new Error(result.message || '支払い確認に失敗しました');
+          // payment_idがある場合は通常の確認API
+          const result = await API.call('confirmPayment', {
+            payment_id: paymentId
+          });
+
+          if (result.success) {
+            Utils.showSuccess('支払いを確認しました');
+            const eventId = document.getElementById('eventSelect').value;
+            await loadPayments(eventId);
+          } else {
+            throw new Error(result.message || '支払い確認に失敗しました');
+          }
         }
 
       } catch (error) {
@@ -514,6 +640,14 @@
       // モバイルメニュートグル
       document.getElementById('mobileToggle').addEventListener('click', () => {
         document.getElementById('adminSidebar').classList.toggle('mobile-open');
+      });
+
+      // 月選択
+      document.getElementById('monthSelect').addEventListener('change', (e) => {
+        filterEventsByMonth(e.target.value);
+        // イベント選択をリセット
+        document.getElementById('eventSelect').value = '';
+        renderEmptyState('イベントを選択してください', 'イベントを選択すると支払い情報が表示されます');
       });
 
       // イベント選択
