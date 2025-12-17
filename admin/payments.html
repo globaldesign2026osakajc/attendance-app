@@ -642,8 +642,14 @@
     async function loadEventsList() {
       try {
         const result = await API.call('getEvents', {});
+        console.log('getEvents result:', result);
+
         if (result.success && result.events) {
           eventsList = result.events;
+          console.log('Events loaded:', eventsList.length, 'events');
+          if (eventsList.length > 0) {
+            console.log('First event:', eventsList[0]);
+          }
 
           // フィルター用のイベント選択肢を設定
           const eventSelects = [
@@ -660,9 +666,13 @@
               const option = document.createElement('option');
               option.value = event.event_id;
               option.textContent = event.title;
+              console.log('Adding event option:', event.event_id, event.title);
               select.appendChild(option);
             });
           });
+          console.log('Event options added to selects');
+        } else {
+          console.warn('No events returned or request failed:', result);
         }
       } catch (error) {
         console.error('Load events error:', error);
