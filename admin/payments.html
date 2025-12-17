@@ -432,6 +432,34 @@
       }
     }
 
+    // Bタイプイベントの金額を取得（participation_optionsから）
+    function getAmountForTypeB(eventDetail, selectedOption) {
+      // participation_optionsがない、またはselected_optionがない場合はfee_amountを返す
+      if (!eventDetail.participation_options || !selectedOption) {
+        return eventDetail.fee_amount || 0;
+      }
+
+      try {
+        // participation_optionsをパース（文字列の場合）
+        const options = typeof eventDetail.participation_options === 'string'
+          ? JSON.parse(eventDetail.participation_options)
+          : eventDetail.participation_options;
+
+        // selected_optionに一致するoptionを探す
+        const matchedOption = options.find(opt => opt.label === selectedOption);
+
+        if (matchedOption && matchedOption.amount !== undefined) {
+          return matchedOption.amount;
+        }
+
+        // 一致するオプションが見つからない場合はfee_amountを返す
+        return eventDetail.fee_amount || 0;
+      } catch (error) {
+        console.error('Error parsing participation_options:', error);
+        return eventDetail.fee_amount || 0;
+      }
+    }
+
     // イベント別支払い情報読み込み
     async function loadPayments(eventId) {
       if (!eventId) {
@@ -465,6 +493,7 @@
         // イベント詳細を取得（登録料の金額を取得）
         const eventDetail = allEvents.find(e => e.event_id === eventId);
         const feeAmount = eventDetail ? eventDetail.fee_amount : 0;
+        const isTypeB = eventDetail && eventDetail.attendance_type === 'B';
 
         if (attendanceResult.success && paymentResult.success && checkinResult.success) {
           const attendances = attendanceResult.attendance || [];
@@ -487,6 +516,19 @@
               // 該当メンバーのチェックイン情報を探す
               const checkin = checkins.find(c => c.member_id === member.member_id);
 
+              // 金額を計算（Bタイプの場合はselected_optionから、Aタイプはfee_amount）
+              let amount;
+              if (payment) {
+                // 支払い情報が既にある場合はその金額を使用
+                amount = payment.amount;
+              } else if (isTypeB && attendance && attendance.selected_option) {
+                // Bタイプで、出席登録情報からselected_optionを取得
+                amount = getAmountForTypeB(eventDetail, attendance.selected_option);
+              } else {
+                // Aタイプまたはselected_optionがない場合はfee_amountを使用
+                amount = feeAmount;
+              }
+
               return {
                 payment_id: payment ? payment.payment_id : '',
                 member_id: member.member_id,
@@ -495,7 +537,7 @@
                 attendance_status: attendance ? attendance.status : '-',
                 checked_in: checkin ? true : false,
                 payment_method: payment ? payment.payment_method : '-',
-                amount: payment ? payment.amount : feeAmount,
+                amount: amount,
                 paid: payment ? payment.paid : false,
                 paid_at: payment ? payment.paid_at : '',
                 notes: payment ? payment.notes : ''
