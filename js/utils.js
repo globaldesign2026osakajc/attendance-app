@@ -81,6 +81,14 @@ const Utils = {
   },
 
   /**
+   * 数値をカンマ区切りでフォーマット（1,000）
+   */
+  formatNumber(number) {
+    if (number === undefined || number === null) return '0';
+    return Number(number).toLocaleString('ja-JP');
+  },
+
+  /**
    * 締切までの残り日数を計算
    */
   getDaysUntil(date) {
