@@ -258,6 +258,34 @@ function getPaymentsByEvent(token, eventId) {
   // チェックイン情報を取得
   const checkins = getSheetData('checkin');
 
+  // キャンセル料判定のヘルパー関数
+  function checkCancellationFee(attendance, checkin) {
+    if (!event || !event.cancellation_fee_date || !attendance) {
+      return false;
+    }
+
+    const cancellationFeeDate = new Date(event.cancellation_fee_date);
+    const registeredAt = new Date(attendance.registered_at);
+
+    // ケース1: キャンセル料発生日以降に「不参加」に変更した場合
+    if (attendance.status === '不参加' && registeredAt >= cancellationFeeDate) {
+      return true;
+    }
+
+    // ケース2: 「出席」と登録したのに実際には来なかった場合（チェックインしていない）
+    // イベント日が過ぎている、かつ出席登録していたのにチェックインしていない
+    if (attendance.status === '出席' && !checkin) {
+      const eventDate = new Date(event.date);
+      const today = new Date();
+      // イベント日を過ぎている場合のみ判定
+      if (today > eventDate) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   // メンバー情報とキャンセル料情報を結合
   const result = eventPayments.map(payment => {
     const member = members.find(m => m.member_id === payment.member_id);
@@ -265,27 +293,7 @@ function getPaymentsByEvent(token, eventId) {
     const checkin = checkins.find(c => c.event_id === eventId && c.member_id === payment.member_id);
 
     // キャンセル料が発生しているかチェック
-    let isCancellationFee = false;
-    if (event && event.cancellation_fee_date && attendance) {
-      const cancellationFeeDate = new Date(event.cancellation_fee_date);
-      const registeredAt = new Date(attendance.registered_at);
-
-      // ケース1: キャンセル料発生日以降に「不参加」に変更した場合
-      if (attendance.status === '不参加' && registeredAt >= cancellationFeeDate) {
-        isCancellationFee = true;
-      }
-
-      // ケース2: 「出席」と登録したのに実際には来なかった場合（チェックインしていない）
-      // イベント日が過ぎている、かつ出席登録していたのにチェックインしていない
-      if (attendance.status === '出席' && !checkin) {
-        const eventDate = new Date(event.date);
-        const today = new Date();
-        // イベント日を過ぎている場合のみ判定
-        if (today > eventDate) {
-          isCancellationFee = true;
-        }
-      }
-    }
+    const isCancellationFee = checkCancellationFee(attendance, checkin);
 
     return {
       payment_id: payment.payment_id,
@@ -301,6 +309,38 @@ function getPaymentsByEvent(token, eventId) {
       notes: payment.notes,
       is_cancellation_fee: isCancellationFee
     };
+  });
+
+  // 支払い情報が存在しない出席登録者もチェック（キャンセル料対象の可能性）
+  const eventAttendances = attendances.filter(a => a.event_id === eventId);
+  eventAttendances.forEach(attendance => {
+    // 既に支払い情報がある場合はスキップ
+    const existingPayment = result.find(r => r.member_id === attendance.member_id);
+    if (existingPayment) {
+      return;
+    }
+
+    const checkin = checkins.find(c => c.event_id === eventId && c.member_id === attendance.member_id);
+    const isCancellationFee = checkCancellationFee(attendance, checkin);
+
+    // キャンセル料対象の場合のみ結果に追加
+    if (isCancellationFee) {
+      const member = members.find(m => m.member_id === attendance.member_id);
+      result.push({
+        payment_id: '',  // 支払い情報なし
+        member_id: attendance.member_id,
+        member_name: member ? member.name : '',
+        affiliation: member ? member.affiliation : '',
+        payment_method: '',
+        amount: event.fee_amount || 0,  // イベントの参加費をキャンセル料として設定
+        paid: false,
+        paid_at: '',
+        receipt_issued: false,
+        receipt_number: '',
+        notes: '',
+        is_cancellation_fee: true
+      });
+    }
   });
 
   // メンバー名でソート
