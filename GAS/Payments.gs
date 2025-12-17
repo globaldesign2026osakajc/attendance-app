@@ -37,6 +37,38 @@ function confirmPayment(token, params) {
 }
 
 /**
+ * 支払いを未払いに戻す（管理者のみ）
+ */
+function unpaidPayment(token, params) {
+  if (!isAdmin(token)) {
+    return {success: false, error: '管理者権限が必要です'};
+  }
+
+  const paymentId = params.payment_id;
+
+  if (!paymentId) {
+    return {success: false, error: '支払いIDが必要です'};
+  }
+
+  const payment = findRow('payments', 'payment_id', paymentId);
+
+  if (!payment) {
+    return {success: false, error: '支払い情報が見つかりません'};
+  }
+
+  updateRow('payments', payment.rowIndex, {
+    paid: false,
+    paid_at: '',
+    paid_by_admin: false
+  });
+
+  return {
+    success: true,
+    message: '未払いに戻しました'
+  };
+}
+
+/**
  * 未払い一覧取得（管理者のみ）
  */
 function getUnpaidList(token) {

@@ -441,11 +441,12 @@
                     <th>支払い日時</th>
                     <th>確認者</th>
                     <th>備考</th>
+                    <th>アクション</th>
                   </tr>
                 </thead>
                 <tbody id="paidTableBody">
                   <tr>
-                    <td colspan="7">
+                    <td colspan="8">
                       <div class="empty-state">
                         <div class="empty-state-icon">✅</div>
                         <div class="empty-state-text">支払い済みの記録はありません</div>
@@ -841,13 +842,9 @@
             ${Utils.escapeHtml(payment.notes || '-')}
           </td>
           <td>
-            ${payment.payment_method === '銀行振込' ? `
-              <button class="btn btn-sm btn-confirm" onclick="confirmPayment('${payment.payment_id}')">
-                振込確認
-              </button>
-            ` : `
-              <span style="color: var(--text-secondary); font-size: 0.875rem;">受付時に確認</span>
-            `}
+            <button class="btn btn-sm btn-confirm" onclick="confirmPayment('${payment.payment_id}')">
+              支払い確認
+            </button>
           </td>
         </tr>
       `).join('');
@@ -886,6 +883,11 @@
           <td>${payment.paid_by_admin ? '管理者確認' : 'QRチェックイン'}</td>
           <td class="notes-cell" title="${Utils.escapeHtml(payment.notes || '')}">
             ${Utils.escapeHtml(payment.notes || '-')}
+          </td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="unpaidPayment('${payment.payment_id}')">
+              未払いに戻す
+            </button>
           </td>
         </tr>
       `).join('');
@@ -982,6 +984,36 @@
         Utils.hideLoading();
       }
     }
+
+    // 未払いに戻す
+    async function unpaidPayment(paymentId) {
+      if (!confirm('この支払いを未払いに戻しますか？')) {
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('unpaidPayment', {
+          payment_id: paymentId
+        });
+
+        if (result.success) {
+          Utils.showSuccess('未払いに戻しました');
+          // データを再読み込み
+          await loadAllData();
+        } else {
+          throw new Error(result.message || '未払いへの変更に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('Unpaid payment error:', error);
+        Utils.showError(error.message || '未払いへの変更に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+    window.unpaidPayment = unpaidPayment;
 
     // キャンセル料受領確認
     async function confirmCancellationFee(paymentId) {

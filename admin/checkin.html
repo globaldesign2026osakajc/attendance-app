@@ -456,16 +456,24 @@
 
           <!-- 支払い確認UI -->
           <div id="paymentConfirmation" class="payment-confirmation">
-            <div class="payment-confirmation-title">現地払いの確認</div>
+            <div class="payment-confirmation-title">支払い状況の確認</div>
             <p style="margin: 0 0 1rem 0; color: var(--warning-color);">
-              <span id="paymentMemberName"></span>さんは現地払いです。支払いを確認してください。
+              <span id="paymentMemberName"></span>さんの支払い状況を選択してください。
             </p>
-            <div class="payment-checkbox-wrapper">
-              <input type="checkbox" id="paymentConfirmed" />
-              <label for="paymentConfirmed">支払いを確認しました</label>
+            <div style="margin-bottom: 1rem;">
+              <div style="display: flex; gap: 1rem;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                  <input type="radio" name="paymentStatus" value="paid" style="margin-right: 0.5rem;">
+                  支払い済み
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                  <input type="radio" name="paymentStatus" value="unpaid" checked style="margin-right: 0.5rem;">
+                  未払い
+                </label>
+              </div>
             </div>
             <button id="confirmPaymentBtn" class="btn btn-warning btn-lg" style="margin-top: 1rem; width: 100%;">
-              支払い確認を登録
+              チェックインを完了
             </button>
           </div>
 
@@ -794,8 +802,8 @@
         if (result.success) {
           showToast(`${result.member_name}さん チェックイン完了`, 'success');
 
-          // 現地払いの場合、支払い確認UIを表示
-          if (result.payment_method === '現地払い' && !result.paid) {
+          // 登録料がある場合、支払い確認UIを表示
+          if (result.payment_method && !result.paid) {
             showPaymentConfirmation(memberId, result.member_name);
           }
 
@@ -821,18 +829,15 @@
     function showPaymentConfirmation(memberId, memberName) {
       pendingPaymentMemberId = memberId;
       document.getElementById('paymentMemberName').textContent = memberName;
-      document.getElementById('paymentConfirmed').checked = false;
+      // デフォルトは未払いを選択
+      document.querySelector('input[name="paymentStatus"][value="unpaid"]').checked = true;
       document.getElementById('paymentConfirmation').classList.add('show');
     }
 
     // 支払い確認登録
     async function confirmPayment() {
-      const confirmed = document.getElementById('paymentConfirmed').checked;
-
-      if (!confirmed) {
-        showToast('支払い確認のチェックを入れてください', 'error');
-        return;
-      }
+      const paymentStatus = document.querySelector('input[name="paymentStatus"]:checked').value;
+      const isPaid = paymentStatus === 'paid';
 
       if (!pendingPaymentMemberId) {
         showToast('メンバーIDが見つかりません', 'error');
@@ -844,11 +849,12 @@
       try {
         const result = await API.call('checkinWithPayment', {
           event_id: currentEventId,
-          member_id: pendingPaymentMemberId
+          member_id: pendingPaymentMemberId,
+          payment_confirmed: isPaid
         });
 
         if (result.success) {
-          showToast('支払い確認を登録しました', 'success');
+          showToast(isPaid ? '支払い済みとして登録しました' : '未払いとして登録しました', 'success');
 
           // 支払い確認UIを非表示
           document.getElementById('paymentConfirmation').classList.remove('show');
