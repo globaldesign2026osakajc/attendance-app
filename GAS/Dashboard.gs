@@ -24,7 +24,7 @@ function getDashboardSummary(token) {
     today.setHours(0, 0, 0, 0);
 
     // 1. 最重要指標を計算
-    const keyMetrics = calculateKeyMetrics(events, members, attendances, payments, today);
+    const keyMetrics = calculateKeyMetrics(events, members, attendances, payments, checkins, today);
 
     // 2. アラートを生成
     const alerts = generateAlerts(events, payments, today);
@@ -63,7 +63,7 @@ function getDashboardSummary(token) {
 /**
  * 最重要指標を計算
  */
-function calculateKeyMetrics(events, members, attendances, payments, today) {
+function calculateKeyMetrics(events, members, attendances, payments, checkins, today) {
   // 未払い件数と金額
   const unpaidPayments = payments.filter(p => !p.paid);
   const unpaidCount = unpaidPayments.length;
@@ -662,5 +662,5 @@ function formatDateJapanese(dateStr) {
  */
 function getAppUrl() {
   // 本番環境のURLを設定してください
-  return 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+  return 'https://globaldesign2026osakajc.github.io/attendance-app/';
 }
