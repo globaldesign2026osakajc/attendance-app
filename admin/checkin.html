@@ -678,8 +678,12 @@
           const select = document.getElementById('manualMemberSelect');
           select.innerHTML = '<option value="">メンバーを選択...</option>';
 
-          // 名前順にソート
-          membersList.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+          // メンバーID順にソート
+          membersList.sort((a, b) => {
+            const idA = a.member_id || '';
+            const idB = b.member_id || '';
+            return idA.localeCompare(idB);
+          });
 
           membersList.forEach(member => {
             const option = document.createElement('option');
