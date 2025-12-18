@@ -778,6 +778,13 @@
     function updateAffiliationStats(checkins) {
       const container = document.getElementById('affiliationStats');
 
+      // 所属ごとの全メンバー数をカウント
+      const affiliationTotalMap = {};
+      membersList.forEach(member => {
+        const affiliation = member.affiliation || '未設定';
+        affiliationTotalMap[affiliation] = (affiliationTotalMap[affiliation] || 0) + 1;
+      });
+
       // 所属ごとに集計
       const affiliationMap = {};
 
@@ -786,6 +793,7 @@
 
         if (!affiliationMap[affiliation]) {
           affiliationMap[affiliation] = {
+            total: affiliationTotalMap[affiliation] || 0,
             expected: 0,
             checkedIn: 0
           };
@@ -795,6 +803,17 @@
 
         if (checkin.checked_in || checkin.checkin_time) {
           affiliationMap[affiliation].checkedIn++;
+        }
+      });
+
+      // チェックイン情報にない所属も追加（全メンバー数のみ）
+      Object.keys(affiliationTotalMap).forEach(affiliation => {
+        if (!affiliationMap[affiliation]) {
+          affiliationMap[affiliation] = {
+            total: affiliationTotalMap[affiliation],
+            expected: 0,
+            checkedIn: 0
+          };
         }
       });
 
@@ -812,14 +831,17 @@
       // 表示
       container.innerHTML = sortedAffiliations.map(affiliation => {
         const stats = affiliationMap[affiliation];
-        const rate = stats.expected > 0
-          ? Math.round((stats.checkedIn / stats.expected) * 100)
+        const rate = stats.total > 0
+          ? Math.round((stats.checkedIn / stats.total) * 100)
           : 0;
 
         return `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 0.5rem;">
             <div style="font-weight: 600; color: var(--text-color);">${affiliation}</div>
             <div style="display: flex; gap: 1.5rem; align-items: center;">
+              <div style="font-size: 0.875rem; color: #666;">
+                全体: <span style="font-weight: 600; color: var(--text-color);">${stats.total}</span>
+              </div>
               <div style="font-size: 0.875rem; color: #666;">
                 予定: <span style="font-weight: 600; color: var(--text-color);">${stats.expected}</span>
               </div>
