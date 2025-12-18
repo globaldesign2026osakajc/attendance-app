@@ -366,3 +366,81 @@ function deleteMember(token, memberId) {
     message: 'メンバーを削除しました'
   };
 }
+
+/**
+ * ログイン中のメンバーの登録単位別統計を取得
+ * 指定されたtagを持つイベントへの出席登録・実出席の統計を返す
+ */
+function getMyTagStats(token, params) {
+  // 認証チェック
+  const loginMember = getMemberFromToken(token);
+
+  if (!loginMember) {
+    return {success: false, error: '認証が必要です'};
+  }
+
+  const tagName = params.tag_name;
+
+  if (!tagName) {
+    return {success: false, error: 'tag_nameが必要です'};
+  }
+
+  // 全データ取得
+  const events = getSheetData('events');
+  const attendances = getSheetData('attendance');
+  const checkins = getSheetData('checkin');
+
+  // 指定されたtagを含むイベントを抽出
+  const taggedEvents = events.filter(event => {
+    if (!event.tags) return false;
+    const eventTags = event.tags.split(',').map(t => t.trim());
+    return eventTags.includes(tagName);
+  });
+
+  if (taggedEvents.length === 0) {
+    return {
+      success: true,
+      registered_count: 0,
+      attended_count: 0,
+      event_count: 0,
+      tag_name: tagName
+    };
+  }
+
+  const taggedEventIds = taggedEvents.map(e => e.event_id);
+
+  // ログイン中のメンバーの出席情報を集計
+  let registeredCount = 0;
+  let attendedCount = 0;
+
+  taggedEventIds.forEach(eventId => {
+    // 出席登録を確認
+    const attendance = attendances.find(a =>
+      a.event_id === eventId &&
+      a.member_id === loginMember.member_id &&
+      a.status === '出席'
+    );
+
+    if (attendance) {
+      registeredCount++;
+    }
+
+    // 実出席を確認
+    const checkin = checkins.find(c =>
+      c.event_id === eventId &&
+      c.member_id === loginMember.member_id
+    );
+
+    if (checkin) {
+      attendedCount++;
+    }
+  });
+
+  return {
+    success: true,
+    registered_count: registeredCount,
+    attended_count: attendedCount,
+    event_count: taggedEvents.length,
+    tag_name: tagName
+  };
+}

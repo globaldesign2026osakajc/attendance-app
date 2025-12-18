@@ -129,6 +129,9 @@ function handleRequest(e) {
       case 'deleteMember':
         result = deleteMember(token, params.member_id);
         break;
+      case 'getMyTagStats':
+        result = getMyTagStats(token, params);
+        break;
 
       // チェックイン
       case 'checkin':
