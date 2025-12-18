@@ -6,7 +6,7 @@
 
 const CONFIG = {
   // GAS Web App API URL
-  API_URL: 'https://script.google.com/macros/s/AKfycbw2lmbQTiHdGWrXQgJI-wd2-OEErxwA2yuUG-Ca8pBDpABj047jfuDEW16TOHmzGOOc/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbxltRbnhn_KYyQ8P94jkBCslIIN-t0V7RaPFKz4r4WPuSecw3MRKy5T9O-sIUMO1yt1/exec',
 
   // アプリ名
   APP_NAME: 'グローバルデザイン推進委員会 出欠管理',
