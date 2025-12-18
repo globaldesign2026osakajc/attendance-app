@@ -422,6 +422,8 @@
         <!-- チェックイン状況 -->
         <div id="checkinStatsContainer" class="checkin-stats" style="display: none;">
           <h3 class="scanner-section-title">チェックイン状況</h3>
+
+          <!-- 全体統計 -->
           <div class="checkin-stats-grid">
             <div class="checkin-stat-item">
               <div class="checkin-stat-value" id="expectedCount">0</div>
@@ -435,6 +437,12 @@
               <div class="checkin-stat-value" id="attendanceRate">0%</div>
               <div class="checkin-stat-label">出席率</div>
             </div>
+          </div>
+
+          <!-- 所属ごと統計 -->
+          <div id="affiliationStatsContainer" style="margin-top: 1.5rem;">
+            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-color);">所属ごと詳細</h4>
+            <div id="affiliationStats"></div>
           </div>
         </div>
 
@@ -761,6 +769,70 @@
       document.getElementById('expectedCount').textContent = expectedCount;
       document.getElementById('checkedInCount').textContent = checkedInCount;
       document.getElementById('attendanceRate').textContent = `${attendanceRate}%`;
+
+      // 所属ごと統計を更新
+      updateAffiliationStats(data.checkins || []);
+    }
+
+    // 所属ごと統計を更新
+    function updateAffiliationStats(checkins) {
+      const container = document.getElementById('affiliationStats');
+
+      // 所属ごとに集計
+      const affiliationMap = {};
+
+      checkins.forEach(checkin => {
+        const affiliation = checkin.affiliation || '未設定';
+
+        if (!affiliationMap[affiliation]) {
+          affiliationMap[affiliation] = {
+            expected: 0,
+            checkedIn: 0
+          };
+        }
+
+        affiliationMap[affiliation].expected++;
+
+        if (checkin.checked_in || checkin.checkin_time) {
+          affiliationMap[affiliation].checkedIn++;
+        }
+      });
+
+      // 所属が1つもない場合
+      if (Object.keys(affiliationMap).length === 0) {
+        container.innerHTML = '<p style="color: #999; text-align: center;">データがありません</p>';
+        return;
+      }
+
+      // 所属名でソート
+      const sortedAffiliations = Object.keys(affiliationMap).sort((a, b) =>
+        a.localeCompare(b, 'ja')
+      );
+
+      // 表示
+      container.innerHTML = sortedAffiliations.map(affiliation => {
+        const stats = affiliationMap[affiliation];
+        const rate = stats.expected > 0
+          ? Math.round((stats.checkedIn / stats.expected) * 100)
+          : 0;
+
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 0.5rem;">
+            <div style="font-weight: 600; color: var(--text-color);">${affiliation}</div>
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+              <div style="font-size: 0.875rem; color: #666;">
+                予定: <span style="font-weight: 600; color: var(--text-color);">${stats.expected}</span>
+              </div>
+              <div style="font-size: 0.875rem; color: #666;">
+                済: <span style="font-weight: 600; color: var(--success-color);">${stats.checkedIn}</span>
+              </div>
+              <div style="font-size: 0.875rem; font-weight: 600; min-width: 50px; text-align: right; color: ${rate >= 80 ? 'var(--success-color)' : rate >= 50 ? '#f59e0b' : '#dc2626'};">
+                ${rate}%
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     // チェックイン履歴を表示
