@@ -393,7 +393,26 @@ function getMyTagStats(token, params) {
   // 指定されたtagを含むイベントを抽出
   const taggedEvents = events.filter(event => {
     if (!event.tags) return false;
-    const eventTags = event.tags.split(',').map(t => t.trim());
+
+    // tagsがJSON配列形式の場合とカンマ区切りの場合に対応
+    let eventTags = [];
+    try {
+      if (typeof event.tags === 'string') {
+        // JSON配列形式の場合
+        if (event.tags.trim().startsWith('[')) {
+          eventTags = JSON.parse(event.tags);
+        } else {
+          // カンマ区切りの場合
+          eventTags = event.tags.split(',').map(t => t.trim());
+        }
+      } else if (Array.isArray(event.tags)) {
+        eventTags = event.tags;
+      }
+    } catch (e) {
+      // パースエラーの場合はカンマ区切りとして扱う
+      eventTags = event.tags.split(',').map(t => t.trim());
+    }
+
     return eventTags.includes(tagName);
   });
 
@@ -402,6 +421,8 @@ function getMyTagStats(token, params) {
       success: true,
       registered_count: 0,
       attended_count: 0,
+      official_absence_count: 0,
+      absent_count: 0,
       event_count: 0,
       tag_name: tagName
     };
@@ -410,19 +431,43 @@ function getMyTagStats(token, params) {
   const taggedEventIds = taggedEvents.map(e => e.event_id);
 
   // ログイン中のメンバーの出席情報を集計
-  let registeredCount = 0;
-  let attendedCount = 0;
+  let registeredCount = 0;  // 出席（Bタイプは欠席・公欠以外）
+  let attendedCount = 0;     // 実出席
+  let officialAbsenceCount = 0;  // 公欠
+  let absentCount = 0;       // 欠席
 
   taggedEventIds.forEach(eventId => {
+    const event = taggedEvents.find(e => e.event_id === eventId);
+
     // 出席登録を確認
     const attendance = attendances.find(a =>
       a.event_id === eventId &&
-      a.member_id === loginMember.member_id &&
-      a.status === '出席'
+      a.member_id === loginMember.member_id
     );
 
     if (attendance) {
-      registeredCount++;
+      const status = attendance.status;
+
+      // Aタイプの場合
+      if (!event.attendance_type || event.attendance_type === 'A') {
+        if (status === '出席') {
+          registeredCount++;
+        } else if (status === '公欠') {
+          officialAbsenceCount++;
+        } else if (status === '欠席' || status === '不参加') {
+          absentCount++;
+        }
+      } else {
+        // Bタイプの場合：欠席・公欠以外を出席としてカウント
+        if (status === '欠席' || status === '不参加') {
+          absentCount++;
+        } else if (status === '公欠') {
+          officialAbsenceCount++;
+        } else {
+          // その他のステータスは出席扱い
+          registeredCount++;
+        }
+      }
     }
 
     // 実出席を確認
@@ -440,6 +485,8 @@ function getMyTagStats(token, params) {
     success: true,
     registered_count: registeredCount,
     attended_count: attendedCount,
+    official_absence_count: officialAbsenceCount,
+    absent_count: absentCount,
     event_count: taggedEvents.length,
     tag_name: tagName
   };

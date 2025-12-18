@@ -379,86 +379,24 @@
 
         <!-- 登録単位 -->
         <div class="stats-section">
-          <h3 class="stats-section-title">📝 登録単位</h3>
-          <div class="stats-grid">
-            <div class="stat-card committee">
-              <div class="stat-card-header">
-                <div class="stat-card-icon">🏢</div>
-                <div class="stat-card-label">委員会</div>
-              </div>
-              <div class="stat-card-value" id="regCommitteeAttend">0</div>
-              <div class="stat-card-detail">
-                <span id="regCommitteeDetail">0 / 0</span>
-                <span class="stat-card-rate" id="regCommitteeRate">0%</span>
-              </div>
-            </div>
-
-            <div class="stat-card monthly-meeting">
-              <div class="stat-card-header">
-                <div class="stat-card-icon">📅</div>
-                <div class="stat-card-label">月例会</div>
-              </div>
-              <div class="stat-card-value" id="regMonthlyAttend">0</div>
-              <div class="stat-card-detail">
-                <span id="regMonthlyDetail">0 / 0</span>
-                <span class="stat-card-rate" id="regMonthlyRate">0%</span>
-              </div>
-            </div>
-
-            <div class="stat-card other">
-              <div class="stat-card-header">
-                <div class="stat-card-icon">📌</div>
-                <div class="stat-card-label">その他</div>
-              </div>
-              <div class="stat-card-value" id="regOtherAttend">0</div>
-              <div class="stat-card-detail">
-                <span id="regOtherDetail">0 / 0</span>
-                <span class="stat-card-rate" id="regOtherRate">0%</span>
-              </div>
-            </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <h3 class="stats-section-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">📝 登録単位</h3>
+            <select id="registrationTagSelect" class="filter-input" style="max-width: 300px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
+              <option value="">登録単位を選択...</option>
+            </select>
           </div>
+          <div id="registrationStatsDisplay" style="display: none;"></div>
         </div>
 
         <!-- 実出席 -->
         <div class="stats-section">
-          <h3 class="stats-section-title">✅ 実出席（チェックイン）</h3>
-          <div class="stats-grid">
-            <div class="stat-card committee">
-              <div class="stat-card-header">
-                <div class="stat-card-icon">🏢</div>
-                <div class="stat-card-label">委員会</div>
-              </div>
-              <div class="stat-card-value" id="actualCommitteeAttend">0</div>
-              <div class="stat-card-detail">
-                <span id="actualCommitteeDetail">0 / 0</span>
-                <span class="stat-card-rate" id="actualCommitteeRate">0%</span>
-              </div>
-            </div>
-
-            <div class="stat-card monthly-meeting">
-              <div class="stat-card-header">
-                <div class="stat-card-icon">📅</div>
-                <div class="stat-card-label">月例会</div>
-              </div>
-              <div class="stat-card-value" id="actualMonthlyAttend">0</div>
-              <div class="stat-card-detail">
-                <span id="actualMonthlyDetail">0 / 0</span>
-                <span class="stat-card-rate" id="actualMonthlyRate">0%</span>
-              </div>
-            </div>
-
-            <div class="stat-card other">
-              <div class="stat-card-header">
-                <div class="stat-card-icon">📌</div>
-                <div class="stat-card-label">その他</div>
-              </div>
-              <div class="stat-card-value" id="actualOtherAttend">0</div>
-              <div class="stat-card-detail">
-                <span id="actualOtherDetail">0 / 0</span>
-                <span class="stat-card-rate" id="actualOtherRate">0%</span>
-              </div>
-            </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <h3 class="stats-section-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">✅ 実出席（チェックイン）</h3>
+            <select id="checkinTagSelect" class="filter-input" style="max-width: 300px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
+              <option value="">登録単位を選択...</option>
+            </select>
           </div>
+          <div id="checkinStatsDisplay" style="display: none;"></div>
         </div>
       </div>
 
@@ -868,17 +806,131 @@
         const result = await API.call('getMasters', {});
 
         if (result.success && result.masters.tags) {
+          // 上部フィルター用
           const tagSelect = document.getElementById('filterTagStats');
+          // 登録単位セクション用
+          const registrationTagSelect = document.getElementById('registrationTagSelect');
+          // 実出席セクション用
+          const checkinTagSelect = document.getElementById('checkinTagSelect');
 
           result.masters.tags.forEach(tag => {
-            const option = document.createElement('option');
-            option.value = tag;
-            option.textContent = tag;
-            tagSelect.appendChild(option);
+            // 上部フィルター
+            const option1 = document.createElement('option');
+            option1.value = tag;
+            option1.textContent = tag;
+            tagSelect.appendChild(option1);
+
+            // 登録単位セクション
+            const option2 = document.createElement('option');
+            option2.value = tag;
+            option2.textContent = tag;
+            registrationTagSelect.appendChild(option2);
+
+            // 実出席セクション
+            const option3 = document.createElement('option');
+            option3.value = tag;
+            option3.textContent = tag;
+            checkinTagSelect.appendChild(option3);
           });
         }
       } catch (error) {
         console.error('Load tags error:', error);
+      }
+    }
+
+    // 登録単位の統計を表示
+    async function displayRegistrationStats(tagName) {
+      const container = document.getElementById('registrationStatsDisplay');
+
+      if (!tagName) {
+        container.style.display = 'none';
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getMyTagStats', {
+          tag_name: tagName
+        });
+
+        if (result.success) {
+          const registrationRate = result.event_count > 0
+            ? Math.round((result.registered_count / result.event_count) * 100)
+            : 0;
+
+          container.innerHTML = `
+            <div class="stats-grid">
+              <div class="stat-card committee">
+                <div class="stat-card-header">
+                  <div class="stat-card-icon">🏢</div>
+                  <div class="stat-card-label">${Utils.escapeHtml(tagName)}</div>
+                </div>
+                <div class="stat-card-value">${result.registered_count}</div>
+                <div class="stat-card-detail">
+                  <span>${result.registered_count} / ${result.event_count}</span>
+                  <span class="stat-card-rate">${registrationRate}%</span>
+                </div>
+              </div>
+            </div>
+          `;
+          container.style.display = 'block';
+        } else {
+          throw new Error(result.error || '統計情報の取得に失敗しました');
+        }
+      } catch (error) {
+        console.error('Load registration stats error:', error);
+        Utils.showError('統計情報の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
+    // 実出席の統計を表示
+    async function displayCheckinStats(tagName) {
+      const container = document.getElementById('checkinStatsDisplay');
+
+      if (!tagName) {
+        container.style.display = 'none';
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getMyTagStats', {
+          tag_name: tagName
+        });
+
+        if (result.success) {
+          const attendanceRate = result.event_count > 0
+            ? Math.round((result.attended_count / result.event_count) * 100)
+            : 0;
+
+          container.innerHTML = `
+            <div class="stats-grid">
+              <div class="stat-card committee">
+                <div class="stat-card-header">
+                  <div class="stat-card-icon">🏢</div>
+                  <div class="stat-card-label">${Utils.escapeHtml(tagName)}</div>
+                </div>
+                <div class="stat-card-value">${result.attended_count}</div>
+                <div class="stat-card-detail">
+                  <span>${result.attended_count} / ${result.event_count}</span>
+                  <span class="stat-card-rate">${attendanceRate}%</span>
+                </div>
+              </div>
+            </div>
+          `;
+          container.style.display = 'block';
+        } else {
+          throw new Error(result.error || '統計情報の取得に失敗しました');
+        }
+      } catch (error) {
+        console.error('Load checkin stats error:', error);
+        Utils.showError('統計情報の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
       }
     }
 
@@ -950,6 +1002,16 @@
       // タグフィルター変更
       document.getElementById('filterTagStats').addEventListener('change', async (e) => {
         await displayTagStats(e.target.value);
+      });
+
+      // 登録単位セクションのタグ選択
+      document.getElementById('registrationTagSelect').addEventListener('change', async (e) => {
+        await displayRegistrationStats(e.target.value);
+      });
+
+      // 実出席セクションのタグ選択
+      document.getElementById('checkinTagSelect').addEventListener('change', async (e) => {
+        await displayCheckinStats(e.target.value);
       });
 
       // フィルター変更
