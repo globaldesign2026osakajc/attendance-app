@@ -431,7 +431,7 @@ function getMyTagStats(token, params) {
 
   const taggedEventIds = taggedEvents.map(e => e.event_id);
 
-  // 開催済イベント数を計算（イベント日が過去のもの）
+  // 開催済イベント数を計算（イベント日が今日より前のもの）
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const completedEvents = taggedEvents.filter(e => {
@@ -440,10 +440,11 @@ function getMyTagStats(token, params) {
     return eventDate < today;
   });
   const completedEventCount = completedEvents.length;
+  const completedEventIds = completedEvents.map(e => e.event_id);
 
   // ログイン中のメンバーの出席情報を集計
   let registeredCount = 0;  // 出席（Bタイプは欠席・公欠以外）
-  let attendedCount = 0;     // 実出席
+  let attendedCount = 0;     // 実出席（開催済イベントのみ）
   let officialAbsenceCount = 0;  // 公欠
   let absentCount = 0;       // 欠席
 
@@ -481,14 +482,16 @@ function getMyTagStats(token, params) {
       }
     }
 
-    // 実出席を確認
-    const checkin = checkins.find(c =>
-      c.event_id === eventId &&
-      c.member_id === loginMember.member_id
-    );
+    // 実出席を確認（開催済イベントのみ）
+    if (completedEventIds.includes(eventId)) {
+      const checkin = checkins.find(c =>
+        c.event_id === eventId &&
+        c.member_id === loginMember.member_id
+      );
 
-    if (checkin) {
-      attendedCount++;
+      if (checkin) {
+        attendedCount++;
+      }
     }
   });
 

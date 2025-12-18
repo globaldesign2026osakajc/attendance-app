@@ -364,26 +364,27 @@
 
       <!-- 統計概要 -->
       <div class="stats-overview">
-        <!-- 登録単位 -->
-        <div class="stats-section">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-            <h3 class="stats-section-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">📝 登録単位</h3>
-            <select id="registrationTagSelect" class="filter-input" style="max-width: 300px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
-              <option value="">登録単位を選択...</option>
-            </select>
-          </div>
-          <div id="registrationStatsDisplay" style="display: none;"></div>
+        <!-- タグ選択 -->
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+          <label style="margin-right: 1rem; font-weight: 600;">登録単位を選択:</label>
+          <select id="tagSelect" class="filter-input" style="max-width: 300px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
+            <option value="">登録単位を選択...</option>
+          </select>
         </div>
 
-        <!-- 実出席 -->
-        <div class="stats-section">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-            <h3 class="stats-section-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">✅ 実出席（チェックイン）</h3>
-            <select id="checkinTagSelect" class="filter-input" style="max-width: 300px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
-              <option value="">登録単位を選択...</option>
-            </select>
+        <!-- 統計表示エリア -->
+        <div id="statsDisplay" style="display: none;">
+          <!-- 登録単位 -->
+          <div class="stats-section">
+            <h3 class="stats-section-title">📝 登録単位</h3>
+            <div id="registrationStatsDisplay"></div>
           </div>
-          <div id="checkinStatsDisplay" style="display: none;"></div>
+
+          <!-- 実出席 -->
+          <div class="stats-section">
+            <h3 class="stats-section-title">✅ 実出席（チェックイン）</h3>
+            <div id="checkinStatsDisplay"></div>
+          </div>
         </div>
       </div>
 
@@ -793,23 +794,13 @@
         const result = await API.call('getMasters', {});
 
         if (result.success && result.masters.tags) {
-          // 登録単位セクション用
-          const registrationTagSelect = document.getElementById('registrationTagSelect');
-          // 実出席セクション用
-          const checkinTagSelect = document.getElementById('checkinTagSelect');
+          const tagSelect = document.getElementById('tagSelect');
 
           result.masters.tags.forEach(tag => {
-            // 登録単位セクション
-            const option2 = document.createElement('option');
-            option2.value = tag;
-            option2.textContent = tag;
-            registrationTagSelect.appendChild(option2);
-
-            // 実出席セクション
-            const option3 = document.createElement('option');
-            option3.value = tag;
-            option3.textContent = tag;
-            checkinTagSelect.appendChild(option3);
+            const option = document.createElement('option');
+            option.value = tag;
+            option.textContent = tag;
+            tagSelect.appendChild(option);
           });
         }
       } catch (error) {
@@ -817,12 +808,14 @@
       }
     }
 
-    // 登録単位の統計を表示
-    async function displayRegistrationStats(tagName) {
-      const container = document.getElementById('registrationStatsDisplay');
+    // タグ選択時に両方の統計を表示
+    async function displayTagStats(tagName) {
+      const statsDisplay = document.getElementById('statsDisplay');
+      const registrationContainer = document.getElementById('registrationStatsDisplay');
+      const checkinContainer = document.getElementById('checkinStatsDisplay');
 
       if (!tagName) {
-        container.style.display = 'none';
+        statsDisplay.style.display = 'none';
         return;
       }
 
@@ -834,11 +827,12 @@
         });
 
         if (result.success) {
+          // 登録単位の統計
           const registrationRate = result.event_count > 0
             ? Math.round((result.registered_count / result.event_count) * 100)
             : 0;
 
-          container.innerHTML = `
+          registrationContainer.innerHTML = `
             <div class="stats-grid">
               <div class="stat-card committee">
                 <div class="stat-card-header">
@@ -853,46 +847,18 @@
               </div>
             </div>
           `;
-          container.style.display = 'block';
-        } else {
-          throw new Error(result.error || '統計情報の取得に失敗しました');
-        }
-      } catch (error) {
-        console.error('Load registration stats error:', error);
-        Utils.showError('統計情報の取得に失敗しました');
-      } finally {
-        Utils.hideLoading();
-      }
-    }
 
-    // 実出席の統計を表示
-    async function displayCheckinStats(tagName) {
-      const container = document.getElementById('checkinStatsDisplay');
-
-      if (!tagName) {
-        container.style.display = 'none';
-        return;
-      }
-
-      Utils.showLoading();
-
-      try {
-        const result = await API.call('getMyTagStats', {
-          tag_name: tagName
-        });
-
-        if (result.success) {
-          // 実出席の母数は開催済イベント数
+          // 実出席の統計（母数は開催済イベント数のみ）
           const completedCount = result.completed_event_count || 0;
           const attendanceRate = completedCount > 0
             ? Math.round((result.attended_count / completedCount) * 100)
             : 0;
 
-          container.innerHTML = `
+          checkinContainer.innerHTML = `
             <div class="stats-grid">
               <div class="stat-card committee">
                 <div class="stat-card-header">
-                  <div class="stat-card-icon">🏢</div>
+                  <div class="stat-card-icon">✅</div>
                   <div class="stat-card-label">${Utils.escapeHtml(tagName)}</div>
                 </div>
                 <div class="stat-card-value">${result.attended_count}</div>
@@ -903,12 +869,13 @@
               </div>
             </div>
           `;
-          container.style.display = 'block';
+
+          statsDisplay.style.display = 'block';
         } else {
           throw new Error(result.error || '統計情報の取得に失敗しました');
         }
       } catch (error) {
-        console.error('Load checkin stats error:', error);
+        console.error('Load tag stats error:', error);
         Utils.showError('統計情報の取得に失敗しました');
       } finally {
         Utils.hideLoading();
@@ -924,14 +891,9 @@
         }
       });
 
-      // 登録単位セクションのタグ選択
-      document.getElementById('registrationTagSelect').addEventListener('change', async (e) => {
-        await displayRegistrationStats(e.target.value);
-      });
-
-      // 実出席セクションのタグ選択
-      document.getElementById('checkinTagSelect').addEventListener('change', async (e) => {
-        await displayCheckinStats(e.target.value);
+      // タグ選択（両方の統計を表示）
+      document.getElementById('tagSelect').addEventListener('change', async (e) => {
+        await displayTagStats(e.target.value);
       });
 
       // フィルター変更
