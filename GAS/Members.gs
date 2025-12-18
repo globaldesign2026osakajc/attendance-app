@@ -424,11 +424,22 @@ function getMyTagStats(token, params) {
       official_absence_count: 0,
       absent_count: 0,
       event_count: 0,
+      completed_event_count: 0,
       tag_name: tagName
     };
   }
 
   const taggedEventIds = taggedEvents.map(e => e.event_id);
+
+  // 開催済イベント数を計算（イベント日が過去のもの）
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const completedEvents = taggedEvents.filter(e => {
+    const eventDate = new Date(e.date);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate < today;
+  });
+  const completedEventCount = completedEvents.length;
 
   // ログイン中のメンバーの出席情報を集計
   let registeredCount = 0;  // 出席（Bタイプは欠席・公欠以外）
@@ -488,6 +499,7 @@ function getMyTagStats(token, params) {
     official_absence_count: officialAbsenceCount,
     absent_count: absentCount,
     event_count: taggedEvents.length,
+    completed_event_count: completedEventCount,
     tag_name: tagName
   };
 }
