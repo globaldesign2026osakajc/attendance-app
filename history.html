@@ -513,7 +513,6 @@
           }
 
           applyFilters();
-          updateStats();
         } else {
           throw new Error(result.message || '履歴の取得に失敗しました');
         }
@@ -588,89 +587,6 @@
       displayHistory();
     }
 
-    // タグを配列に変換するヘルパー関数
-    function normalizeTags(tags) {
-      if (!tags) return [];
-      if (Array.isArray(tags)) return tags;
-      if (typeof tags === 'string') {
-        // カンマ区切りまたは単一の文字列として扱う
-        return tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-      }
-      return [];
-    }
-
-    // タグをチェックするヘルパー関数
-    function hasTag(item, tagName) {
-      const tags = normalizeTags(item.tags || item.event_tags);
-      return tags.some(tag => tag.includes(tagName));
-    }
-
-    // 統計更新
-    function updateStats() {
-      const now = new Date();
-
-      // 登録単位: 全イベント（過去+未来）を集計
-      const allEvents = allHistory;
-
-      // 実出席: 過去のイベントのみ集計
-      const pastEvents = allHistory.filter(item => new Date(item.event_date) < now);
-
-      // タグ別にイベントを分類（登録単位用: 全イベント）
-      const committeeEventsAll = allEvents.filter(item => hasTag(item, '委員会'));
-      const monthlyEventsAll = allEvents.filter(item => hasTag(item, '月例会'));
-      const otherEventsAll = allEvents.filter(item =>
-        !hasTag(item, '委員会') && !hasTag(item, '月例会')
-      );
-
-      // タグ別にイベントを分類（実出席用: 過去のみ）
-      const committeeEventsPast = pastEvents.filter(item => hasTag(item, '委員会'));
-      const monthlyEventsPast = pastEvents.filter(item => hasTag(item, '月例会'));
-      const otherEventsPast = pastEvents.filter(item =>
-        !hasTag(item, '委員会') && !hasTag(item, '月例会')
-      );
-
-      // 登録単位の統計（全イベント）
-      updateCategoryStats('reg', 'Committee', committeeEventsAll, false);
-      updateCategoryStats('reg', 'Monthly', monthlyEventsAll, false);
-      updateCategoryStats('reg', 'Other', otherEventsAll, false);
-
-      // 実出席の統計（過去のイベントのみ）
-      updateCategoryStats('actual', 'Committee', committeeEventsPast, true);
-      updateCategoryStats('actual', 'Monthly', monthlyEventsPast, true);
-      updateCategoryStats('actual', 'Other', otherEventsPast, true);
-    }
-
-    // カテゴリー別統計更新
-    function updateCategoryStats(type, category, events, useCheckin) {
-      const totalEvents = events.length;
-      let attendCount = 0;
-
-      if (useCheckin) {
-        // 実出席：チェックイン済みのみカウント
-        // checked_in フラグまたは checkin_time の有無で判定
-        attendCount = events.filter(item =>
-          item.checked_in === true ||
-          item.checked_in === 1 ||
-          (item.checkin_time && item.checkin_time !== null)
-        ).length;
-      } else {
-        // 登録単位：出席登録があるものをカウント
-        // attendance_status が「出席」「参加」の場合、またはBタイプ（欠席以外）
-        attendCount = events.filter(item => {
-          if (!item.attendance_status) return false; // 未登録は除外
-          if (item.attendance_status === '欠席') return false; // 欠席は除外
-          return true; // 出席、参加、その他のBタイプステータスはすべてカウント
-        }).length;
-      }
-
-      const rate = totalEvents > 0 ? Math.round((attendCount / totalEvents) * 100) : 0;
-
-      // 値を更新
-      document.getElementById(`${type}${category}Attend`).textContent = attendCount;
-      document.getElementById(`${type}${category}Detail`).textContent =
-        `${attendCount} / ${totalEvents}`;
-      document.getElementById(`${type}${category}Rate`).textContent = `${rate}%`;
-    }
 
     // 履歴表示
     function displayHistory() {
