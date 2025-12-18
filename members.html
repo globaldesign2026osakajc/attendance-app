@@ -428,12 +428,6 @@
       <div class="filters">
         <div class="filter-row">
           <div class="filter-group">
-            <label for="filterTag" class="filter-label">登録単位</label>
-            <select id="filterTag" class="filter-input">
-              <option value="">すべて</option>
-            </select>
-          </div>
-          <div class="filter-group">
             <label for="searchName" class="filter-label">氏名検索</label>
             <input type="text" id="searchName" class="filter-input" placeholder="氏名で検索...">
           </div>
@@ -567,8 +561,6 @@
   <script>
     let allMembers = [];
     let currentUser = null;
-    let allTags = [];
-    let currentTagStats = null;
 
     // 初期化
     document.addEventListener('DOMContentLoaded', async () => {
@@ -593,108 +585,13 @@
       });
 
       // フィルターイベント
-      document.getElementById('filterTag').addEventListener('change', onTagFilterChange);
       document.getElementById('searchName').addEventListener('input', filterMembers);
       document.getElementById('filterAffiliation').addEventListener('change', filterMembers);
       document.getElementById('filterBirthMonth').addEventListener('change', filterMembers);
 
       // データ読み込み
-      await loadTags();
       await loadMembers();
     });
-
-    // タグ一覧取得
-    async function loadTags() {
-      try {
-        const result = await API.call('getMasters', {});
-
-        if (result.success && result.masters.tags) {
-          allTags = result.masters.tags;
-          populateTagFilter();
-        }
-      } catch (error) {
-        console.error('Load tags error:', error);
-      }
-    }
-
-    // タグフィルター選択肢を設定
-    function populateTagFilter() {
-      const tagSelect = document.getElementById('filterTag');
-
-      allTags.forEach(tag => {
-        const option = document.createElement('option');
-        option.value = tag;
-        option.textContent = tag;
-        tagSelect.appendChild(option);
-      });
-    }
-
-    // タグフィルター変更時
-    async function onTagFilterChange() {
-      const selectedTag = document.getElementById('filterTag').value;
-
-      if (!selectedTag) {
-        // タグ未選択の場合は全メンバーを表示
-        currentTagStats = null;
-        await loadMembers();
-        return;
-      }
-
-      // 選択されたタグの統計を取得
-      Utils.showLoading();
-
-      try {
-        const result = await API.call('getMyTagStats', {
-          tag_name: selectedTag
-        });
-
-        if (result.success) {
-          currentTagStats = result;
-
-          // 統計情報を表示する領域を追加（メンバー一覧の上部に表示）
-          displayTagStats(result);
-
-          // タグフィルター選択時は統計のみ表示（メンバー一覧は非表示）
-          document.getElementById('membersContainer').innerHTML = '';
-        } else {
-          throw new Error(result.error || '統計情報の取得に失敗しました');
-        }
-      } catch (error) {
-        console.error('Load tag stats error:', error);
-        Utils.showError('統計情報の取得に失敗しました');
-      } finally {
-        Utils.hideLoading();
-      }
-    }
-
-    // タグ統計を表示
-    function displayTagStats(stats) {
-      const container = document.getElementById('membersContainer');
-
-      container.innerHTML = `
-        <div style="grid-column: 1 / -1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 2rem; color: white; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);">
-          <h3 style="margin: 0 0 1.5rem 0; font-size: 1.5rem; font-weight: 700;">登録単位: ${Utils.escapeHtml(stats.tag_name)}</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-            <div style="background: rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem; backdrop-filter: blur(10px);">
-              <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">対象イベント数</div>
-              <div style="font-size: 2.5rem; font-weight: 700;">${stats.event_count}</div>
-            </div>
-            <div style="background: rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem; backdrop-filter: blur(10px);">
-              <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">あなたの出席登録回数</div>
-              <div style="font-size: 2.5rem; font-weight: 700;">${stats.registered_count}</div>
-            </div>
-            <div style="background: rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem; backdrop-filter: blur(10px);">
-              <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">あなたの実出席回数</div>
-              <div style="font-size: 2.5rem; font-weight: 700;">${stats.attended_count}</div>
-            </div>
-            <div style="background: rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem; backdrop-filter: blur(10px);">
-              <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">出席率</div>
-              <div style="font-size: 2.5rem; font-weight: 700;">${stats.event_count > 0 ? Math.round((stats.attended_count / stats.event_count) * 100) : 0}%</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
 
     // メンバー一覧取得
     async function loadMembers() {

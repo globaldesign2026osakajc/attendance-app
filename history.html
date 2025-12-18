@@ -364,6 +364,19 @@
 
       <!-- 統計概要 -->
       <div class="stats-overview">
+        <!-- 登録単位フィルター -->
+        <div class="stats-section" style="margin-bottom: 1.5rem;">
+          <div class="filter-group" style="max-width: 400px;">
+            <label for="filterTagStats" class="filter-label" style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; display: block;">🔍 登録単位で統計を表示</label>
+            <select id="filterTagStats" class="filter-input" style="padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 0.938rem; width: 100%;">
+              <option value="">すべて</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- タグ統計表示エリア -->
+        <div id="tagStatsDisplay" style="display: none; margin-bottom: 2rem;"></div>
+
         <!-- 登録単位 -->
         <div class="stats-section">
           <h3 class="stats-section-title">📝 登録単位</h3>
@@ -526,6 +539,9 @@
 
       // ユーザー名表示
       document.getElementById('userName').textContent = userInfo.name;
+
+      // タグ一覧取得
+      await loadTags();
 
       // 履歴取得
       await loadHistory();
@@ -846,6 +862,82 @@
       `;
     }
 
+    // タグ一覧取得
+    async function loadTags() {
+      try {
+        const result = await API.call('getMasters', {});
+
+        if (result.success && result.masters.tags) {
+          const tagSelect = document.getElementById('filterTagStats');
+
+          result.masters.tags.forEach(tag => {
+            const option = document.createElement('option');
+            option.value = tag;
+            option.textContent = tag;
+            tagSelect.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Load tags error:', error);
+      }
+    }
+
+    // タグ統計を表示
+    async function displayTagStats(tagName) {
+      if (!tagName) {
+        document.getElementById('tagStatsDisplay').style.display = 'none';
+        return;
+      }
+
+      Utils.showLoading();
+
+      try {
+        const result = await API.call('getMyTagStats', {
+          tag_name: tagName
+        });
+
+        if (result.success) {
+          const container = document.getElementById('tagStatsDisplay');
+          const attendanceRate = result.event_count > 0
+            ? Math.round((result.attended_count / result.event_count) * 100)
+            : 0;
+          const registrationRate = result.event_count > 0
+            ? Math.round((result.registered_count / result.event_count) * 100)
+            : 0;
+
+          container.innerHTML = `
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 2rem; color: white; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);">
+              <h3 style="margin: 0 0 1.5rem 0; font-size: 1.5rem; font-weight: 700;">📊 登録単位: ${Utils.escapeHtml(result.tag_name)}</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem; backdrop-filter: blur(10px);">
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">対象イベント数</div>
+                  <div style="font-size: 2.5rem; font-weight: 700;">${result.event_count}</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem; backdrop-filter: blur(10px);">
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">出席登録回数</div>
+                  <div style="font-size: 2.5rem; font-weight: 700;">${result.registered_count}</div>
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.5rem;">登録率: ${registrationRate}%</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem; backdrop-filter: blur(10px);">
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">実出席回数</div>
+                  <div style="font-size: 2.5rem; font-weight: 700;">${result.attended_count}</div>
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.5rem;">出席率: ${attendanceRate}%</div>
+                </div>
+              </div>
+            </div>
+          `;
+          container.style.display = 'block';
+        } else {
+          throw new Error(result.error || '統計情報の取得に失敗しました');
+        }
+      } catch (error) {
+        console.error('Load tag stats error:', error);
+        Utils.showError('統計情報の取得に失敗しました');
+      } finally {
+        Utils.hideLoading();
+      }
+    }
+
     // イベントリスナー設定
     function setupEventListeners() {
       // ログアウト
@@ -853,6 +945,11 @@
         if (confirm('ログアウトしますか？')) {
           await Auth.logout();
         }
+      });
+
+      // タグフィルター変更
+      document.getElementById('filterTagStats').addEventListener('change', async (e) => {
+        await displayTagStats(e.target.value);
       });
 
       // フィルター変更
