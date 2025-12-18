@@ -73,6 +73,11 @@ function handleRequest(e) {
         result = logout(token);
         break;
 
+      // ダッシュボード
+      case 'getDashboardSummary':
+        result = getDashboardSummary(token);
+        break;
+
       // イベント
       case 'getEvents':
         result = getEvents(token, params, params.member_id);
