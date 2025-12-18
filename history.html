@@ -665,17 +665,30 @@
       }
 
       // 登録料
-      const fee = item.participation_fee > 0 ? Utils.formatCurrency(item.participation_fee) : '無料';
+      let fee = '';
+      if (item.participation_fee === null || item.participation_fee === undefined) {
+        fee = '未定';
+      } else if (item.participation_fee > 0) {
+        fee = Utils.formatCurrency(item.participation_fee);
+      } else {
+        fee = '無料';
+      }
 
       // 支払ステータス
       let paymentHTML = '';
       let paymentClass = 'free';
 
-      if (item.participation_fee > 0) {
+      // 登録料が未定の場合
+      if (item.participation_fee === null || item.participation_fee === undefined) {
+        paymentHTML = '-';
+        paymentClass = 'free';
+      } else if (item.participation_fee > 0) {
+        // 登録料が設定されている場合
         if (item.payment_confirmed) {
           paymentHTML = '✓ 支払済み';
           paymentClass = 'paid';
-        } else if (item.attendance_status === '出席') {
+        } else if (item.attendance_status && item.attendance_status !== '欠席' && item.attendance_status !== '不参加') {
+          // 出席登録があり、欠席・不参加以外（Aタイプの出席、Bタイプの各種ステータス）
           paymentHTML = '未払い';
           paymentClass = 'unpaid';
         } else {
@@ -683,6 +696,7 @@
           paymentClass = 'free';
         }
       } else {
+        // 無料の場合
         paymentHTML = '-';
       }
 
