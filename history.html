@@ -364,27 +364,33 @@
 
       <!-- 統計概要 -->
       <div class="stats-overview">
-        <!-- タグ選択 -->
-        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
-          <label style="margin-right: 1rem; font-weight: 600;">登録単位を選択:</label>
-          <select id="tagSelect" class="filter-input" style="max-width: 300px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
-            <option value="">登録単位を選択...</option>
-          </select>
+        <!-- 統計表示エリア（横並び） -->
+        <div id="statsDisplay" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+            <!-- 左側：登録単位セクション -->
+            <div class="stats-section">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <label style="font-weight: 600; white-space: nowrap;">登録単位を選択:</label>
+                <select id="tagSelect" class="filter-input" style="flex: 1; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
+                  <option value="">登録単位を選択...</option>
+                </select>
+              </div>
+              <h3 class="stats-section-title">📝 登録単位</h3>
+              <div id="registrationStatsDisplay"></div>
+            </div>
+
+            <!-- 右側：実出席セクション -->
+            <div class="stats-section">
+              <div style="height: 3rem;"></div> <!-- タグ選択の高さ分のスペーサー -->
+              <h3 class="stats-section-title">✅ 実出席（チェックイン）</h3>
+              <div id="checkinStatsDisplay"></div>
+            </div>
+          </div>
         </div>
 
-        <!-- 統計表示エリア -->
-        <div id="statsDisplay" style="display: none;">
-          <!-- 登録単位 -->
-          <div class="stats-section">
-            <h3 class="stats-section-title">📝 登録単位</h3>
-            <div id="registrationStatsDisplay"></div>
-          </div>
-
-          <!-- 実出席 -->
-          <div class="stats-section">
-            <h3 class="stats-section-title">✅ 実出席（チェックイン）</h3>
-            <div id="checkinStatsDisplay"></div>
-          </div>
+        <!-- タグ未選択時のメッセージ -->
+        <div id="noTagMessage" style="text-align: center; padding: 2rem; color: #666;">
+          <p style="font-size: 1.1rem;">👆 登録単位を選択してください</p>
         </div>
       </div>
 
@@ -811,11 +817,13 @@
     // タグ選択時に両方の統計を表示
     async function displayTagStats(tagName) {
       const statsDisplay = document.getElementById('statsDisplay');
+      const noTagMessage = document.getElementById('noTagMessage');
       const registrationContainer = document.getElementById('registrationStatsDisplay');
       const checkinContainer = document.getElementById('checkinStatsDisplay');
 
       if (!tagName) {
         statsDisplay.style.display = 'none';
+        noTagMessage.style.display = 'block';
         return;
       }
 
@@ -870,6 +878,7 @@
             </div>
           `;
 
+          noTagMessage.style.display = 'none';
           statsDisplay.style.display = 'block';
         } else {
           throw new Error(result.error || '統計情報の取得に失敗しました');
