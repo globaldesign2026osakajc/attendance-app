@@ -125,50 +125,74 @@ function getAdminReceiptableEvents(token, eventId, affiliation) {
  * 領収書発行（単独）
  */
 function issueReceipt(token, dataStr) {
+  Logger.log('===== issueReceipt 開始 =====');
+  Logger.log('dataStr: ' + dataStr);
+
   const member = getMemberFromToken(token);
+  Logger.log('member: ' + JSON.stringify(member));
 
   if (!member) {
+    Logger.log('認証エラー: メンバーが見つかりません');
     return {success: false, error: '認証が必要です'};
   }
 
   const data = parseJSON(dataStr);
+  Logger.log('parsed data: ' + JSON.stringify(data));
 
   if (!data || !data.event_id || !data.member_id || !data.company_name) {
+    Logger.log('バリデーションエラー: 必須項目不足');
     return {success: false, error: '必須項目が不足しています'};
   }
 
   // 権限チェック: 自分の領収書 または 管理者
+  Logger.log('権限チェック開始');
   if (data.member_id !== member.member_id && !isAdmin(token)) {
+    Logger.log('権限エラー');
     return {success: false, error: '権限がありません'};
   }
+  Logger.log('権限チェックOK');
 
   // イベント確認
+  Logger.log('イベント確認開始: ' + data.event_id);
   const event = findRow('events', 'event_id', data.event_id);
+  Logger.log('event: ' + JSON.stringify(event));
 
   if (!event || !event.receipt_enabled) {
+    Logger.log('イベントエラー: 見つからないか領収書無効');
     return {success: false, error: 'このイベントは領収書発行が有効ではありません'};
   }
+  Logger.log('イベント確認OK');
 
   // 支払い確認
+  Logger.log('支払い確認開始');
   const payment = findPayment(data.event_id, data.member_id);
+  Logger.log('payment: ' + JSON.stringify(payment));
 
   if (!payment) {
+    Logger.log('支払いエラー: 見つかりません');
     return {success: false, error: '支払い情報が見つかりません'};
   }
 
   if (!payment.paid) {
+    Logger.log('支払いエラー: 未払い');
     return {success: false, error: '未払いのため領収書を発行できません'};
   }
 
   if (payment.receipt_issued) {
+    Logger.log('発行済みエラー');
     return {success: false, error: '既に領収書が発行されています'};
   }
+  Logger.log('支払い確認OK');
 
   // 領収書番号生成
+  Logger.log('領収書番号生成開始');
   const receiptNumber = generateReceiptNumber(data.event_id, data.member_id, false);
+  Logger.log('領収書番号: ' + receiptNumber);
 
   // 領収書データ作成
+  Logger.log('領収書データ作成開始');
   const receiptNote = data.receipt_note || event.receipt_note_default || `${event.title} 登録料として`;
+  Logger.log('receiptNote: ' + receiptNote);
 
   const receiptData = {
     receipt_number: receiptNumber,
@@ -179,13 +203,18 @@ function issueReceipt(token, dataStr) {
     event_name: `${event.title}（${formatDate(event.date)}）`,
     issued_at: formatDate(new Date())
   };
+  Logger.log('receiptData: ' + JSON.stringify(receiptData));
 
   // PDF生成
+  Logger.log('PDF生成呼び出し開始');
   const pdfUrl = generateReceiptPDF(receiptData);
+  Logger.log('PDF生成完了。URL: ' + pdfUrl);
 
   // receiptsテーブルに記録
+  Logger.log('receiptsテーブル記録開始');
   const receiptsSheet = getSheet('receipts');
   const receiptId = generateUniqueId('REC', receiptsSheet);
+  Logger.log('receiptId: ' + receiptId);
 
   addRow('receipts', {
     receipt_id: receiptId,
@@ -201,15 +230,19 @@ function issueReceipt(token, dataStr) {
     issued_at: new Date(),
     pdf_url: pdfUrl
   });
+  Logger.log('receiptsテーブル記録完了');
 
   // paymentsテーブル更新
+  Logger.log('paymentsテーブル更新開始');
   updateRow('payments', payment.rowIndex, {
     receipt_issued: true,
     receipt_number: receiptNumber,
     receipt_url: pdfUrl,
     receipt_issued_at: new Date()
   });
+  Logger.log('paymentsテーブル更新完了');
 
+  Logger.log('===== issueReceipt 正常終了 =====');
   return {
     success: true,
     receipt_number: receiptNumber,
