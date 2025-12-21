@@ -570,11 +570,31 @@
 
     // 領収書発行
     async function issueReceipt(eventId) {
-      // 会社名入力ダイアログ
-      const companyName = prompt('領収書の宛名（会社名・団体名）を入力してください:', '');
+      // プロフィールから会社名を取得
+      let defaultCompanyName = '';
+      try {
+        const profileResult = await API.call('getProfile', {});
+        if (profileResult.success && profileResult.member) {
+          defaultCompanyName = profileResult.member.company_name || '';
+        }
+      } catch (error) {
+        console.error('Failed to get profile:', error);
+      }
 
-      if (!companyName) {
-        return;
+      // 会社名入力ダイアログ（デフォルト値を設定）
+      let companyName = null;
+      while (!companyName || companyName.trim() === '') {
+        companyName = prompt('領収書の宛名（会社名・団体名）を入力してください:', defaultCompanyName);
+
+        // キャンセルされた場合
+        if (companyName === null) {
+          return;
+        }
+
+        // 空欄の場合は再度入力を促す
+        if (!companyName || companyName.trim() === '') {
+          alert('宛名は必須です。会社名または団体名を入力してください。');
+        }
       }
 
       if (!confirm('領収書を発行しますか？')) {
@@ -587,10 +607,8 @@
         const data = {
           event_id: eventId,
           member_id: userInfo.memberId,
-          company_name: companyName
+          company_name: companyName.trim()
         };
-
-        const result = await API.call('issueReceipt', {}, true);
 
         // POSTリクエストの場合、dataをJSON文字列として送る
         const response = await fetch(CONFIG.API_URL, {
@@ -605,14 +623,14 @@
           })
         });
 
-        const result2 = await response.json();
+        const result = await response.json();
 
-        if (result2.success) {
+        if (result.success) {
           Utils.showSuccess('領収書を発行しました');
           // 領収書を再取得
           await loadReceipts();
         } else {
-          throw new Error(result2.error || '領収書の発行に失敗しました');
+          throw new Error(result.error || '領収書の発行に失敗しました');
         }
 
       } catch (error) {
