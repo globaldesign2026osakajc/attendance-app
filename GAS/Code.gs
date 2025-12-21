@@ -22,8 +22,12 @@ function doPost(e) {
  * リクエストハンドラー
  */
 function handleRequest(e) {
+  Logger.log('===== handleRequest 開始 =====');
+  Logger.log('e: ' + JSON.stringify(e));
+
   // パラメータが存在しない場合の対応（直接実行時など）
   if (!e || (!e.parameter && !e.postData)) {
+    Logger.log('パラメータなし');
     const output = ContentService.createTextOutput();
     output.setMimeType(ContentService.MimeType.JSON);
     return output.setContent(JSON.stringify({
@@ -34,11 +38,16 @@ function handleRequest(e) {
 
   // POSTリクエストの場合、JSONボディをパース
   let params = e.parameter || {};
+  Logger.log('initial params: ' + JSON.stringify(params));
+
   if (e.postData && e.postData.contents) {
+    Logger.log('POSTデータあり: ' + e.postData.contents);
     try {
       const postParams = JSON.parse(e.postData.contents);
+      Logger.log('parsed postParams: ' + JSON.stringify(postParams));
       params = { ...params, ...postParams };
     } catch (error) {
+      Logger.log('JSONパースエラー: ' + error);
       const output = ContentService.createTextOutput();
       output.setMimeType(ContentService.MimeType.JSON);
       return output.setContent(JSON.stringify({
@@ -50,6 +59,8 @@ function handleRequest(e) {
 
   const action = params.action;
   const token = params.token;
+  Logger.log('action: ' + action);
+  Logger.log('token exists: ' + (!!token));
 
   const output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
