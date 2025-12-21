@@ -168,13 +168,14 @@ function issueReceipt(token, dataStr) {
   const receiptNumber = generateReceiptNumber(data.event_id, data.member_id, false);
 
   // 領収書データ作成
-  const receiptNote = data.receipt_note || event.receipt_note_default || `${event.title} 参加費として`;
+  const receiptNote = data.receipt_note || event.receipt_note_default || `${event.title} 登録料として`;
 
   const receiptData = {
     receipt_number: receiptNumber,
     company_name: data.company_name,
     amount: payment.amount,
     receipt_note: receiptNote,
+    detail_note: '', // 単独領収書では使用しない
     event_name: event.title,
     issued_at: formatDate(new Date())
   };
@@ -271,7 +272,7 @@ function issueCombinedReceipt(token, dataStr) {
   const receiptNumber = generateReceiptNumber(data.event_id, null, true);
 
   // 領収書データ作成
-  const receiptNote = data.receipt_note || event.receipt_note_default || `${event.title} 参加費として`;
+  const receiptNote = data.receipt_note || event.receipt_note_default || `${event.title} 登録料として`;
   const detailNote = data.detail_note || '';
 
   const receiptData = {
