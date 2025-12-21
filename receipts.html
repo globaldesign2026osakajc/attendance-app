@@ -404,15 +404,13 @@
       Utils.showLoading();
 
       try {
-        const result = await API.call('getReceipts', {
-          member_id: userInfo.memberId
-        });
+        const result = await API.call('getReceiptableEvents', {});
 
         if (result.success) {
-          allReceipts = result.receipts || [];
+          allReceipts = result.events || [];
           applyFilters();
         } else {
-          throw new Error(result.message || '領収書の取得に失敗しました');
+          throw new Error(result.error || '領収書の取得に失敗しました');
         }
 
       } catch (error) {
@@ -494,19 +492,18 @@
     function createReceiptCard(receipt) {
       const eventDate = Utils.formatDateSlash(receipt.event_date);
       const dayOfWeek = Utils.getDayOfWeek(receipt.event_date);
-      const amount = Utils.formatCurrency(receipt.amount);
-      const issuedDate = receipt.issued_date ? Utils.formatDateSlash(receipt.issued_date) : '-';
+      const amount = Utils.formatCurrency(receipt.payment_amount);
 
       // ステータス
       let statusClass = 'unavailable';
       let statusText = '発行不可';
       let cardClass = '';
 
-      if (receipt.receipt_url) {
+      if (receipt.receipt_issued) {
         statusClass = 'issued';
         statusText = '✓ 発行済み';
         cardClass = 'issued';
-      } else if (receipt.payment_confirmed) {
+      } else if (receipt.can_issue) {
         statusClass = 'pending';
         statusText = '発行可能';
         cardClass = 'pending';
@@ -516,7 +513,7 @@
         <div class="receipt-card ${cardClass}">
           <div class="receipt-header">
             <div class="receipt-info">
-              <div class="receipt-event-name">${Utils.escapeHtml(receipt.event_name)}</div>
+              <div class="receipt-event-name">${Utils.escapeHtml(receipt.event_title)}</div>
               <div class="receipt-event-date">開催日：${eventDate}（${dayOfWeek}）</div>
             </div>
             <div class="receipt-status ${statusClass}">${statusText}</div>
@@ -527,19 +524,19 @@
               <div class="receipt-detail-label">金額</div>
               <div class="receipt-detail-value">${amount}</div>
             </div>
+            <div class="receipt-detail-item">
+              <div class="receipt-detail-label">支払状況</div>
+              <div class="receipt-detail-value">${receipt.paid ? '支払済み' : '未払い'}</div>
+            </div>
             ${receipt.receipt_number ? `
               <div class="receipt-detail-item">
                 <div class="receipt-detail-label">領収書番号</div>
                 <div class="receipt-detail-value">${receipt.receipt_number}</div>
               </div>
             ` : ''}
-            <div class="receipt-detail-item">
-              <div class="receipt-detail-label">発行日</div>
-              <div class="receipt-detail-value">${issuedDate}</div>
-            </div>
           </div>
 
-          ${!receipt.payment_confirmed ? `
+          ${!receipt.paid ? `
             <div class="receipt-notice">
               <span class="receipt-notice-icon">ℹ️</span>
               <span>支払いが確認されていないため、領収書を発行できません。</span>
@@ -556,8 +553,8 @@
                 <span>👁️</span>
                 <span>プレビュー</span>
               </button>
-            ` : receipt.payment_confirmed ? `
-              <button class="receipt-btn primary" onclick="issueReceipt('${receipt.event_id}', '${receipt.payment_id}')">
+            ` : receipt.can_issue ? `
+              <button class="receipt-btn primary" onclick="issueReceipt('${receipt.event_id}')">
                 <span>📝</span>
                 <span>領収書を発行</span>
               </button>
@@ -572,7 +569,14 @@
     }
 
     // 領収書発行
-    async function issueReceipt(eventId, paymentId) {
+    async function issueReceipt(eventId) {
+      // 会社名入力ダイアログ
+      const companyName = prompt('領収書の宛名（会社名・団体名）を入力してください:', '');
+
+      if (!companyName) {
+        return;
+      }
+
       if (!confirm('領収書を発行しますか？')) {
         return;
       }
@@ -580,18 +584,35 @@
       Utils.showLoading();
 
       try {
-        const result = await API.call('issueReceipt', {
+        const data = {
           event_id: eventId,
-          payment_id: paymentId,
-          member_id: userInfo.memberId
+          member_id: userInfo.memberId,
+          company_name: companyName
+        };
+
+        const result = await API.call('issueReceipt', {}, true);
+
+        // POSTリクエストの場合、dataをJSON文字列として送る
+        const response = await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain'
+          },
+          body: JSON.stringify({
+            action: 'issueReceipt',
+            token: localStorage.getItem('authToken'),
+            data: JSON.stringify(data)
+          })
         });
 
-        if (result.success) {
+        const result2 = await response.json();
+
+        if (result2.success) {
           Utils.showSuccess('領収書を発行しました');
           // 領収書を再取得
           await loadReceipts();
         } else {
-          throw new Error(result.message || '領収書の発行に失敗しました');
+          throw new Error(result2.error || '領収書の発行に失敗しました');
         }
 
       } catch (error) {
