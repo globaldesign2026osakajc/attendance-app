@@ -235,6 +235,109 @@
       font-size: 1.25rem;
     }
 
+    /* 会社名入力ダイアログ */
+    .company-dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .company-dialog {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .company-dialog-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-color);
+    }
+
+    .company-dialog-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .company-dialog-input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .company-dialog-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .company-dialog-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .company-dialog-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .company-dialog-hint {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+
+    .company-dialog-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    .company-dialog-btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .company-dialog-btn.cancel {
+      background-color: var(--gray-light);
+      color: var(--text-color);
+    }
+
+    .company-dialog-btn.cancel:hover {
+      background-color: var(--border-color);
+    }
+
+    .company-dialog-btn.confirm {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .company-dialog-btn.confirm:hover {
+      background-color: var(--secondary-color);
+    }
+
     @media (max-width: 768px) {
       .receipts-list {
         padding: 1.5rem;
@@ -318,6 +421,25 @@
       </nav>
     </div>
   </header>
+
+  <!-- 会社名入力ダイアログ -->
+  <div id="companyDialogOverlay" class="company-dialog-overlay" style="display: none;">
+    <div class="company-dialog">
+      <h3 class="company-dialog-title">領収書の宛名を入力</h3>
+      <p class="company-dialog-desc">
+        領収書に記載する宛名（会社名または団体名）を入力してください。
+      </p>
+      <div class="company-dialog-input-group">
+        <label class="company-dialog-label">宛名（必須）</label>
+        <input type="text" id="companyNameInput" class="company-dialog-input" placeholder="例: 株式会社〇〇">
+        <div class="company-dialog-hint" id="companyNameHint"></div>
+      </div>
+      <div class="company-dialog-actions">
+        <button class="company-dialog-btn cancel" id="dialogCancelBtn">キャンセル</button>
+        <button class="company-dialog-btn confirm" id="dialogConfirmBtn">発行する</button>
+      </div>
+    </div>
+  </div>
 
   <!-- メインコンテンツ -->
   <main class="main-content">
@@ -568,6 +690,98 @@
       `;
     }
 
+    // 会社名入力ダイアログ表示
+    function showCompanyNameDialog(defaultCompanyName) {
+      return new Promise((resolve, reject) => {
+        const overlay = document.getElementById('companyDialogOverlay');
+        const input = document.getElementById('companyNameInput');
+        const hint = document.getElementById('companyNameHint');
+        const cancelBtn = document.getElementById('dialogCancelBtn');
+        const confirmBtn = document.getElementById('dialogConfirmBtn');
+
+        // デフォルト値を設定
+        input.value = defaultCompanyName || '';
+
+        // ヒント文言を設定
+        if (defaultCompanyName) {
+          hint.textContent = `プロフィールに登録された「${defaultCompanyName}」が自動入力されています。変更も可能です。`;
+          hint.style.color = 'var(--info-color)';
+        } else {
+          hint.textContent = 'プロフィールに会社名が登録されていません。ここで入力してください。';
+          hint.style.color = 'var(--warning-color)';
+        }
+
+        // ダイアログ表示
+        overlay.style.display = 'flex';
+
+        // 入力フォーカス
+        setTimeout(() => {
+          input.focus();
+          input.select();
+        }, 100);
+
+        // キャンセルボタン
+        const handleCancel = () => {
+          cleanup();
+          reject(new Error('cancelled'));
+        };
+
+        // 確定ボタン
+        const handleConfirm = () => {
+          const companyName = input.value.trim();
+
+          if (!companyName) {
+            input.style.borderColor = 'var(--danger-color)';
+            hint.textContent = '⚠️ 宛名は必須です。会社名または団体名を入力してください。';
+            hint.style.color = 'var(--danger-color)';
+            input.focus();
+            return;
+          }
+
+          cleanup();
+          resolve(companyName);
+        };
+
+        // Enterキーで確定
+        const handleKeyPress = (e) => {
+          if (e.key === 'Enter') {
+            handleConfirm();
+          } else if (e.key === 'Escape') {
+            handleCancel();
+          }
+        };
+
+        // 入力時にエラー表示をリセット
+        const handleInput = () => {
+          input.style.borderColor = '';
+          if (defaultCompanyName) {
+            hint.textContent = `プロフィールに登録された「${defaultCompanyName}」が自動入力されています。変更も可能です。`;
+            hint.style.color = 'var(--info-color)';
+          } else {
+            hint.textContent = 'プロフィールに会社名が登録されていません。ここで入力してください。';
+            hint.style.color = 'var(--warning-color)';
+          }
+        };
+
+        // イベントリスナー追加
+        cancelBtn.addEventListener('click', handleCancel);
+        confirmBtn.addEventListener('click', handleConfirm);
+        input.addEventListener('keydown', handleKeyPress);
+        input.addEventListener('input', handleInput);
+
+        // クリーンアップ関数
+        function cleanup() {
+          overlay.style.display = 'none';
+          cancelBtn.removeEventListener('click', handleCancel);
+          confirmBtn.removeEventListener('click', handleConfirm);
+          input.removeEventListener('keydown', handleKeyPress);
+          input.removeEventListener('input', handleInput);
+          input.value = '';
+          input.style.borderColor = '';
+        }
+      });
+    }
+
     // 領収書発行
     async function issueReceipt(eventId) {
       // プロフィールから会社名を取得
@@ -581,23 +795,12 @@
         console.error('Failed to get profile:', error);
       }
 
-      // 会社名入力ダイアログ（デフォルト値を設定）
-      let companyName = null;
-      while (!companyName || companyName.trim() === '') {
-        companyName = prompt('領収書の宛名（会社名・団体名）を入力してください:', defaultCompanyName);
-
+      // 会社名入力ダイアログを表示
+      let companyName;
+      try {
+        companyName = await showCompanyNameDialog(defaultCompanyName);
+      } catch (error) {
         // キャンセルされた場合
-        if (companyName === null) {
-          return;
-        }
-
-        // 空欄の場合は再度入力を促す
-        if (!companyName || companyName.trim() === '') {
-          alert('宛名は必須です。会社名または団体名を入力してください。');
-        }
-      }
-
-      if (!confirm('領収書を発行しますか？')) {
         return;
       }
 
@@ -607,7 +810,7 @@
         const data = {
           event_id: eventId,
           member_id: userInfo.memberId,
-          company_name: companyName.trim()
+          company_name: companyName
         };
 
         // POSTリクエストの場合、dataをJSON文字列として送る

@@ -11,7 +11,9 @@
       "Bash(git commit:*)",
       "Bash(git push)",
       "Bash(\"を削除）\n- プレースホルダーを以下に変更:\n  「公欠の場合は、公欠理由を記載してください。\n   遅参しそうなど、備考があれば記載してください。」\n- 出欠選択時の表示制御ロジックを削除\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(grep:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n管理画面ダッシュボードをシンプル化\n\n- 今日のタスクとクイックアクションのみ表示\n- 最重要指標カード、アラート、統計、イベント一覧を削除\n- ダッシュボード表示の高速化\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []
