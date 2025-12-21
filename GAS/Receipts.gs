@@ -176,7 +176,7 @@ function issueReceipt(token, dataStr) {
     amount: payment.amount,
     receipt_note: receiptNote,
     detail_note: '', // 単独領収書では使用しない
-    event_name: event.title,
+    event_name: `${event.title}（${formatDate(event.date)}）`,
     issued_at: formatDate(new Date())
   };
 
@@ -281,7 +281,7 @@ function issueCombinedReceipt(token, dataStr) {
     amount: totalAmount,
     receipt_note: receiptNote,
     detail_note: detailNote,
-    event_name: event.title,
+    event_name: `${event.title}（${formatDate(event.date)}）`,
     issued_at: formatDate(new Date())
   };
 
