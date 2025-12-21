@@ -14,11 +14,11 @@ function getDashboardSummary(token) {
 
   try {
     // 全データを一度に取得
-    const events = getSheetData('events');
-    const members = getSheetData('members');
-    const attendances = getSheetData('attendance');
-    const payments = getSheetData('payments');
-    const checkins = getSheetData('checkin');
+    const events = getSheetData('events') || [];
+    const members = getSheetData('members') || [];
+    const attendances = getSheetData('attendance') || [];
+    const payments = getSheetData('payments') || [];
+    const checkins = getSheetData('checkin') || [];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

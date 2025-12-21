@@ -42,6 +42,13 @@ function generateUniqueId(prefix, sheet) {
  */
 function getSheetData(sheetName) {
   const sheet = getSheet(sheetName);
+
+  // シートが存在しない場合は空配列を返す
+  if (!sheet) {
+    Logger.log('Warning: Sheet "' + sheetName + '" not found');
+    return [];
+  }
+
   const data = sheet.getDataRange().getValues();
 
   if (data.length === 0) {
@@ -83,6 +90,13 @@ function getSheetData(sheetName) {
  */
 function findRow(sheetName, columnName, value) {
   const sheet = getSheet(sheetName);
+
+  // シートが存在しない場合はnullを返す
+  if (!sheet) {
+    Logger.log('Warning: Sheet "' + sheetName + '" not found');
+    return null;
+  }
+
   const data = sheet.getDataRange().getValues();
 
   if (data.length === 0) {
