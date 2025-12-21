@@ -350,39 +350,64 @@ function generateReceiptNumber(eventId, memberId, isCombined) {
  */
 function generateReceiptPDF(data) {
   try {
+    Logger.log('PDF生成開始: ' + JSON.stringify(data));
+
+    // テンプレートIDとフォルダIDの確認
+    Logger.log('RECEIPT_TEMPLATE_ID: ' + RECEIPT_TEMPLATE_ID);
+    Logger.log('RECEIPT_FOLDER_ID: ' + RECEIPT_FOLDER_ID);
+
     // テンプレートをコピー
     const templateDoc = DriveApp.getFileById(RECEIPT_TEMPLATE_ID);
+    Logger.log('テンプレート取得成功');
+
     const folder = DriveApp.getFolderById(RECEIPT_FOLDER_ID);
+    Logger.log('フォルダ取得成功');
 
     const newDoc = templateDoc.makeCopy(`領収書_${data.receipt_number}`, folder);
+    Logger.log('ドキュメントコピー成功: ' + newDoc.getId());
+
     const doc = DocumentApp.openById(newDoc.getId());
     const body = doc.getBody();
+    Logger.log('ドキュメントオープン成功');
 
     // プレースホルダーを置換
-    body.replaceText('{{receipt_number}}', data.receipt_number);
-    body.replaceText('{{company_name}}', data.company_name);
-    body.replaceText('{{amount}}', data.amount.toLocaleString('ja-JP'));
-    body.replaceText('{{receipt_note}}', data.receipt_note);
-    body.replaceText('{{issued_at}}', data.issued_at);
-    body.replaceText('{{event_name}}', data.event_name);
-    body.replaceText('{{detail_note}}', data.detail_note || '');
+    body.replaceText('\\{\\{receipt_number\\}\\}', data.receipt_number || '');
+    body.replaceText('\\{\\{company_name\\}\\}', data.company_name || '');
+    body.replaceText('\\{\\{amount\\}\\}', data.amount ? data.amount.toLocaleString('ja-JP') : '0');
+    body.replaceText('\\{\\{receipt_note\\}\\}', data.receipt_note || '');
+    body.replaceText('\\{\\{issued_at\\}\\}', data.issued_at || '');
+    body.replaceText('\\{\\{event_name\\}\\}', data.event_name || '');
+    body.replaceText('\\{\\{detail_note\\}\\}', data.detail_note || '');
+    Logger.log('プレースホルダー置換完了');
 
     doc.saveAndClose();
+    Logger.log('ドキュメント保存完了');
 
     // PDFとして出力
     const pdfBlob = newDoc.getAs('application/pdf');
+    Logger.log('PDF変換成功');
+
     const pdfFile = folder.createFile(pdfBlob);
     pdfFile.setName(`領収書_${data.receipt_number}.pdf`);
+    Logger.log('PDFファイル作成成功: ' + pdfFile.getId());
 
     // 元のドキュメントを削除
     newDoc.setTrashed(true);
+    Logger.log('元ドキュメント削除完了');
 
     // 共有設定
     pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    Logger.log('共有設定完了');
 
-    return pdfFile.getUrl();
+    const pdfUrl = pdfFile.getUrl();
+    Logger.log('PDF生成完了。URL: ' + pdfUrl);
+
+    return pdfUrl;
   } catch (e) {
-    Logger.log('PDF生成エラー: ' + e.toString());
+    Logger.log('PDF生成エラー詳細:');
+    Logger.log('エラーメッセージ: ' + e.message);
+    Logger.log('エラースタック: ' + e.stack);
+    Logger.log('データ: ' + JSON.stringify(data));
     return '';
   }
 }
