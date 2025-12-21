@@ -787,9 +787,9 @@
       // プロフィールから会社名を取得
       let defaultCompanyName = '';
       try {
-        const profileResult = await API.call('getProfile', {});
-        if (profileResult.success && profileResult.member) {
-          defaultCompanyName = profileResult.member.company_name || '';
+        const profileResult = await API.call('getMemberProfile', {});
+        if (profileResult.success && profileResult.profile) {
+          defaultCompanyName = profileResult.profile.company_name || '';
         }
       } catch (error) {
         console.error('Failed to get profile:', error);
