@@ -185,8 +185,6 @@ class EventsList {
   }
 
   async refresh() {
-    // キャッシュをクリアして最新データを取得
-    API.clearAllCache();
     await this.loadEvents();
   }
 }

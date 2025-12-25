@@ -22,37 +22,6 @@ const AdminAPI = {
 
     const url = `${this.baseUrl}?action=${endpoint}`;
 
-    // キャッシュ可能なエンドポイント（GET系のみ）
-    const cacheableEndpoints = [
-      'getDashboardStats',
-      'getEvents',
-      'getEvent',
-      'getMembers',
-      'getMember',
-      'getAttendances',
-      'getPayments',
-      'getReceipts',
-      'getAttendanceAnalytics',
-      'getPaymentAnalytics'
-    ];
-
-    // エンドポイント名を抽出（パラメータを除く）
-    const endpointName = endpoint.split('&')[0];
-    const isPOST = options.method === 'POST';
-
-    // キャッシュキーの生成
-    const cacheKey = `admin_api_${endpoint}`;
-
-    // キャッシュから取得を試みる（POST以外かつキャッシュ可能なエンドポイント）
-    if (!isPOST && cacheableEndpoints.includes(endpointName)) {
-      const cached = Cache.get(cacheKey);
-      if (cached) {
-        console.log(`[Admin Cache Hit] ${endpointName}`);
-        return cached;
-      }
-      console.log(`[Admin Cache Miss] ${endpointName}`);
-    }
-
     try {
       const response = await fetch(url, config);
       const data = await response.json();
@@ -61,42 +30,11 @@ const AdminAPI = {
         throw new Error(data.error || 'リクエストに失敗しました');
       }
 
-      // レスポンスをキャッシュに保存（POST以外かつキャッシュ可能なエンドポイント）
-      if (!isPOST && cacheableEndpoints.includes(endpointName)) {
-        Cache.set(cacheKey, data);
-      }
-
       return data;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
-  },
-
-  /**
-   * キャッシュをクリアする（特定のエンドポイント）
-   * @param {string} endpoint - クリアするエンドポイント名
-   */
-  clearCache(endpoint) {
-    try {
-      const keys = Object.keys(localStorage);
-      keys.forEach(key => {
-        if (key.startsWith(`cache_admin_api_${endpoint}`)) {
-          localStorage.removeItem(key);
-        }
-      });
-      console.log(`[Admin Cache Cleared] ${endpoint}`);
-    } catch (error) {
-      console.error('キャッシュクリアエラー:', error);
-    }
-  },
-
-  /**
-   * 全キャッシュをクリアする
-   */
-  clearAllCache() {
-    Cache.clear();
-    console.log('[Admin Cache Cleared] All');
   },
 
   // イベント管理

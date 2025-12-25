@@ -21,30 +21,6 @@ const API = {
       usePost = true;
     }
 
-    // キャッシュ可能なアクション（GET系のみ）
-    const cacheableActions = [
-      'getEvents',
-      'getEventDetail',
-      'getMyAttendance',
-      'getMembers',
-      'getMemberProfile',
-      'getAttendanceHistory',
-      'getMyProfile'
-    ];
-
-    // キャッシュキーの生成（パラメータを含める）
-    const cacheKey = `api_${action}_${JSON.stringify(params)}`;
-
-    // キャッシュから取得を試みる（POST以外かつキャッシュ可能なアクション）
-    if (!usePost && cacheableActions.includes(action)) {
-      const cached = Cache.get(cacheKey);
-      if (cached) {
-        console.log(`[Cache Hit] ${action}`, params);
-        return cached;
-      }
-      console.log(`[Cache Miss] ${action}`, params);
-    }
-
     if (usePost) {
       // POSTリクエスト（大きなデータの場合）
       const requestBody = {
@@ -72,11 +48,6 @@ const API = {
           Auth.logout();
           window.location.href = '/index.html';
           throw new Error('認証エラー');
-        }
-
-        // POSTでもキャッシュ可能なアクションの場合はキャッシュに保存
-        if (cacheableActions.includes(action) && data.success) {
-          Cache.set(cacheKey, data);
         }
 
         return data;
@@ -116,11 +87,6 @@ const API = {
           throw new Error('認証エラー');
         }
 
-        // レスポンスをキャッシュに保存（キャッシュ可能なアクションのみ）
-        if (cacheableActions.includes(action) && data.success) {
-          Cache.set(cacheKey, data);
-        }
-
         return data;
 
       } catch (error) {
@@ -128,32 +94,6 @@ const API = {
         throw error;
       }
     }
-  },
-
-  /**
-   * キャッシュをクリアする（特定のアクション）
-   * @param {string} action - クリアするアクション名
-   */
-  clearCache(action) {
-    try {
-      const keys = Object.keys(localStorage);
-      keys.forEach(key => {
-        if (key.startsWith(`cache_api_${action}_`)) {
-          localStorage.removeItem(key);
-        }
-      });
-      console.log(`[Cache Cleared] ${action}`);
-    } catch (error) {
-      console.error('キャッシュクリアエラー:', error);
-    }
-  },
-
-  /**
-   * 全キャッシュをクリアする
-   */
-  clearAllCache() {
-    Cache.clear();
-    console.log('[Cache Cleared] All');
   },
 
   /**
