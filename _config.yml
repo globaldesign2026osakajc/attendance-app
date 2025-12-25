@@ -4,10 +4,6 @@
 title: 出欠管理アプリ
 description: グローバルデザイン推進委員会向け出欠管理WEBアプリケーション
 
-# Build settings
-markdown: kramdown
-theme: jekyll-theme-minimal
-
 # Exclude files
 exclude:
   - GAS/
