@@ -211,6 +211,8 @@ class Dashboard {
   }
 
   async refresh() {
+    // キャッシュをクリアして最新データを取得
+    AdminAPI.clearAllCache();
     await this.init();
   }
 }
